@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <fftw3.h>
+#include <string>
 
 struct audioVector				// This structure will contain a pointer to the audio vector X and the sample frequency Fs
 {
@@ -103,7 +104,7 @@ audioArray	processPowerSpectrum( spectrumArray );
 void	saveSpectrum( audioArray );
 
 // function to compute the Mel filterbank
-melArray	melFilterbank( audioArray );
+melArray	melFilterbank( audioArray, int );
 
 // function to compute the log of the Mel filterbank
 void	logMelFilterbank( melArray );
@@ -115,10 +116,10 @@ melArray	dctLogMelFilterbank( melArray );
 deltaArray	deltasDeltaDeltas( melArray, int );
 
 // function to save the MFCC in a Octave format file
-void	saveMFCC( melArray );
+void	saveMFCC( melArray, std::string );
 
 // function to save the MFCC in a Octave format file
-void	saveDeltas( deltaArray );
+void	saveDeltas( deltaArray, std::string );
 
 // function to transform from Hz to Mel frequency
 double	hertz2Mel( double );
@@ -137,4 +138,10 @@ void	passNewLine(FILE *);
 
 // function to add persistence to the coefficients. This function modifies the input
 void	persistence( melArray, int );
+
+// function to apply leaky integration to the input. This function modifies the input
+void	leakyIntegrator( melArray, double );
+
+// function to filter AudioVector.mat through a Mel Filter Bank.
+void	filterAudioVector( int, double, double, int, double, bool, bool, bool, bool, bool, double, std::string );
 

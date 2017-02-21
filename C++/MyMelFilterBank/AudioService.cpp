@@ -26,6 +26,206 @@
 
 #include "AudioService.h"
 
+// function to filter AudioVector.mat through a Mel Filter Bank.
+void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWindow, int persistenceValue, double leakyCoefficient,
+			   bool computeCepstrum, bool gainControl, bool computeDeltas, bool applyPersistence, bool leakyIntegration,
+			   double delay, std::string fileName )
+{
+	system("clear");					// clears the screen
+
+	////////////////////////////////////////// loads audio vector X and sample frequency Fs from "AudioVector.mat" file
+
+	audioVector audio;
+
+	audio = loadAudioVectorFile();
+
+	////////////////////////////////////////// audio vector X and sample frequency Fs loaded from "AudioVector.mat" file
+
+
+
+
+
+
+	////////////////////////////////////////// reshapes audio vector X conform to Fourier sample period and Fourier window
+
+	audioArray array;
+
+	array = reshapeAudioVector(audio, sampleRate, sampleWindow);
+	//array = reshapeAudioVector(audio, 0.01, 0.025); // original training
+	//array = reshapeAudioVector(audio, 0.5, 1);
+
+	////////////////////////////////////////// audio vector X reshaped conform to Fourier sample period and Fourier window
+
+
+
+
+
+
+	////////////////////////////////////////// saves the spectrum from the different channels in spectrum.mat file
+
+	//saveWindowed(array);
+
+	////////////////////////////////////////// spectrum saved from the different channels in spectrum.mat file
+
+
+
+
+
+
+	////////////////////////////////////////// extract the spectrum from the different channels in array
+
+	spectrumArray arrayS;
+
+	arrayS = extractSpectrum(array);
+
+	////////////////////////////////////////// spectrum extracted from the different channels in array
+
+
+
+
+
+
+	////////////////////////////////////////// process the spectrum from the different channels in arrayS
+
+	audioArray processedSpectrum;
+
+	if ( computeCepstrum )
+	{
+		processedSpectrum = processSpectrum(arrayS);
+	}
+	else
+	{
+		processedSpectrum = processPowerSpectrum(arrayS);
+	}
+
+	////////////////////////////////////////// spectrum processed from the different channels in arrayS
+
+
+
+
+
+
+	////////////////////////////////////////// saves the spectrum from the different channels in spectrum.mat file
+
+	//saveSpectrum(processedSpectrum);
+
+	////////////////////////////////////////// spectrum saved from the different channels in spectrum.mat file
+
+
+
+
+
+
+	////////////////////////////////////////// computes the Mel filter banks
+
+	melArray MF;
+
+	MF = melFilterbank(processedSpectrum, numberOfFilters);
+
+	////////////////////////////////////////// Mel filter banks computed
+
+
+
+
+
+
+	////////////////////////////////////////// computes the log and DCT of the Mel filter banks
+
+	melArray	MFCC;
+
+	if ( computeCepstrum )
+	{
+		MFCC = dctLogMelFilterbank(MF);
+	}
+	else
+	{
+		MFCC = MF;
+	}
+
+
+	////////////////////////////////////////// log and DCT of the Mel filter banks computed
+
+
+
+
+
+
+	////////////////////////////////////////// adjusts the gain in Mel filter banks
+
+	double	threshold = 0.001;
+
+	if ( gainControl )
+	{
+		adjustGain(MFCC, threshold);
+		//adjustDeltaGain(deltas, threshold);
+	}
+
+	////////////////////////////////////////// Mel filter banks gain adjusted
+
+
+
+
+
+	////////////////////////////////////////// computes the Deltas and Delta-Deltas of MFCC
+
+	deltaArray	deltas;
+
+	if ( computeDeltas )
+	{
+		deltas = deltasDeltaDeltas(MFCC,2);
+	}
+
+	////////////////////////////////////////// Deltas and Delta-Deltas of MFCC computed
+
+
+
+
+
+	////////////////////////////////////////// adds paersistence to the MFCC
+
+	if ( applyPersistence )
+		persistence(MFCC,persistenceValue);
+
+	////////////////////////////////////////// paersistence added to the MFCC
+
+
+
+
+
+	////////////////////////////////////////// applies leakyIntegrator to the MFCC
+
+	if ( leakyIntegration )
+		leakyIntegrator(MFCC,leakyCoefficient);
+
+	////////////////////////////////////////// leakyIntegrator applied to the MFCC
+
+
+
+
+
+	////////////////////////////////////////// saves the Mel Frequency baks from the different channels
+
+	saveMFCC(MFCC, fileName);
+
+	////////////////////////////////////////// Mel Frequency baks saved from the different channels
+
+
+
+
+
+
+	////////////////////////////////////////// saves the Deltas and Delta-Deltas of the MFCC in two files
+
+	if ( computeDeltas )
+	{
+		saveDeltas(deltas, fileName);
+	}
+
+	////////////////////////////////////////// Deltas and Delta-Deltas of the MFCC saved in two files
+
+} // end function filterAudioVector
+
+
 // function to read "AudioVector.mat" file
 audioVector	loadAudioVectorFile()
 {
@@ -49,7 +249,7 @@ audioVector	loadAudioVectorFile()
 
 	FILE *filePointer; 								// ConnectomeNode.conn file pointer
 
-	strcpy(pathFile, "/home/dario/MEGA/Doctorado/Contenidos/Model/Octave/AudioVector.mat");
+	strcpy(pathFile, "../../Octave/AudioVector.mat");
 
 	// fopen opens file. Exit program if unable to create file
 	if ( ( filePointer = fopen( pathFile, "r" ) ) == NULL ) {
@@ -274,7 +474,7 @@ void	saveWindowed( audioArray windows )
 	FILE *filePointer; 								// spectrum.mat file pointer
 
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( "/home/dario/MEGA/Doctorado/Contenidos/Model/Octave/windowed.mat", "w" ) ) == NULL ) {
+	if ( ( filePointer = fopen( "../../Octave/windowed.mat", "w" ) ) == NULL ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
 	} // end if
@@ -466,7 +666,7 @@ void	saveSpectrum( audioArray processedSpect )
 	FILE *filePointer; 								// spectrum.mat file pointer
 
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( "/home/dario/MEGA/Doctorado/Contenidos/Model/Octave/spectrum.mat", "w" ) ) == NULL ) {
+	if ( ( filePointer = fopen( "../../Octave/spectrum.mat", "w" ) ) == NULL ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
 	} // end if
@@ -521,16 +721,14 @@ void	saveSpectrum( audioArray processedSpect )
 
 
 // function to compute the Mel filterbank
-melArray	melFilterbank( audioArray spectrum )
+melArray	melFilterbank( audioArray spectrum, int filters )
 {
 	int	c, i, j, k;
-	int	filters, nfft;
+	int	nfft;
 	int	*dicreteHertzPositions;
 	double	auxiliary, lowerFrequency, upperFrequency, melLowerFrequency, melUpperFrequency, melBandWidth, melBandWidthFilter, samplerate;
 	double	*melPositions, *hertzPositions;
 	melArray	output;
-
-	filters = 28;									// this is the number of filters
 
 	lowerFrequency = 300;								// this is the lower frequency in Hz
 	upperFrequency = 8000;								// this is the upper frequency in Hz
@@ -775,14 +973,18 @@ deltaArray	deltasDeltaDeltas( melArray Array, int N )
 
 
 // function to save the MFCC in a Octave format file
-void	saveMFCC( melArray mel )
+void	saveMFCC( melArray mel, std::string name )
 {
 	int	i, j, k;
 
-	FILE *filePointer; 								// MFCC.mat file pointer
+	FILE *filePointer; 								// "name".mat file pointer
+	std::string	path = "../../Octave/";
+	std::string	extension = ".mat";
+	name = path + name + extension;
 
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( "/home/dario/MEGA/Doctorado/Contenidos/Model/Octave/MFCC.mat", "w" ) ) == NULL ) {
+	const char * c_name = name.c_str();
+	if ( ( filePointer = fopen( c_name, "w" ) ) == NULL ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
 	} // end if
@@ -853,17 +1055,20 @@ void	saveMFCC( melArray mel )
 
 
 // function to save the Deltas and Delta-Deltas in a Octave format file
-void	saveDeltas( deltaArray delta )
+void	saveDeltas( deltaArray delta, std::string name )
 {
 	int	i, j, k;
 
 	FILE *filePointer; 								// Deltas.mat file pointer
-
+	std::string	path = "../../Octave/";
+	std::string	extension = "_Deltas.mat";
+	std::string	newName = path + name + extension;
 
 	/////////////////////// This file is to save the Deltas	///////////////////////
 
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( "/home/dario/MEGA/Doctorado/Contenidos/Model/Octave/Deltas.mat", "w" ) ) == NULL ) {
+	const char * c_newName = newName.c_str();
+	if ( ( filePointer = fopen( c_newName, "w" ) ) == NULL ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
 	} // end if
@@ -917,11 +1122,15 @@ void	saveDeltas( deltaArray delta )
 
 
 
-
+	newName.clear();
+	extension.clear();
 	/////////////////////// This file is to save the Delta-Deltas	///////////////////////
 
+	extension = "_DeltasDeltas.mat";
+	newName = path + name + extension;
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( "/home/dario/MEGA/Doctorado/Contenidos/Model/Octave/DeltaDeltas.mat", "w" ) ) == NULL ) {
+	const char * c_newName1 = newName.c_str();
+	if ( ( filePointer = fopen( c_newName1, "w" ) ) == NULL ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
 	} // end if
@@ -1109,6 +1318,26 @@ void	persistence( melArray Array, int persistent )
 } // end function persistence
 
 
+// function to apply leaky integration to the input. This function modifies the input
+void	leakyIntegrator( melArray Array, double coefficient )
+{
+	int	i, j, k;
+
+	for (i = 0; i < Array.channels; i++)
+	{
+		for (j = 0; j < Array.chunks; j++)
+		{
+			if ( j == 0 ) {
+				for (k = 0; k < Array.filters; k++)
+					*((Array.channel[i] + j*Array.filters) + k) = (1 - coefficient) * *((Array.channel[i] + j*Array.filters) + k) + 0;
+			}
+			else {
+				for (k = 0; k < Array.filters; k++)
+					*((Array.channel[i] + j*Array.filters) + k) = (1 - coefficient) * *((Array.channel[i] + j*Array.filters) + k) + coefficient * *((Array.channel[i] + (j-1)*Array.filters) + k);
+			}
+		}
+	}
+} // end function persistence
 
 
 
