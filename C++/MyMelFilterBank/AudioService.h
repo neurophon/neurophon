@@ -143,5 +143,12 @@ void	persistence( melArray, int );
 void	leakyIntegrator( melArray, double );
 
 // function to filter AudioVector.mat through a Mel Filter Bank.
-void	filterAudioVector( int, double, double, int, double, bool, bool, bool, bool, bool, double, std::string );
+void	filterAudioVector( int, double, double, int, double, bool, bool, bool, bool, bool, bool, double, std::string, std::string );
+
+// function to compute the convolution between two vectors
+void	convolve( const double, size_t, const double, size_t, double );
+
+// function to apply kernel convolution to the Mel Filter-Bank.
+// Thought this function does not modify Array, it can free such structure depending on freeArray boolean variable.
+melArray	applyKernelConvolution( melArray, std::string, bool, bool );
 

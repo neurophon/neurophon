@@ -15,24 +15,33 @@
 // File Description:	AudioService member-function definitions. This file contains implementations of the
 //			member functions prototyped in AudioService.h.
 
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <array>
+#include <vector>
+#include <algorithm>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <cmath>
 #include <complex.h>
-
-#include <iostream>
+#include <stddef.h>
 
 #include "AudioService.h"
+
+using namespace std;
+
+#include "../Constants.h"
+#include "../DataTypes.h"
+#include "../OctaveInterface.h"
 
 // function to filter AudioVector.mat through a Mel Filter Bank.
 void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWindow, int persistenceValue, double leakyCoefficient,
 			   bool computeCepstrum, bool gainControl, bool computeDeltas, bool applyPersistence, bool leakyIntegration,
-			   double delay, std::string fileName )
+			   bool kernelConvolution, double delay, std::string fileName, std::string kernelName )
 {
-	system("clear");					// clears the screen
-
 	////////////////////////////////////////// loads audio vector X and sample frequency Fs from "AudioVector.mat" file
 
 	audioVector audio;
@@ -202,10 +211,30 @@ void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWin
 
 
 
+	////////////////////////////////////////// applies Kernel Convolution to the MFCC
+
+	melArray	RealArray, LeftImagArray, RightImagArray;
+
+	std::string	RealKernelName = "Real" + kernelName;
+	std::string	ImagKernelName = "Imag" + kernelName;
+	if ( kernelConvolution )
+	{
+		RealArray = applyKernelConvolution( MFCC, RealKernelName, false, false );
+		LeftImagArray = applyKernelConvolution( MFCC, ImagKernelName, false, false );
+		RightImagArray = applyKernelConvolution( MFCC, ImagKernelName, true, true );
+	}
+
+	////////////////////////////////////////// Kernel Convolution applied to the MFCC
+
+
+
+
 
 	////////////////////////////////////////// saves the Mel Frequency baks from the different channels
 
-	saveMFCC(MFCC, fileName);
+	saveMFCC(RealArray, ("Real" + fileName));
+	saveMFCC(LeftImagArray, ("LeftImag" + fileName));
+	saveMFCC(RightImagArray, ("RightImag" + fileName));
 
 	////////////////////////////////////////// Mel Frequency baks saved from the different channels
 
@@ -1337,10 +1366,107 @@ void	leakyIntegrator( melArray Array, double coefficient )
 			}
 		}
 	}
-} // end function persistence
+} // end function leakyIntegrator
 
 
+// function to compute the convolution between two vectors
+void	convolve(const double Signal[/* SignalLen */], size_t SignalLen,
+		 const double Kernel[/* KernelLen */], size_t KernelLen,
+		 double Result[/* SignalLen + KernelLen - 1 */])
+{
+	size_t n;
 
+	for (n = 0; n < SignalLen + KernelLen - 1; n++)
+	{
+		size_t kmin, kmax, k;
+
+		Result[n] = 0;
+
+		kmin = (n >= KernelLen - 1) ? n - (KernelLen - 1) : 0;
+		kmax = (n < SignalLen - 1) ? n : SignalLen - 1;
+
+		for (k = kmin; k <= kmax; k++)
+		{
+			Result[n] += Signal[k] * Kernel[n - k];
+		}
+	}
+} // end function convolve
+
+
+// function to apply kernel convolution to the Mel Filter-Bank.
+// Thought this function does not modify Array, it can free such structure depending on freeArray boolean variable.
+melArray	applyKernelConvolution( melArray Array, std::string kernelName, bool freeArray, bool negativeKernel )
+{
+	int i, j, k;
+
+	double	signal[Array.filters];
+	double	kernel[Array.filters];
+	double	result[2*Array.filters - 1];
+
+	std::vector<double>	AuxiliaryKernel;
+
+	AuxiliaryKernel.resize(Array.filters);
+
+	melArray	output;
+
+	std::string	str;
+	std::string	STR;
+
+	kernelName = "../../Octave/" + kernelName + ".mat";
+	// open a file in read mode.
+	ifstream infile; 
+	infile.open(kernelName, ios::in | std::ifstream::binary);
+
+	while ( std::getline(infile, str) )
+	{
+		STR = "# name: Aux";
+		if ( str.compare(STR) == 0 )
+			load_matrix_to_vector(AuxiliaryKernel, infile);
+	}
+	infile.close();
+
+	for (k = 0; k < Array.filters; k++)
+	{
+		if ( negativeKernel ) {
+			kernel[k] = -AuxiliaryKernel[k];
+		}
+		else {
+			kernel[k] = AuxiliaryKernel[k];
+		}
+	}
+
+	for (i = 0; i < Array.channels; i++)
+	{
+		output.channel[i] = (double*)calloc(Array.chunks*Array.filters, sizeof(double));	// reserves space for the output channel
+		for (j = 0; j < Array.chunks; j++)
+		{
+			for (k = 0; k < Array.filters; k++)
+				signal[k] = *((Array.channel[i] + j*Array.filters) + k);
+
+			convolve(signal, Array.filters,
+				 kernel, Array.filters,
+				 result);
+
+			for (k = 0; k < Array.filters; k++)
+				*((output.channel[i] + j*Array.filters) + k) = result[k + (int)ceil(double(Array.filters)/2)];
+		}
+		if ( freeArray )
+			free(Array.channel[i]);
+	}
+
+	output.filters = Array.filters;
+	output.channels = Array.channels;
+	output.chunks = Array.chunks;
+	output.fourierSamplingPeriodLength = Array.fourierSamplingPeriodLength;
+	output.fourierWindowLength = Array.fourierWindowLength;
+	output.sampleFrequency = Array.sampleFrequency;
+	output.fourierSamplingPeriod = Array.fourierSamplingPeriod;
+	output.fourierWindow = Array.fourierWindow;
+	output.samplingPeriod = Array.samplingPeriod;
+	output.filter = Array.filter;
+
+	return	output;
+} // end function applyKernelConvolution
 
 
 
