@@ -14,9 +14,6 @@
 // File Name:		SimplePopulation.cpp
 // File Description:	SimplePopulation member-function definitions. This file contains implementations of the
 //			member functions prototyped in SimplePopulation.h.
-#include <iostream>
-
-
 
 #include<algorithm>
 #include "SimplePopulation.h"				// includes definition of class SimplePopulation
@@ -31,69 +28,76 @@ SimplePopulation::SimplePopulation( const std::vector<int>& populationDimensions
 
 
 // returns the normalized coordinates of the best matching unit using response information.
-std::vector<double>	SimplePopulation::Activate( const responseInfo& response )
+std::vector<double>	SimplePopulation::Activate( const responseInfo& response, bool normalize )
 {
-	std::cout << "\nIndex is: " << response.ranking[0] << "\n.";
-	std::cout << "\nDistance is: " << response.distances[response.ranking[0]] << "\n";
-
-	return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+	if ( normalize )
+		return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+	else {
+		auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+		std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+		return	doubleVector;
+	}
 } // end function Activate
 
 
 // returns the normalized coordinates of the best matching unit using input.
-std::vector<double>	SimplePopulation::Activate( const std::vector<double>& input )
+std::vector<double>	SimplePopulation::Activate( const std::vector<double>& input, bool normalize )
 {
 	responseInfo	response;
 
 	response = SelfOrganizingMap::getResponse(input);
 
-	std::cout << "\nIndex is: " << response.ranking[0] << "\n.";
-	std::cout << "\nDistance is: " << response.distances[response.ranking[0]] << "\n";
-
-	return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+	if ( normalize )
+		return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+	else {
+		auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+		std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+		return	doubleVector;
+	}
 } // end function Activate
 
 
 // decides which units in the population to activate depending on response information.
-std::vector<double>	SimplePopulation::Activate( const responseInfo& response, double activationRadius )
+std::vector<double>	SimplePopulation::Activate( const responseInfo& response, double activationRadius, bool normalize )
 {
-	std::vector<double>	coordinates;
-
 	if ( response.distances[response.ranking[0]] <= activationRadius ) {
-		coordinates = SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+		if ( normalize )
+			return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+		else {
+			auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+			return	doubleVector;
+		}
 	}
 	else {
+		std::vector<double>	coordinates;
 		coordinates.resize(_unitsArrayDimensionality.size());
 		std::fill(coordinates.begin(), coordinates.end(), -1);
+		return	coordinates;
 	}
-
-	std::cout << "\nIndex is: " << response.ranking[0] << "\n.";
-	std::cout << "\nDistance is: " << response.distances[response.ranking[0]] << "\n";
-
-	return	coordinates;
 } // end function Activate
 
 
 // decides which units in the population to activate depending on input.
-std::vector<double>	SimplePopulation::Activate( const std::vector<double>& input, double activationRadius )
+std::vector<double>	SimplePopulation::Activate( const std::vector<double>& input, double activationRadius, bool normalize )
 {
-	responseInfo	response;
-	std::vector<double>	coordinates;
-
-	response = SelfOrganizingMap::getResponse(input);
+	auto	response = SelfOrganizingMap::getResponse(input);
 
 	if ( response.distances[response.ranking[0]] <= activationRadius ) {
-		coordinates = SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+		if ( normalize )
+			return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+		else {
+			auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+			return	doubleVector;
+		}
 	}
 	else {
+		std::vector<double>	coordinates;
 		coordinates.resize(_unitsArrayDimensionality.size());
 		std::fill(coordinates.begin(), coordinates.end(), -1);
+		return	coordinates;
 	}
-
-	std::cout << "\nIndex is: " << response.ranking[0] << "\n.";
-	std::cout << "\nDistance is: " << response.distances[response.ranking[0]] << "\n";
-
-	return	coordinates;
 } // end function Activate
 
 

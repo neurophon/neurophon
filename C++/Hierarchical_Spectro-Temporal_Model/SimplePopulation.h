@@ -33,18 +33,18 @@ class SimplePopulation : public SelfOrganizingMap
 public:
 				SimplePopulation( const std::vector<int>&, int );	// constructor that initializes SimplePopulation
 
-	std::vector<double>	Activate( const responseInfo& );		// returns the normalized coordinates of the best matching unit depending on response info.
-	std::vector<double>	Activate( const std::vector<double>& );		// returns the normalized coordinates of the best matching unit depending on input.
-	std::vector<double>	Activate( const responseInfo&,			// decides which units in the population to activate depending on response info.
-					  double activationRadius );		// If the best matching unit is inside activationRadius, the function returns
-										// its normalized coordinates.
-										// In the other case, coordinates are filled with "-1".
-	std::vector<double>	Activate( const std::vector<double>&,		// decides which units in the population to activate depending on input.
-					  double activationRadius );		// If the best matching unit is inside activationRadius, the function returns
-										// its normalized coordinates.
-										// In the other case, coordinates are filled with "-1".
+	std::vector<double>	Activate( const responseInfo&, bool );			// returns the normalized coordinates of the best matching unit depending on response info.
+	std::vector<double>	Activate( const std::vector<double>&, bool );		// returns the normalized coordinates of the best matching unit depending on input.
+	std::vector<double>	Activate( const responseInfo&,				// decides which unit in the population to activate depending on response info.
+					  double activationRadius, bool );		// If the best matching unit is inside activationRadius, the function returns
+											// its normalized coordinates.
+											// In the other case, coordinates are filled with "-1".
+	std::vector<double>	Activate( const std::vector<double>&,			// decides which unit in the population to activate depending on input.
+					  double activationRadius, bool );		// If the best matching unit is inside activationRadius, the function returns
+											// its normalized coordinates.
+											// In the other case, coordinates are filled with "-1".
 
-//private:
+private:
 	std::vector<double>	Normalize( const std::vector<int>& );		// normalizes neuron coorsinates in the population
 }; // end class KohonenFeatureMapAbs
 
