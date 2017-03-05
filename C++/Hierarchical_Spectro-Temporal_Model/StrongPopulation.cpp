@@ -70,11 +70,12 @@ std::vector<double>	StrongPopulation::Activate( const responseInfo& response, do
 		auto	newResponse = StrongPopulation::getStrongResponse(response);
 		auto	newDistances = get_elements(newResponse.distances, distanceIndexes);
 		double	newDistanceMinimum = get_minimum_element(newDistances);
-		int	index = get_index_from_value(newResponse.distances, newDistanceMinimum);
+		auto	minimumIndexes = get_indexes_from_value(newResponse.distances, newDistanceMinimum);
+		auto	number = rand() % minimumIndexes.size();
 		if ( normalize )
-			return	StrongPopulation::Normalize(unravelIndex(index, _unitsArrayDimensionality));
+			return	StrongPopulation::Normalize(unravelIndex(minimumIndexes[number], _unitsArrayDimensionality));
 		else {
-			auto intVector = unravelIndex(index, _unitsArrayDimensionality);
+			auto intVector = unravelIndex(minimumIndexes[number], _unitsArrayDimensionality);
 			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
 			return	doubleVector;
 		}
@@ -107,11 +108,12 @@ std::vector<double>	StrongPopulation::Activate( const std::vector<double>& input
 		auto	newResponse = StrongPopulation::getStrongResponse(response);
 		auto	newDistances = get_elements(newResponse.distances, distanceIndexes);
 		double	newDistanceMinimum = get_minimum_element(newDistances);
-		int	index = get_index_from_value(newResponse.distances, newDistanceMinimum);
+		auto	minimumIndexes = get_indexes_from_value(newResponse.distances, newDistanceMinimum);
+		auto	number = rand() % minimumIndexes.size();
 		if ( normalize )
-			return	StrongPopulation::Normalize(unravelIndex(index, _unitsArrayDimensionality));
+			return	StrongPopulation::Normalize(unravelIndex(minimumIndexes[number], _unitsArrayDimensionality));
 		else {
-			auto intVector = unravelIndex(index, _unitsArrayDimensionality);
+			auto intVector = unravelIndex(minimumIndexes[number], _unitsArrayDimensionality);
 			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
 			return	doubleVector;
 		}
