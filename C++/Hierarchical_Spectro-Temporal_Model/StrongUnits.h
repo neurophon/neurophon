@@ -32,7 +32,7 @@ class StrongUnits : public SelfOrganizingMap
 public:
 		StrongUnits( const std::vector<int>&, int );	// constructor that initializes StrongUnits by default
 		StrongUnits( const std::vector<int>&, int,
-			     const std::vector<double> );	// constructor that initializes StrongUnits by previous vector
+			     const std::vector<double>& );	// constructor that initializes StrongUnits by previous vector
 
 	void	Update( const responseInfo& );			// updates _strongUnits depending on response info.
 	void	Update( const std::vector<double>& );		// updates _strongUnits depending on input.

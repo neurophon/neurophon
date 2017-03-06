@@ -39,7 +39,7 @@ StrongUnits::StrongUnits( const std::vector<int>& populationDimensions, int numb
 // constructor initializes populationDimensions and numberOfInputs with variables supplied as arguments.
 // This loads _strongUnits with previous vector supplied as argument too
 StrongUnits::StrongUnits( const std::vector<int>& populationDimensions, int numberOfInputs,
-			  const std::vector<double> strongUnits )
+			  const std::vector<double>& strongUnits )
 	// explicitly call base-class constructor
 	: SelfOrganizingMap(populationDimensions, numberOfInputs)
 {
@@ -56,7 +56,17 @@ StrongUnits::StrongUnits( const std::vector<int>& populationDimensions, int numb
 void	StrongUnits::Update( const responseInfo& response )
 {
 	double	sum;
-	_strongUnits[response.ranking[0]] = _strongUnits[response.ranking[0]] + SYNAPTIC_INCREMENT;
+
+	auto	minimumDistanceIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
+
+	if ( minimumDistanceIndexes.size() > 1 ) {
+		auto	number = rand() % minimumDistanceIndexes.size();
+		_strongUnits[minimumDistanceIndexes[number]] =
+		_strongUnits[minimumDistanceIndexes[number]] + SYNAPTIC_INCREMENT;
+	}
+	else {
+		_strongUnits[response.ranking[0]] = _strongUnits[response.ranking[0]] + SYNAPTIC_INCREMENT;
+	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
 		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
@@ -78,7 +88,16 @@ void	StrongUnits::Update( const std::vector<double>& input )
 
 	response = SelfOrganizingMap::getResponse(input);
 
-	_strongUnits[response.ranking[0]] = _strongUnits[response.ranking[0]] + SYNAPTIC_INCREMENT;
+	auto	minimumDistanceIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
+
+	if ( minimumDistanceIndexes.size() > 1 ) {
+		auto	number = rand() % minimumDistanceIndexes.size();
+		_strongUnits[minimumDistanceIndexes[number]] =
+		_strongUnits[minimumDistanceIndexes[number]] + SYNAPTIC_INCREMENT;
+	}
+	else {
+		_strongUnits[response.ranking[0]] = _strongUnits[response.ranking[0]] + SYNAPTIC_INCREMENT;
+	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
 		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
@@ -122,9 +141,20 @@ void	StrongUnits::Update( const responseInfo& response, double neighborParameter
 {
 	double	sum, neighborhoodValue;
 
-	for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-		neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit);
-		_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
+	auto	minimumDistanceIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
+
+	if ( minimumDistanceIndexes.size() > 1 ) {
+		auto	number = rand() % minimumDistanceIndexes.size();
+		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit);
+			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
+		}
+	}
+	else {
+		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit);
+			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
+		}
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
@@ -147,9 +177,20 @@ void	StrongUnits::Update( const std::vector<double>& input, double neighborParam
 
 	response = SelfOrganizingMap::getResponse(input);
 
-	for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-		neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit);
-		_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
+	auto	minimumDistanceIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
+
+	if ( minimumDistanceIndexes.size() > 1 ) {
+		auto	number = rand() % minimumDistanceIndexes.size();
+		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit);
+			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
+		}
+	}
+	else {
+		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit);
+			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
+		}
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
