@@ -19,6 +19,7 @@
 #include <algorithm>
 
 #include "StrongUnits.h"				// includes definition of class StrongUnits
+#include "../Libraries/Templates.h"
 #include "../Libraries/Utilities.h"
 #include "../Libraries/Constants.h"
 #include "../Libraries/OctaveInterface.h"
@@ -69,14 +70,14 @@ void	StrongUnits::Update( const responseInfo& response )
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
+		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0.0);
+		if ( sum > 1 )
+			std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
+			std::bind2nd(std::divides<double>(),sum));
+
 		_updateStep = 0;
 	}
 	_updateStep++;
-
-	if ( sum > 1 )
-		std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
-		std::bind2nd(std::divides<double>(),sum));
 } // end function Update
 
 
@@ -100,14 +101,14 @@ void	StrongUnits::Update( const std::vector<double>& input )
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
+		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0.0);
+		if ( sum > 1 )
+			std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
+			std::bind2nd(std::divides<double>(),sum));
+
 		_updateStep = 0;
 	}
 	_updateStep++;
-
-	if ( sum > 1 )
-		std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
-		std::bind2nd(std::divides<double>(),sum));
 } // end function Update
 
 
@@ -125,19 +126,19 @@ void	StrongUnits::Update( int index )
 	_strongUnits[index] = _strongUnits[index] + SYNAPTIC_INCREMENT;
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
+		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0.0);
+		if ( sum > 1 )
+			std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
+			std::bind2nd(std::divides<double>(),sum));
+
 		_updateStep = 0;
 	}
 	_updateStep++;
-
-	if ( sum > 1 )
-		std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
-		std::bind2nd(std::divides<double>(),sum));
 } // end function Update
 
 
 // updates _strongUnits neighborhood depending on response info.
-void	StrongUnits::Update( const responseInfo& response, double neighborParameter )
+void	StrongUnits::Update( const responseInfo& response, double neighborParameter, const std::string& str )
 {
 	double	sum, neighborhoodValue;
 
@@ -146,31 +147,31 @@ void	StrongUnits::Update( const responseInfo& response, double neighborParameter
 	if ( minimumDistanceIndexes.size() > 1 ) {
 		auto	number = rand() % minimumDistanceIndexes.size();
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit);
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
 		}
 	}
 	else {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit);
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
 		}
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
+		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0.0);
+		if ( sum > 1 )
+			std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
+			std::bind2nd(std::divides<double>(),sum));
+
 		_updateStep = 0;
 	}
 	_updateStep++;
-
-	if ( sum > 1 )
-		std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
-		std::bind2nd(std::divides<double>(),sum));
 } // end function Update
 
 
 // updates _strongUnits neighborhood depending on input.
-void	StrongUnits::Update( const std::vector<double>& input, double neighborParameter )
+void	StrongUnits::Update( const std::vector<double>& input, double neighborParameter, const std::string& str )
 {
 	double	sum, neighborhoodValue;
 	responseInfo	response;
@@ -182,31 +183,31 @@ void	StrongUnits::Update( const std::vector<double>& input, double neighborParam
 	if ( minimumDistanceIndexes.size() > 1 ) {
 		auto	number = rand() % minimumDistanceIndexes.size();
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit);
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
 		}
 	}
 	else {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit);
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 			_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
 		}
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
+		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0.0);
+		if ( sum > 1 )
+			std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
+			std::bind2nd(std::divides<double>(),sum));
+
 		_updateStep = 0;
 	}
 	_updateStep++;
-
-	if ( sum > 1 )
-		std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
-		std::bind2nd(std::divides<double>(),sum));
 } // end function Update
 
 
 // updates _strongUnits neighborhood depending on unit index.
-void	StrongUnits::Update( int index, double neighborParameter )
+void	StrongUnits::Update( int index, double neighborParameter, const std::string& str )
 {
 	double	sum, neighborhoodValue;
 
@@ -217,19 +218,19 @@ void	StrongUnits::Update( int index, double neighborParameter )
 	}
 
 	for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-		neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit);
+		neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
 		_strongUnits[unit] = _strongUnits[unit] + neighborhoodValue*SYNAPTIC_INCREMENT;
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0);
+		sum = std::accumulate(_strongUnits.begin(), _strongUnits.end(), 0.0);
+		if ( sum > 1 )
+			std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
+			std::bind2nd(std::divides<double>(),sum));
+
 		_updateStep = 0;
 	}
 	_updateStep++;
-
-	if ( sum > 1 )
-		std::transform(_strongUnits.begin(), _strongUnits.end(), _strongUnits.begin(),
-		std::bind2nd(std::divides<double>(),sum));
 } // end function Update
 
 
@@ -241,7 +242,7 @@ void	StrongUnits::saveStrongUnitsStatus()
         outfile.open("../../Octave/SU_Status.mat", ios::out | ios::trunc);
 
         // file preamble.
-        outfile << "# This is a file created by saveStatus member function in StrongUnits class." << endl;
+        outfile << "# This is a file created by saveStrongUnitsStatus member function in StrongUnits class." << endl;
         outfile << "# Author: Dematties Dario Jesus." << endl;
 
         outfile << "\n\n" << endl;
@@ -251,7 +252,7 @@ void	StrongUnits::saveStrongUnitsStatus()
 
 	// close the opened file.
 	outfile.close();
-} // end functiom saveWeights
+} // end functiom saveStrongUnitsStatus
 
 
 

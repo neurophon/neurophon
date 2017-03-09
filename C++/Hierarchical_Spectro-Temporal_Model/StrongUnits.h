@@ -37,9 +37,12 @@ public:
 	void	Update( const responseInfo& );			// updates _strongUnits depending on response info.
 	void	Update( const std::vector<double>& );		// updates _strongUnits depending on input.
 	void	Update( int );					// updates _strongUnits depending on unit index.
-	void	Update( const responseInfo&, double );		// updates _strongUnits neighborhood depending on response info.
-	void	Update( const std::vector<double>&, double );	// updates _strongUnits neighborhood depending on input.
-	void	Update( int, double );				// updates _strongUnits neighborhood depending on unit index.
+	void	Update( const responseInfo&, double,
+			const std::string& );			// updates _strongUnits neighborhood depending on response info.
+	void	Update( const std::vector<double>&, double,
+			const std::string& );			// updates _strongUnits neighborhood depending on input.
+	void	Update( int, double,
+			const std::string& );			// updates _strongUnits neighborhood depending on unit index.
 
 	void	saveStrongUnitsStatus();			// function that saves the StrongUnits status in a file
 
