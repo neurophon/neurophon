@@ -43,14 +43,18 @@ public:
 			const bool, const double );				// updates _temporalUnits depending on response info.
 	void	Update( const std::vector<double>&, const std::vector<int>&,
 			const bool, const double );				// updates _temporalUnits depending on input.
-	void	Update( int, const std::vector<int>&,
+	void	Update( const int, const std::vector<int>&,
 			const bool, const double );				// updates _temporalUnits depending on unit index.
+	void	Update( const int, const int, const int,
+			       const bool, const double );			// updates _temporalUnits depending on individual unit indexes.
 	void	Update( const responseInfo&, double, const std::vector<int>&,
 			const bool, const double, const std::string& );		// updates _temporalUnits neighborhood depending on response info.
 	void	Update( const std::vector<double>&, double, const std::vector<int>&,
 			const bool, const double, const std::string& );		// updates _temporalUnits neighborhood depending on input.
-	void	Update( int, double, const std::vector<int>&,
+	void	Update( const int, double, const std::vector<int>&,
 			const bool, const double, const std::string& );		// updates _temporalUnits neighborhood depending on unit index.
+	void	Update( const int, double, const int, const int,
+			const bool, const double, const std::string& );		// updates _temporalUnits neighborhood depending on individual unit indexes.
 
 	void	saveTemporalUnitsStatus();			// function that saves the TemporalUnits status in a file
 

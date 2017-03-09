@@ -83,18 +83,22 @@ void	TemporalUnits::Update( const responseInfo& response, const std::vector<int>
 		number = rand() % minimumDistanceIndexes.size();
 		if ( increment ) {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] + SYNAPTIC_INCREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] + SYNAPTIC_INCREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				}
 			}
 		}
 		else {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] - SYNAPTIC_DECREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] - SYNAPTIC_DECREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				}
 			}
 		}
 
@@ -102,18 +106,22 @@ void	TemporalUnits::Update( const responseInfo& response, const std::vector<int>
 	else {
 		if ( increment ) {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] + SYNAPTIC_INCREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] + SYNAPTIC_INCREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				}
 			}
 		}
 		else {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] - SYNAPTIC_DECREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] - SYNAPTIC_DECREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				}
 			}
 		}
 	}
@@ -154,18 +162,22 @@ void	TemporalUnits::Update( const std::vector<double>& input, const std::vector<
 		number = rand() % minimumDistanceIndexes.size();
 		if ( increment ) {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] + SYNAPTIC_INCREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] + SYNAPTIC_INCREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				}
 			}
 		}
 		else {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
-				_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] - SYNAPTIC_DECREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] =
+					_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] - SYNAPTIC_DECREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][minimumDistanceIndexes[number]] = 0.0;
+				}
 			}
 		}
 
@@ -173,18 +185,22 @@ void	TemporalUnits::Update( const std::vector<double>& input, const std::vector<
 	else {
 		if ( increment ) {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] + SYNAPTIC_INCREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] + SYNAPTIC_INCREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				}
 			}
 		}
 		else {
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
-				_temporalUnits[link][linkingUnits[link]][response.ranking[0]] - SYNAPTIC_DECREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] =
+					_temporalUnits[link][linkingUnits[link]][response.ranking[0]] - SYNAPTIC_DECREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][response.ranking[0]] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][response.ranking[0]] = 0.0;
+				}
 			}
 		}
 	}
@@ -210,7 +226,7 @@ void	TemporalUnits::Update( const std::vector<double>& input, const std::vector<
 
 
 // updates _temporalUnits depending on unit index.
-void	TemporalUnits::Update( int index, const std::vector<int>& linkingUnits,
+void	TemporalUnits::Update( const int index, const std::vector<int>& linkingUnits,
 			       const bool increment, const double threshold )
 {
 	double	sum;
@@ -223,18 +239,22 @@ void	TemporalUnits::Update( int index, const std::vector<int>& linkingUnits,
 
 	if ( increment ) {
 		for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-			_temporalUnits[link][linkingUnits[link]][index] =
-			_temporalUnits[link][linkingUnits[link]][index] + SYNAPTIC_INCREMENT;
-			if ( _temporalUnits[link][linkingUnits[link]][index] < 0.0 )
-				_temporalUnits[link][linkingUnits[link]][index] = 0.0;
+			if ( linkingUnits[link] != -1 ) {
+				_temporalUnits[link][linkingUnits[link]][index] =
+				_temporalUnits[link][linkingUnits[link]][index] + SYNAPTIC_INCREMENT;
+				if ( _temporalUnits[link][linkingUnits[link]][index] < 0.0 )
+					_temporalUnits[link][linkingUnits[link]][index] = 0.0;
+			}
 		}
 	}
 	else {
 		for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-			_temporalUnits[link][linkingUnits[link]][index] =
-			_temporalUnits[link][linkingUnits[link]][index] - SYNAPTIC_DECREMENT;
-			if ( _temporalUnits[link][linkingUnits[link]][index] < 0.0 )
-				_temporalUnits[link][linkingUnits[link]][index] = 0.0;
+			if ( linkingUnits[link] != -1 ) {
+				_temporalUnits[link][linkingUnits[link]][index] =
+				_temporalUnits[link][linkingUnits[link]][index] - SYNAPTIC_DECREMENT;
+				if ( _temporalUnits[link][linkingUnits[link]][index] < 0.0 )
+					_temporalUnits[link][linkingUnits[link]][index] = 0.0;
+			}
 		}
 	}
 
@@ -258,6 +278,48 @@ void	TemporalUnits::Update( int index, const std::vector<int>& linkingUnits,
 } // end function Update
 
 
+// updates _temporalUnits depending on individual unit indexes.
+void	TemporalUnits::Update( const int index, const int link, const int linkingUnit,
+			       const bool increment, const double threshold )
+{
+	double	sum;
+
+	if ( index > _unitsDimensionality || index < 0 ) {
+		cout << "TemporalUnits bad method parameter:" << endl;
+		cout << "Wrong index (" << index << ") in Update function." << endl;
+		exit( EXIT_FAILURE );
+	}
+
+	if ( increment ) {
+		_temporalUnits[link][linkingUnit][index] =
+		_temporalUnits[link][linkingUnit][index] + SYNAPTIC_INCREMENT;
+		if ( _temporalUnits[link][linkingUnit][index] < 0.0 )
+			_temporalUnits[link][linkingUnit][index] = 0.0;
+	}
+	else {
+		_temporalUnits[link][linkingUnit][index] =
+		_temporalUnits[link][linkingUnit][index] - SYNAPTIC_DECREMENT;
+		if ( _temporalUnits[link][linkingUnit][index] < 0.0 )
+			_temporalUnits[link][linkingUnit][index] = 0.0;
+	}
+
+	if ( _updateStep > UPDATE_PERIOD ) {
+		std::vector<int>	indexes;
+		for ( int row = 0; row < (int)_temporalUnits[link].size(); row++ ) {
+			sum = std::accumulate(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), 0.0);
+			if ( sum > 1 )
+				std::transform(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), _temporalUnits[link][row].begin(),
+				std::bind2nd(std::divides<double>(),sum));
+
+			indexes = less_than_indexes(_temporalUnits[link][row], threshold);
+			set_elements(_temporalUnits[link][row], indexes, 0.0);
+		}
+		_updateStep = 0;
+	}
+	_updateStep++;
+} // end function Update
+
+
 // updates _temporalUnits neighborhood depending on response info.
 void	TemporalUnits::Update( const responseInfo& response, double neighborParameter, const std::vector<int>& linkingUnits,
 			       const bool increment, const double threshold, const std::string& str )
@@ -272,10 +334,12 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-										       + neighborhoodValue*SYNAPTIC_INCREMENT;
-					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       + neighborhoodValue*SYNAPTIC_INCREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
 				}
 			}
 		}
@@ -283,10 +347,12 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-										       - neighborhoodValue*SYNAPTIC_DECREMENT;
-					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       - neighborhoodValue*SYNAPTIC_DECREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
 				}
 			}
 		}
@@ -296,10 +362,12 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-										       + neighborhoodValue*SYNAPTIC_INCREMENT;
-					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       + neighborhoodValue*SYNAPTIC_INCREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
 				}
 			}
 		}
@@ -307,10 +375,12 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-										       - neighborhoodValue*SYNAPTIC_DECREMENT;
-					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       - neighborhoodValue*SYNAPTIC_DECREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
 				}
 			}
 		}
@@ -354,10 +424,12 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-										       + neighborhoodValue*SYNAPTIC_INCREMENT;
-					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       + neighborhoodValue*SYNAPTIC_INCREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
 				}
 			}
 		}
@@ -365,10 +437,12 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-										       - neighborhoodValue*SYNAPTIC_DECREMENT;
-					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       - neighborhoodValue*SYNAPTIC_DECREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
 				}
 			}
 		}
@@ -378,10 +452,12 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-										       + neighborhoodValue*SYNAPTIC_INCREMENT;
-					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       + neighborhoodValue*SYNAPTIC_INCREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
 				}
 			}
 		}
@@ -389,6 +465,67 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
+					if ( linkingUnits[link] != -1 ) {
+						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+											       - neighborhoodValue*SYNAPTIC_DECREMENT;
+						if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+							_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+					}
+				}
+			}
+		}
+	}
+
+	if ( _updateStep > UPDATE_PERIOD ) {
+		std::vector<int>	indexes;
+		for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
+			for ( int row = 0; row < (int)_temporalUnits[link].size(); row++ ) {
+				sum = std::accumulate(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), 0.0);
+				if ( sum > 1 )
+					std::transform(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), _temporalUnits[link][row].begin(),
+					std::bind2nd(std::divides<double>(),sum));
+
+				indexes = less_than_indexes(_temporalUnits[link][row], threshold);
+				set_elements(_temporalUnits[link][row], indexes, 0.0);
+			}
+		}
+
+		_updateStep = 0;
+	}
+	_updateStep++;
+} // end function Update
+
+
+// updates _temporalUnits neighborhood depending on unit index.
+void	TemporalUnits::Update( const int index, double neighborParameter, const std::vector<int>& linkingUnits,
+			       const bool increment, const double threshold, const std::string& str )
+{
+	double	sum, neighborhoodValue;
+
+	if ( index > _unitsDimensionality || index < 0 ) {
+		cout << "TemporalUnits bad method parameter:" << endl;
+		cout << "Wrong index (" << index << ") in Update function." << endl;
+		exit( EXIT_FAILURE );
+	}
+
+	if ( increment ) {
+		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
+			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
+				if ( linkingUnits[link] != -1 ) {
+					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
+										       + neighborhoodValue*SYNAPTIC_INCREMENT;
+					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
+						_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
+				}
+			}
+		}
+	}
+	else {
+		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
+			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
+			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
+				if ( linkingUnits[link] != -1 ) {
 					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
 										       - neighborhoodValue*SYNAPTIC_DECREMENT;
 					if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
@@ -418,8 +555,8 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 } // end function Update
 
 
-// updates _temporalUnits neighborhood depending on unit index.
-void	TemporalUnits::Update( int index, double neighborParameter, const std::vector<int>& linkingUnits,
+// updates _temporalUnits neighborhood depending on individual unit indexes.
+void	TemporalUnits::Update( const int index, double neighborParameter, const int link, const int linkingUnit,
 			       const bool increment, const double threshold, const std::string& str )
 {
 	double	sum, neighborhoodValue;
@@ -433,40 +570,33 @@ void	TemporalUnits::Update( int index, double neighborParameter, const std::vect
 	if ( increment ) {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
-			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-									       + neighborhoodValue*SYNAPTIC_INCREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
-			}
+			_temporalUnits[link][linkingUnit][unit] = _temporalUnits[link][linkingUnit][unit]
+								       + neighborhoodValue*SYNAPTIC_INCREMENT;
+			if ( _temporalUnits[link][linkingUnit][unit] < 0.0 )
+				_temporalUnits[link][linkingUnit][unit] = 0.0;
 		}
 	}
 	else {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
 			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
-			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-				_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
-									       - neighborhoodValue*SYNAPTIC_DECREMENT;
-				if ( _temporalUnits[link][linkingUnits[link]][unit] < 0.0 )
-					_temporalUnits[link][linkingUnits[link]][unit] = 0.0;
-			}
+			_temporalUnits[link][linkingUnit][unit] = _temporalUnits[link][linkingUnit][unit]
+								       - neighborhoodValue*SYNAPTIC_DECREMENT;
+			if ( _temporalUnits[link][linkingUnit][unit] < 0.0 )
+				_temporalUnits[link][linkingUnit][unit] = 0.0;
 		}
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
 		std::vector<int>	indexes;
-		for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
-			for ( int row = 0; row < (int)_temporalUnits[link].size(); row++ ) {
-				sum = std::accumulate(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), 0.0);
-				if ( sum > 1 )
-					std::transform(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), _temporalUnits[link][row].begin(),
-					std::bind2nd(std::divides<double>(),sum));
+		for ( int row = 0; row < (int)_temporalUnits[link].size(); row++ ) {
+			sum = std::accumulate(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), 0.0);
+			if ( sum > 1 )
+				std::transform(_temporalUnits[link][row].begin(), _temporalUnits[link][row].end(), _temporalUnits[link][row].begin(),
+				std::bind2nd(std::divides<double>(),sum));
 
-				indexes = less_than_indexes(_temporalUnits[link][row], threshold);
-				set_elements(_temporalUnits[link][row], indexes, 0.0);
-			}
+			indexes = less_than_indexes(_temporalUnits[link][row], threshold);
+			set_elements(_temporalUnits[link][row], indexes, 0.0);
 		}
-
 		_updateStep = 0;
 	}
 	_updateStep++;
