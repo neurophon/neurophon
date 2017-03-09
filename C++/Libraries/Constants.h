@@ -17,11 +17,14 @@
 #ifndef CONTANTS_H
 #define CONTANTS_H
 
-// This is for the input dimensionality
-//#define	INPUT_DIM			2
+// This is the synaptic increment
+#define	SYNAPTIC_INCREMENT	0.001
 
-// This is for the columns dimensionality
-//#define	COLUMNS_DIM			2
+// This is the synaptic decrement
+#define	SYNAPTIC_DECREMENT	0.001
+
+// This is the period of updates
+#define	UPDATE_PERIOD	100
 
 // This is for general dimensionality
 #define	DIM				128

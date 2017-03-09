@@ -10,10 +10,6 @@
 //						Biomédica FIUBA	&						//
 //						CCT CONICET Mendoza INCIHUSA					//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//														//
-//		This is a C++ implementation code of Numenta Platform for Intelligent Computing (NuPIC)		//
-//														//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // File Name:		DataTypes.h
 // File Description:	Data type definitions. This file contains the data type definitions to be used in the code
@@ -21,14 +17,20 @@
 #ifndef DATATYPES_H
 #define DATATYPES_H
 
+// This defines a three dimensional vector of double elements
+typedef	std::vector<std::vector<std::vector<double>>>	ThreeD_Vector_Double;
 
-enum verb_lev {zero, one, two, three};
-
-
-struct SparseMatrixElement				// This structure stores values as sparse matrix elements, efficiently
+// This structure stores values as sparse matrix elements efficiently
+template <typename T> 
+struct SparseMatrixElements
 {
-	unsigned int	index;				// This is an input index in the column
-	float	value;					// This is the value corresponding to input index 'index' in this column
-}; // end structure SparsePermanencesMatrix
+	int	numberOfNonZero;			// This is the number of non zero elements in the matrix
+	int	numberOfRows;				// This is the number of rows in the matrix
+	int	numberOfColumns;			// This is the number of columns in the matrix
+	std::vector<int>	rows;			// This is the vector of rows
+	std::vector<int>	columns;		// This is the vector of columns
+	std::vector<T>		values;			// This is the vector of values corresponding to indexes
+}; // end structure SparseMatrixElements
+
 
 #endif
