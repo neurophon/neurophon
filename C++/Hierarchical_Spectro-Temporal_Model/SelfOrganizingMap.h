@@ -34,17 +34,17 @@ public:
 
 	void	learningRule( double, double, int,
 			      const std::vector<double>& );				// function that modifies the synapticWeights matrix through the Kohonen's learning rule
-	double	learningNeighborhood( double, int, int );				// function that computes the neighborhood lateral influence parameter for learning process
+	double	learningNeighborhood( double, int, int, const std::string& );		// function that computes the neighborhood lateral influence parameter for learning process
 	responseInfo	getResponse( const std::vector<double>& );			// function that gets the response information from the input
 
-	void	saveStatus();								// function that saves the Self Organizing Map's status in a file
+	void	saveSelfOrganizingMapStatus();						// function that saves the Self Organizing Map's status in a file
 
 protected:
         std::vector<int>			_unitsArrayDimensionality;		// vector with the dimensions of the array of units
+        int					_unitsDimensionality;			// flat dimensionality of the units vector
 
 private:
         int					_inputDimensionality;			// flat dimensionality of the input vector
-        int					_unitsDimensionality;			// flat dimensionality of the units vector
 
 	std::vector<std::vector<double>>	_weights;				// matrix of the weights
 }; // end class KohonenFeatureMap

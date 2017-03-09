@@ -17,7 +17,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <cassert>
 #include <algorithm>
 #include <time.h>
 
@@ -43,9 +42,6 @@ SelfOrganizingMap::SelfOrganizingMap( const std::vector<int>& unitsArrayDimensio
 	_weights.resize(_unitsDimensionality);
 	for ( int row = 0; row < _unitsDimensionality; row++ )
 		_weights[row].resize(inputDimensionality);
-
-	/* initialize random seed: */
-	srand (time(NULL));
 
 	for ( int row = 0; row < _unitsDimensionality; row++ )
 		for ( int column = 0; column < inputDimensionality; column++ )
@@ -134,8 +130,9 @@ void	SelfOrganizingMap::learningRule( double learningRate, double neighborParame
 
 	deltaWeights.resize(_unitsDimensionality);
 
+	std::string	gaussian = "gaussian";
 	for ( int row = 0; row < _unitsDimensionality; row++ ) {							// the index row corresponds to the unit
-		neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, unitsWinnerPosition, row);
+		neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, unitsWinnerPosition, row, gaussian);
 		// This is the Kohonen learning rule to update the synaptic weights
 		deltaWeights[row] = input - _weights[row];
 		std::transform(deltaWeights[row].begin(), deltaWeights[row].end(), deltaWeights[row].begin(),
@@ -146,7 +143,7 @@ void	SelfOrganizingMap::learningRule( double learningRate, double neighborParame
 
 
 // function to compute the neighborhood value in the lateral interaction between units in the array for learning process
-double	SelfOrganizingMap::learningNeighborhood( double widthParameter, int winnerPosition, int otherPosition )
+double	SelfOrganizingMap::learningNeighborhood( double widthParameter, int winnerPosition, int otherPosition, const std::string& str )
 {
 	std::vector<int>	winnerPositionArray, otherPositionArray, auxiliary;
 
@@ -158,7 +155,20 @@ double	SelfOrganizingMap::learningNeighborhood( double widthParameter, int winne
 		       static_cast<double(*)(double)>(&std::abs));
 	int distance = std::accumulate(auxiliary.begin(), auxiliary.end(), 0.0);
 
-	return exp(-(pow((double)distance, (double)2)) / (2*widthParameter));		// returns the neighborhood value
+	std::string	STR;
+	STR = "gaussian";
+	if ( str.compare(STR) == 0 ) {
+		return exp(-(pow((double)distance, (double)2)) / (2*widthParameter));		// returns the neighborhood value (gaussian)
+	}
+	STR = "mex";
+	if ( str.compare(STR) == 0 ) {
+		return 2/(sqrt(3*widthParameter)*pow(M_PI,(double)0.25)) *
+		       (1 - (pow(distance,(double)2))/(pow(widthParameter,(double)2))) *
+		       exp(-(pow(distance,(double)2))/(2*pow(widthParameter,(double)2)));	// returns the neighborhood value (mexican hat)
+	}
+
+	cout << "SelfOrganizingMap object inconsistence: bad function option: " << str << ".\n" << endl;
+	exit( EXIT_FAILURE );
 } // end function learningNeighborhoodFunction
 
 
@@ -178,14 +188,14 @@ responseInfo	SelfOrganizingMap::getResponse( const std::vector<double>& input )
 
 
 // function to save the Self Organizing Map's status in a file
-void	SelfOrganizingMap::saveStatus()
+void	SelfOrganizingMap::saveSelfOrganizingMapStatus()
 {
         // open a file in write mode.
         ofstream outfile;
         outfile.open("../../Octave/SOM_Status.mat", ios::out | ios::trunc);
 
         // file preamble.
-        outfile << "# This is a file created by saveWeights member function in SelfOrganizingMap class." << endl;
+        outfile << "# This is a file created by saveSelfOrganizingMapStatus member function in SelfOrganizingMap class." << endl;
         outfile << "# Author: Dematties Dario Jesus." << endl;
 
         outfile << "\n\n" << endl;
@@ -204,6 +214,6 @@ void	SelfOrganizingMap::saveStatus()
 
 	// close the opened file.
 	outfile.close();
-} // end functiom saveWeights
+} // end functiom saveSelfOrganizingMapStatus
 
 
