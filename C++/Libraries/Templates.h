@@ -219,6 +219,22 @@ std::vector<int>	less_than_indexes(const std::vector<T>& v, const V& limit)
 } // end template less_than_indexes
 
 
+// Finds the index positions of elements that verify less than or equal to condition.
+template <typename T, typename V>
+std::vector<int>	less_than_or_equal_to_indexes(const std::vector<T>& v, const V& limit)
+{
+	std::vector<int> results;
+
+	auto it = std::find_if(std::begin(v), std::end(v), [&limit](T i){return i <= limit;});
+	while (it != std::end(v)) {
+	   results.emplace_back(std::distance(std::begin(v), it));
+	   it = std::find_if(std::next(it), std::end(v), [&limit](T i){return i <= limit;});
+	}
+
+	return	results;
+} // end template less_than_or_equal_to_indexes
+
+
 // gets vector indexes corresponding to vector value
 template <typename T>
 std::vector<int>	get_indexes_from_value(const std::vector<T>& v, const T& value)
@@ -234,6 +250,25 @@ std::vector<int>	get_indexes_from_value(const std::vector<T>& v, const T& value)
 	auxiliary.shrink_to_fit();
 	return	auxiliary;
 } // end template get_indexes_from_value
+
+
+// i owe you the comment ;)
+template<typename T>
+std::vector<int>    coincidence_indexes(std::vector<T> v1, std::vector<T> v2)
+{
+    std::vector<int>    output;
+    
+    auto    it = find_first_of (v1.begin(), v1.end(), v2.begin(), v2.end());
+	while (it != std::end(v1)) {
+	    auto index = std::distance(v1.begin(), it);
+	    assert(index < (int)v1.size());
+	    output.push_back(index);
+	    it = find_first_of (it+1, v1.end(), v2.begin(), v2.end());
+	}
+
+    output.shrink_to_fit();
+    return  output;
+} // end template coincidence_indexes
 
 
 // gets the minimum element from vector 
@@ -269,10 +304,9 @@ SparseMatrixElements<V>	to_sparse(const std::vector<std::vector<V>>& v)
 	SparseMatrixElements<V>	output;
 
 	int	rows = v.size();
-	int	columns;
-	for ( int row = 0; row < rows; row++ ) {
-		columns = v[row].size();
-		for ( int column = 0; column < columns; column++ ) {
+	int	columns = v[0].size();
+	for ( int column = 0; column < columns; column++ ) {
+		for ( int row = 0; row < rows; row++ ) {
 			if ( v[row][column] != 0.0 ) {
 				output.rows.push_back(row);
 				output.columns.push_back(column);
