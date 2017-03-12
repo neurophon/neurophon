@@ -17,8 +17,14 @@
 #ifndef DATATYPES_H
 #define DATATYPES_H
 
-// This defines a three dimensional vector of double elements
-typedef	std::vector<std::vector<std::vector<double>>>	ThreeD_Vector_Double;
+
+// This defines a bi-dimensional vector
+template <typename T> 
+using	twodvector = std::vector<std::vector<T>>;
+
+// This defines a three dimensional vector
+template <typename T> 
+using	threedvector = std::vector<std::vector<std::vector<T>>>;
 
 // This structure stores values as sparse matrix elements efficiently
 template <typename T> 
