@@ -17,6 +17,7 @@
 
 #include<algorithm>
 #include "SimplePopulation.h"				// includes definition of class SimplePopulation
+#include "../Libraries/Templates.h"
 #include "../Libraries/Utilities.h"
 
 // constructor initializes populationDimensions and numberOfInputs with variables supplied as arguments
@@ -30,12 +31,26 @@ SimplePopulation::SimplePopulation( const std::vector<int>& populationDimensions
 // returns the normalized coordinates of the best matching unit using response information.
 std::vector<double>	SimplePopulation::Activate( const responseInfo& response, bool normalize )
 {
-	if ( normalize )
-		return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+	auto	minimumIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
+
+	if ( minimumIndexes.size() > 1 ) {
+		auto	number = rand() % minimumIndexes.size();
+		if ( normalize )
+			return	SimplePopulation::Normalize(unravelIndex(minimumIndexes[number], _unitsArrayDimensionality));
+		else {
+			auto intVector = unravelIndex(minimumIndexes[number], _unitsArrayDimensionality);
+			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+			return	doubleVector;
+		}
+	}
 	else {
-		auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
-		std::vector<double>	doubleVector(intVector.begin(), intVector.end());
-		return	doubleVector;
+		if ( normalize )
+			return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+		else {
+			auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+			return	doubleVector;
+		}
 	}
 } // end function Activate
 
@@ -43,16 +58,28 @@ std::vector<double>	SimplePopulation::Activate( const responseInfo& response, bo
 // returns the normalized coordinates of the best matching unit using input.
 std::vector<double>	SimplePopulation::Activate( const std::vector<double>& input, bool normalize )
 {
-	responseInfo	response;
+	auto	response = SelfOrganizingMap::getResponse(input);
 
-	response = SelfOrganizingMap::getResponse(input);
+	auto	minimumIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
 
-	if ( normalize )
-		return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+	if ( minimumIndexes.size() > 1 ) {
+		auto	number = rand() % minimumIndexes.size();
+		if ( normalize )
+			return	SimplePopulation::Normalize(unravelIndex(minimumIndexes[number], _unitsArrayDimensionality));
+		else {
+			auto intVector = unravelIndex(minimumIndexes[number], _unitsArrayDimensionality);
+			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+			return	doubleVector;
+		}
+	}
 	else {
-		auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
-		std::vector<double>	doubleVector(intVector.begin(), intVector.end());
-		return	doubleVector;
+		if ( normalize )
+			return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+		else {
+			auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+			return	doubleVector;
+		}
 	}
 } // end function Activate
 
@@ -61,12 +88,27 @@ std::vector<double>	SimplePopulation::Activate( const std::vector<double>& input
 std::vector<double>	SimplePopulation::Activate( const responseInfo& response, double activationRadius, bool normalize )
 {
 	if ( response.distances[response.ranking[0]] <= activationRadius ) {
-		if ( normalize )
-			return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+
+		auto	minimumIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
+
+		if ( minimumIndexes.size() > 1 ) {
+			auto	number = rand() % minimumIndexes.size();
+			if ( normalize )
+				return	SimplePopulation::Normalize(unravelIndex(minimumIndexes[number], _unitsArrayDimensionality));
+			else {
+				auto intVector = unravelIndex(minimumIndexes[number], _unitsArrayDimensionality);
+				std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+				return	doubleVector;
+			}
+		}
 		else {
-			auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
-			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
-			return	doubleVector;
+			if ( normalize )
+				return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+			else {
+				auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+				std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+				return	doubleVector;
+			}
 		}
 	}
 	else {
@@ -84,12 +126,27 @@ std::vector<double>	SimplePopulation::Activate( const std::vector<double>& input
 	auto	response = SelfOrganizingMap::getResponse(input);
 
 	if ( response.distances[response.ranking[0]] <= activationRadius ) {
-		if ( normalize )
-			return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+
+		auto	minimumIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
+
+		if ( minimumIndexes.size() > 1 ) {
+			auto	number = rand() % minimumIndexes.size();
+			if ( normalize )
+				return	SimplePopulation::Normalize(unravelIndex(minimumIndexes[number], _unitsArrayDimensionality));
+			else {
+				auto intVector = unravelIndex(minimumIndexes[number], _unitsArrayDimensionality);
+				std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+				return	doubleVector;
+			}
+		}
 		else {
-			auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
-			std::vector<double>	doubleVector(intVector.begin(), intVector.end());
-			return	doubleVector;
+			if ( normalize )
+				return	SimplePopulation::Normalize(unravelIndex(response.ranking[0], _unitsArrayDimensionality));
+			else {
+				auto intVector = unravelIndex(response.ranking[0], _unitsArrayDimensionality);
+				std::vector<double>	doubleVector(intVector.begin(), intVector.end());
+				return	doubleVector;
+			}
 		}
 	}
 	else {
