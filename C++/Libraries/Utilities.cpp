@@ -114,17 +114,17 @@ int	ravelIndex( const std::vector<int>& coordinatesOfArray, const std::vector<in
 // note: This function only receives inferior and superior limits of every interval (not the complete intervals).
 // This feature allows the function to receive irregular intervals for each dimension
 // (not all the intervals have to have the same number of elements).
-std::vector<unsigned int>	cartesianProductI( const std::array<std::array<unsigned int, 2>, DIM>& intervals )
+std::vector<int>	cartesianProductI( const std::vector<std::vector<int>>& intervals )
 {
-	unsigned int	step = 1;
-	std::vector<unsigned int>::iterator	it;
-	std::vector<unsigned int>	coordinates, aux, temp;
+	int	step = 1;
+	std::vector<int>::iterator	it;
+	std::vector<int>	coordinates, aux, temp;
 
 	for ( int i = intervals.size()-1; i >= 0; i--)
 	{
 		if ( step == 1 )
 		{
-			if ( intervals[i][0] >= intervals[i][1] )
+			if ( intervals[i][0] > intervals[i][1] )
 			{
 				std::cout << "\nUtilities inconsistency:" << endl;
 				std::cout << "\nIn function cartesianProductI:" << endl;
@@ -132,7 +132,7 @@ std::vector<unsigned int>	cartesianProductI( const std::array<std::array<unsigne
 				exit( EXIT_FAILURE );
 			}
 
-			for ( unsigned int j = intervals[i][0]; j <= intervals[i][1]; j++ )
+			for ( int j = intervals[i][0]; j <= intervals[i][1]; j++ )
 			{
 				coordinates.push_back(j);
 			}
@@ -141,7 +141,7 @@ std::vector<unsigned int>	cartesianProductI( const std::array<std::array<unsigne
 		else
 		{
 			aux.clear();
-			if ( intervals[i][0] >= intervals[i][1] )
+			if ( intervals[i][0] > intervals[i][1] )
 			{
 				std::cout << "\nUtilities inconsistency:" << endl;
 				std::cout << "\nIn function cartesianProductI:" << endl;
@@ -149,7 +149,7 @@ std::vector<unsigned int>	cartesianProductI( const std::array<std::array<unsigne
 				exit( EXIT_FAILURE );
 			}
 
-			for ( unsigned int j = intervals[i][0]; j <= intervals[i][1]; j++ )
+			for ( int j = intervals[i][0]; j <= intervals[i][1]; j++ )
 			{
 				temp = coordinates;
 				for ( it = temp.begin(); it < temp.end(); it += step )
@@ -168,22 +168,22 @@ std::vector<unsigned int>	cartesianProductI( const std::array<std::array<unsigne
 
 
 // Cartesian product, equivalent to a nested for-loop.
-std::vector<unsigned int>	cartesianProduct( const std::array<std::vector<unsigned int>, DIM>& intervals )
+std::vector<int>	cartesianProduct( const std::vector<std::vector<int>>& intervals )
 {
-	unsigned int	step = 1, size;
-	std::vector<unsigned int>::iterator	it;
-	std::vector<unsigned int>	coordinates, aux, temp;
+	int	step = 1;//, size;
+	std::vector<int>::iterator	it;
+	std::vector<int>	coordinates, aux, temp;
 
-	size = intervals[0].size();
+	//size = intervals[0].size();
 	for ( int i = intervals.size()-1; i >= 0; i--)
 	{
-		if ( size != intervals[i].size() )
+		/*if ( size != (int)intervals[i].size() )
 		{
 			std::cout << "\nUtilities inconsistency:" << endl;
 			std::cout << "\nIn function cartesianProduct:" << endl;
 			cout << "Corrupt intervals" << endl;
 			exit( EXIT_FAILURE );
-		}
+		}*/
 
 		if ( step == 1 )
 		{
@@ -194,7 +194,7 @@ std::vector<unsigned int>	cartesianProduct( const std::array<std::vector<unsigne
 		else
 		{
 			aux.clear();
-			for ( unsigned int j = 0; j < intervals[i].size(); j++ )
+			for ( int j = 0; j < (int)intervals[i].size(); j++ )
 			{
 				temp = coordinates;
 				for ( it = temp.begin(); it < temp.end(); it += step )
@@ -213,7 +213,7 @@ std::vector<unsigned int>	cartesianProduct( const std::array<std::vector<unsigne
 
 
 // Returns the positive of (i % n)
-unsigned int	positiveMod(int i, int n)
+int	positiveMod(int i, int n)
 {
     return (i % n + n) % n;
 } // end function positiveMod
@@ -235,4 +235,9 @@ std::vector<int>	trueIndexes( const std::vector<bool> &vector )
 } // end function trueIndexes
 
 
+// computes the percentage of true elements in vector of bool
+double	truePercentage( const std::vector<bool>& v )
+{
+	return	(double)(std::count(v.begin(), v.end(), true))/(double)v.size();
+} // end function truePercentage
 

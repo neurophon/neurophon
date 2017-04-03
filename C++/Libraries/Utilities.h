@@ -40,18 +40,21 @@ int	ravelIndex( const std::vector<int>&, const std::vector<int>& );
 
 
 // Irregular cartesian product, equivalent to a nested for-loop
-std::vector<unsigned int>	cartesianProductI( const std::array<std::array<unsigned int, 2>, DIM>& );
+std::vector<int>	cartesianProductI( const std::vector<std::vector<int>>& );
 
 
 // Cartesian product, equivalent to a nested for-loop.
-std::vector<unsigned int>	cartesianProduct( const std::array<std::vector<unsigned int>, DIM>& );
+std::vector<int>	cartesianProduct( const std::vector<std::vector<int>>& );
 
 
 // Returns the positive of (i % n)
-unsigned int positiveMod( int , int );
+int positiveMod( int , int );
 
 
 // Returns a vector with the indexes whose vector values are true
 std::vector<int>	trueIndexes( const std::vector<bool>& );
+
+// computes the percentage of true elements in vector of bool
+double	truePercentage( const std::vector<bool>& );
 
 #endif
