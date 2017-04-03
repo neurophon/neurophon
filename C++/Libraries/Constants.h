@@ -26,7 +26,7 @@
 // This is the period of updates
 #define	UPDATE_PERIOD	100
 
-// This is for general dimensionality
-#define	DIM				128
+// This is threshold imposed to the input information
+#define	INPUT_THRESHOLD		0.000001
 
 #endif
