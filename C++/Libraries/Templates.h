@@ -27,6 +27,8 @@
 #include <cmath>
 #include <numeric>
 #include <cassert>
+#include <unordered_map>
+
 
 #include "DataTypes.h"
 
@@ -252,7 +254,7 @@ std::vector<int>	get_indexes_from_value(const std::vector<T>& v, const T& value)
 } // end template get_indexes_from_value
 
 
-// i owe you the comment ;)
+// I owe you the comment ;)
 template<typename T>
 std::vector<int>    coincidence_indexes(std::vector<T> v1, std::vector<T> v2)
 {
@@ -325,6 +327,304 @@ SparseMatrixElements<V>	to_sparse(const std::vector<std::vector<V>>& v)
 
 	return	output;
 } // end template to_sparse
+
+
+// checks if there is in v an element less than or equal to a 
+template <typename T>
+bool	check_if_less_than_or_equal_to(const std::vector<T>& v, const T a)
+{
+return  ( std::find_if(v.begin(), v.end(),
+             [a](const T & m) -> bool { return m <= a; }) != v.end() );
+} // end tempplate check_if_less_than_or_equal_to
+
+
+// checks if there is in v an element less than a 
+template <typename T>
+bool	check_if_less_than(const std::vector<T>& v, const T a)
+{
+return  ( std::find_if(v.begin(), v.end(),
+             [a](const T & m) -> bool { return m < a; }) != v.end() );
+} // end tempplate check_if_less_than
+
+
+// checks if there is in v an element equal to a 
+template <typename T>
+bool	check_if_equal_to(const std::vector<T>& v, const T a)
+{
+return  ( std::find_if(v.begin(), v.end(),
+             [a](const T & m) -> bool { return m == a; }) != v.end() );
+} // end tempplate check_if_equal_to
+
+
+// gets an histogram from vector of vectors
+template <typename T>
+std::unordered_map<T,unsigned int>   get_histogram(const std::vector<std::vector<T>>& v)
+{
+    std::unordered_map<T,unsigned int> histogram;
+    std::for_each(v.begin(), v.end(), [&histogram=histogram]( const std::vector<T>& inner_vec)
+     {
+          for(T val : inner_vec)
+          {
+            ++histogram[val];   
+          }
+     });
+    return  histogram;
+} // end template get_histogram
+
+
+// gets unique elements' vector from vecto of vectors of elements 
+template <typename T>
+std::vector<T>   get_unique_elements(const std::vector<std::vector<T>>& v)
+{
+    std::vector<T>  output;
+    
+    for(const auto& s: v)
+        for(const auto& t: s)
+            output.push_back(t);
+    
+    output.shrink_to_fit();
+    
+    std::sort(output.begin(), output.end());
+    auto last = std::unique(output.begin(), output.end());
+    output.erase(last, output.end()); 
+
+    return  output;
+} // end template get_unique_elements
+
+
+// this is a recursive overloaded system of templates to test if a
+// generally nested vector of vectors of ... is rectangular
+template < typename T > bool is_rectangular( const T&  ) { return true ; }
+
+template < typename T > bool is_rectangular( const std::vector< std::vector<T> >& matrix )
+{
+    static const auto neq_size = []( const auto& a, const auto& b ) { return a.size() != b.size() ; } ;
+    if( std::adjacent_find( std::begin(matrix), std::end(matrix), neq_size ) != std::end(matrix) ) return false ;
+
+    for( const auto& v : matrix ) if( !is_rectangular(v) ) return false ;
+    return true ;
+} // end template is_rectangular
+
+
+// receives a -not necessarily rectangular-
+// multidimensional vector (vector of vectors of ...),
+// and returns the dimensions of the corresponsing
+// rectangular multidimensional vector
+template < typename T > std::vector<std::size_t> get_rectangular_indexes( std::vector<T>& matrix )
+{
+    std::vector<std::size_t>    dimensions;
+    dimensions.push_back(matrix.size());
+    return  dimensions;
+}
+
+template < typename T > std::vector<std::size_t> get_rectangular_indexes( std::vector<std::vector<T>>& matrix )
+{
+    std::vector<std::size_t>    dimensions, auxiliary;
+    for(auto& v : matrix) {
+        auto    temp = get_rectangular_indexes(v);
+        dimensions.resize(temp.size());
+        
+        std::transform (dimensions.begin(), dimensions.end(), temp.begin(), std::back_inserter(auxiliary),//
+        [](std::size_t element1, std::size_t element2)
+        {
+            if ( element1 > element2 )
+                return element1;
+            else
+                return element2;
+            
+        });
+        dimensions = auxiliary;
+        auxiliary.clear();
+    }
+    dimensions.push_back(matrix.size());
+    return  dimensions;
+}
+
+template < typename T > std::vector<std::size_t> get_rectangular_indexes( std::vector<std::vector<std::vector<T>>>& matrix )
+{
+    std::vector<std::size_t>    dimensions, auxiliary;
+    for(auto& v : matrix) {
+        auto    temp = get_rectangular_indexes(v);
+        dimensions.resize(temp.size());
+        
+        std::transform (dimensions.begin(), dimensions.end(), temp.begin(), std::back_inserter(auxiliary),//
+        [](std::size_t element1, std::size_t element2)
+        {
+            if ( element1 > element2 )
+                return element1;
+            else
+                return element2;
+            
+        });
+        dimensions = auxiliary;
+        auxiliary.clear();
+    }
+    dimensions.push_back(matrix.size());
+    return  dimensions;
+} // end template get_rectangular_indexes
+
+
+// receives a -not necessarily rectangular-
+// multidimensional vector (vector of vectors of ...),
+// checks if it is non-rectangular and,
+// in such a case, fill the same with a valued received as argument.
+template < typename T, typename V > void make_rectangular( std::vector<T>& matrix, const V& defaultValue,
+							std::vector<std::size_t> dimensions = {},
+							const bool firstTime = true )
+{
+	if ( firstTime )
+		dimensions = get_rectangular_indexes(matrix);
+
+	matrix.resize(dimensions.back(), defaultValue);
+}
+
+template < typename T, typename V > void make_rectangular( std::vector<std::vector<T>>& matrix,
+							const V& defaultValue, std::vector<std::size_t> dimensions = {},
+							const bool firstTime = true )
+{
+	if ( firstTime )
+		dimensions = get_rectangular_indexes(matrix);
+
+	matrix.resize(dimensions.back());
+	dimensions.pop_back();
+
+	for( auto& v : matrix ) make_rectangular(v,defaultValue,dimensions,false) ;
+} // end template make_rectangular
+
+
+// this is a recursive overloaded system of templates to get the dimensionality
+// of a generally nested vector of vectors of ...
+// the template test if the data structure is rectangular and throw
+// an error in the negative case
+template < typename T > std::vector<std::size_t> get_dimensionality( const T&, bool ) { return {} ; }
+
+template < typename T > std::vector<std::size_t>
+get_dimensionality( const std::vector<T>& vec, bool guaranteed_to_be_rectangualar = false )
+{
+    if( !guaranteed_to_be_rectangualar && !is_rectangular(vec) ) throw std::domain_error(
+   "get_dimensionality template inconsistence.\n"
+   "Argument \"matrix\" is not rectangular.\n" ) ;
+
+    std::vector<std::size_t> dims { vec.size() } ;
+
+    const auto inner_dims = get_dimensionality( vec.empty() ? typename std::vector<T>::value_type{} : vec.front(), true ) ;
+    dims.insert( dims.end(), inner_dims.begin(), inner_dims.end() ) ;
+
+    return dims ;
+} // end template get_dimensionality
+
+
+// this is a recursive overloaded system of templates to put a
+// a generally nested vector of vectors of ... (multidimensional vector)
+// in a onedimensional vector
+// the template tests if the data structure is rectangular and
+// not empty, and throw
+// an error in the negative case
+template <typename T, typename V> void
+to_one_dimentional_vector( const T& element,
+			   std::vector<V>& v1,
+			   bool )
+{
+    v1.push_back(element);
+}
+
+template <typename T, typename V> void
+to_one_dimentional_vector( const std::vector<T>& vec,
+			   std::vector<V>& v1,
+			   bool guaranteed_to_be_rectangualar = false )
+{
+    if( !guaranteed_to_be_rectangualar && !is_rectangular(vec) ) throw std::domain_error(
+   "to_one_dimentional_vector template inconsistence.\n"
+   "Nested vector of vectors of ... is not rectangular.\n" ) ;
+
+    if ( vec.empty() ) throw std::domain_error(
+   "to_one_dimentional_vector template inconsistence.\n"
+   "Nested vector of vectors of ... is empty.\n" ) ;
+
+    for (const auto& v : vec)
+        to_one_dimentional_vector( v, v1, true ) ;
+
+} // end template to_one_dimentional_vector
+
+
+// this is a recursive overloaded system of templates to generate a
+// generally nested vector of vectors of ... (multidimensional vector)
+// whose structue is determine -at compile-time- through received arguments
+// the template tests if the data structure is not null, and throw
+// an error in the negative case
+namespace detail
+{
+    template< typename T, std::size_t NDIMS > struct vector_builder
+    {
+        using type = std::vector< typename vector_builder<T,NDIMS-1>::type > ;
+
+        static type make( std::vector<std::size_t> dims, const T& v = {} )
+        {
+            const auto vec = std::vector<T>( dims.empty() ? 0 : dims.back(), v ) ;
+            if( !dims.empty() ) dims.pop_back() ;
+            return vector_builder< std::vector<T>, NDIMS-1 >::make( dims, vec ) ;
+        }
+    };
+
+    template< typename T > struct vector_builder<T,1>
+    {
+        using type = std::vector<T> ;
+
+        static type make( std::vector<std::size_t> dims, const T& v = {} )
+        { return type( dims.empty() ? 0 : dims.back(), v ) ; }
+    };
+}
+
+template< typename T, typename... SIZE_T >
+auto make_vector( const T& v, SIZE_T... dims )
+{
+    static_assert( sizeof...(dims) != 0,
+    "make_vector template inconsistence:\n"
+    "Invalid null dimension.\n" ) ;
+    std::vector<std::size_t> vec_dims{ dims... } ;
+    return detail::vector_builder< T, sizeof...(dims) >::make( vec_dims, v ) ;
+} // end template make_vector
+
+
+// this is a recursive overloaded system of templates to put a
+// onedimensional vector in a
+// generally nested vector of vectors of ... (multidimensional vector)
+// the template tests if the data structure is rectangular and
+// not empty, and throw
+// an error in the negative case
+// if the one-dimensional vector is larger than needed,
+// surplus elements are discarded.
+// if the one-dimensional vector is smaller than needed,
+// absent elements are substituted with zeros.
+template<typename T>
+void	to_multi_dimentional_vector( T& s, std::vector<T>& vec, bool )
+{
+	if ( vec.size() == 0 ) {
+		s = 0;
+	}
+	else {
+		s = vec.front();
+		std::vector<T> aux(vec.begin()+1,vec.end());
+		vec = aux;
+	}
+}
+
+template<typename T, typename V>
+void	to_multi_dimentional_vector( std::vector<T>& v, std::vector<V>& vec,
+					bool guaranteed_to_be_rectangualar = false )
+{
+	if( !guaranteed_to_be_rectangualar && !is_rectangular(v) ) throw std::domain_error(
+	"to_multi_dimentional_vector template inconsistence.\n"
+	"Nested vector of vectors of ... is not rectangular.\n" ) ;
+
+	if ( v.empty() ) throw std::domain_error(
+	"to_multi_dimentional_vector template inconsistence.\n"
+	"Nested vector of vectors of ... is empty.\n" ) ;
+
+	for (auto& s : v)
+		to_multi_dimentional_vector(s, vec, true);
+} // end template to_multi_dimentional_vector
+
 
 #endif
 
