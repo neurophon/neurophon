@@ -21,7 +21,10 @@
 
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 #include <cassert>
+
+#include "../Libraries/Templates.h"
 
 #include "DataTypes.h"
 #include "Constants.h"
@@ -69,27 +72,6 @@ void	save_as_string( const std::string& name, const T& str, ofstream &FILE )
 } // end template save_as_string
 
 
-// Save array as matrix type in Octave (.mat) file.
-template <typename T>
-void	save_array_as_matrix( const std::string& name, const std::array<T,DIM>& matrix, ofstream &FILE )
-{
-	std::size_t	columns;
-	columns = matrix.size();
-	std::string	nameLine = "# name: ", typeLine = "# type: matrix";
-	std::string	rowsLine = "# rows: 1", columnsLine = "# columns: ";
-	nameLine += name;
-	FILE << nameLine << endl;
-	FILE << typeLine << endl;
-	FILE << rowsLine << endl;
-	FILE << columnsLine << columns << endl;
-
-	for ( std::size_t column = 0; column < columns; column++ )
-		FILE << " " << matrix[column];
-
-	FILE << "\n\n" << endl;
-} // end template save_array_as_matrix
-
-
 // Save vector as matrix type in Octave (.mat) file.
 template <typename T>
 void	save_vector_as_matrix( const std::string& name, const std::vector<T>& matrix, ofstream &FILE )
@@ -135,6 +117,39 @@ void	save_vector_of_vectors_as_matrix( const std::string& name, const std::vecto
 } // end template save_vector_of_vectors_as_matrix
 
 
+// Save multidimensional vector as matrix type in Octave (.mat) file.
+// multidimensional makes reference to more than two dimensions, i. e.
+// the data to save is, at least, a vector of vectors of vectors.
+template <typename T, typename V>
+void	save_multidimensional_vector_as_matrix( const std::string& name,
+						const std::vector<T>& matrix, const V&, ofstream &FILE )
+{
+	std::string	nameLine = "# name: ", typeLine = "# type: matrix";
+	std::string	ndimsLine = "# ndims: ";
+	nameLine += name;
+	FILE << nameLine << endl;
+	FILE << typeLine << endl;
+
+	auto	arrayDimensionality = get_dimensionality(matrix);
+
+	std::reverse(arrayDimensionality.begin(),arrayDimensionality.end());
+	FILE << ndimsLine << arrayDimensionality.size() << endl;
+	for (const auto d : arrayDimensionality)
+		FILE << " " << d;
+
+	FILE << endl;
+
+	std::vector<V>    v;
+
+	to_one_dimentional_vector(matrix,v);
+
+	for (const auto& s : v)
+		FILE << s << endl;
+
+	FILE << endl;
+} // end template save_vector_of_vectors_as_matrix
+
+
 // Saves a SparseMatrixElements data as sparse matrix type in Octave (.mat) file.
 template <typename T> 
 void	save_sparse_matrix_elements_as_sparse_matrix( const std::string& name, const SparseMatrixElements<T>& matrix, ofstream &FILE )
@@ -152,7 +167,7 @@ void	save_sparse_matrix_elements_as_sparse_matrix( const std::string& name, cons
 	FILE << "# rows: " << matrix.numberOfRows << endl;
 	FILE << "# columns: " << matrix.numberOfColumns << endl;
 
-	if ( matrix.numberOfNonZero > 0 ) {
+	/*if ( matrix.numberOfNonZero > 0 ) {
 		std::vector<int>	columnIndexes;
 		std::vector<int>	rowIndexes;
 		std::vector<int>	coincidence;
@@ -176,6 +191,11 @@ void	save_sparse_matrix_elements_as_sparse_matrix( const std::string& name, cons
 				columnIndexes.clear();
 			}
 		}
+	}*/
+
+	if ( matrix.numberOfNonZero > 0 ) {
+		for ( int element = 0; element < (int)matrix.values.size(); element++ )
+			FILE << matrix.rows[element]+1 << ' ' << matrix.columns[element]+1 << ' ' << matrix.values[element] << endl;
 	}
 	FILE << "\n" << endl;
 } // end template save_sparse_matrix_elements_as_sparse_matrix
@@ -237,70 +257,6 @@ void	load_bool( T& value, ifstream &FILE )
 } // end template load_bool
 
 
-// Load matrix type from Octave (.mat) file into array.
-template <typename T>
-void	load_matrix_to_array( std::array<T,DIM>& arr, ifstream &FILE )
-{
-	std::size_t	columns;
-	std::string	str, STR;
-
-	if ( !std::getline(FILE, str) )
-	{
-		std::cout << "\nOctaveInterface.h inconsistency:" << endl;
-		std::cout << "In function load_matrix_to_array:" << endl;
-		std::cout << "Cannot read line from file." << endl;
-		exit( EXIT_FAILURE );
-	}
-	STR = "# type: matrix";
-	if ( str.compare(STR) == 0 )
-	{
-		if ( !std::getline(FILE, str) )
-		{
-			std::cout << "\nOctaveInterface.h inconsistency:" << endl;
-			std::cout << "In function load_matrix_to_array:" << endl;
-			std::cout << "Cannot read line from file." << endl;
-			exit( EXIT_FAILURE );
-		}
-		STR = "# rows: 1";
-		if ( str.compare(STR) != 0 )
-		{
-			std::cout << "\nOctaveInterface.h inconsistency:" << endl;
-			std::cout << "In function load_matrix_to_array:" << endl;
-			std::cout << "matrix type does not fulfill function conditions." << endl;
-			std::cout << "It must be: " << STR << endl;
-			std::cout << "Yet, it is: " << str << endl;
-			exit( EXIT_FAILURE );
-		}
-
-		str.resize(11);
-		FILE.read(&str[0],11);
-		STR = "# columns: ";
-		if ( str.compare(STR) == 0 )
-		{
-			FILE >> columns;
-		}
-		else
-		{
-			std::cout << "\nOctaveInterface.h inconsistency:" << endl;
-			std::cout << "In function load_matrix_to_array:" << endl;
-			std::cout << "File corrupted." << endl;
-			exit( EXIT_FAILURE );
-		}
-		std::getline(FILE, str);
-
-		for ( std::size_t column = 0; column < columns; column++ )
-			FILE >> arr[column];
-	}
-	else
-	{
-		std::cout << "\nOctaveInterface.h inconsistency:" << endl;
-		std::cout << "In function load_matrix_to_array:" << endl;
-		std::cout << "arr must be of type matrix." << endl;
-		exit( EXIT_FAILURE );
-	}
-} // end template load_matrix_to_array
-
-
 // Load matrix type from Octave (.mat) file into vector.
 template <typename T>
 void	load_matrix_to_vector( std::vector<T>& arr, ifstream &FILE )
@@ -352,6 +308,7 @@ void	load_matrix_to_vector( std::vector<T>& arr, ifstream &FILE )
 		}
 		std::getline(FILE, str);
 
+		arr.resize(columns);
 		for ( std::size_t column = 0; column < columns; column++ )
 			FILE >> arr[column];
 	}
@@ -414,7 +371,9 @@ void	load_matrix_to_vector_of_vectors( std::vector<std::vector<T>>& arr, ifstrea
 		}
 		std::getline(FILE, str);
 
+		arr.resize(rows);
 		for ( std::size_t row = 0; row < rows; row++ ) {
+			arr[row].resize(columns);
 			for ( std::size_t column = 0; column < columns; column++ )
 				FILE >> arr[row][column];
 
@@ -431,11 +390,71 @@ void	load_matrix_to_vector_of_vectors( std::vector<std::vector<T>>& arr, ifstrea
 } // end template load_matrix_to_vector_of_vectors
 
 
+
+// Load  matrix to multidimensional vector from Octave (.mat) file.
+// multidimensional makes reference to more than two dimensions, i. e.
+// the structure of the argument "matrix" in which the data is load must
+// be determined and allocated in advance (before calling the template).
+template <typename T, typename V>
+void	load_matrix_to_multidimensional_vector( std::vector<T>& matrix, const V&, ifstream &FILE )
+{
+	std::size_t	ndims;
+	std::string	str, STR;
+
+	if ( !std::getline(FILE, str) )
+	{
+		std::cout << "\nOctaveInterface.h inconsistency:" << endl;
+		std::cout << "In function load_matrix_to_multidimensional_vector:" << endl;
+		std::cout << "Cannot read line from file." << endl;
+		exit( EXIT_FAILURE );
+	}
+	STR = "# type: matrix";
+	if ( str.compare(STR) == 0 )
+	{
+		str.resize(9);
+		FILE.read(&str[0],9);
+		STR = "# ndims: ";
+		if ( str.compare(STR) == 0 )
+		{
+			FILE >> ndims;
+		}
+		else
+		{
+			std::cout << "\nOctaveInterface.h inconsistency:" << endl;
+			std::cout << "In function load_matrix_to_multidimensional_vector:" << endl;
+			std::cout << "File corrupted." << endl;
+			exit( EXIT_FAILURE );
+		}
+		std::getline(FILE, str);
+
+		std::vector<size_t> dimensions;
+		dimensions.resize(ndims);
+		for ( size_t dim = 0; dim < ndims; dim++ )
+			FILE >> dimensions[dim];
+		
+		std::getline(FILE, str);
+
+		auto	length = std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<size_t>());
+		std::vector<V>	aux(length);
+		for(auto& v : aux)
+			FILE >> v;
+
+		to_multi_dimentional_vector(matrix, aux);
+	}
+	else
+	{
+		std::cout << "\nOctaveInterface.h inconsistency:" << endl;
+		std::cout << "In function load_matrix_to_multidimensional_vector:" << endl;
+		std::cout << "loaded data must be of type matrix." << endl;
+		exit( EXIT_FAILURE );
+	}
+} // end template load_matrix_to_multidimensional_vector
+
+
 // Loads sparse matrix type in Octave (.mat) file in SparseMatrixElements data .
 template <typename T>
-void	load_sparse_matrix_to_sparse_matrix_elements( const SparseMatrixElements<T>& arr, ifstream &FILE )
+void	load_sparse_matrix_to_sparse_matrix_elements( SparseMatrixElements<T>& arr, ifstream &FILE )
 {
-	std::size_t	nnz, index, corticalColumn;
 	std::string	str, STR;
 
 	if ( !std::getline(FILE, str) )
@@ -490,7 +509,10 @@ void	load_sparse_matrix_to_sparse_matrix_elements( const SparseMatrixElements<T>
 
 		int	row, column;
 		T	value;
-		for ( std::size_t member = 0; member < nnz; member++ )
+		arr.rows.clear();
+		arr.columns.clear();
+		arr.values.clear();
+		for ( int member = 0; member < arr.numberOfNonZero; member++ )
 		{
 			// The vector of vectors was introduced in the file in the following way:
 			// FILE << row+1 << ' ' << column+1 << ' ' << matrix[rowIndex].value << endl;
