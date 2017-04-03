@@ -35,3 +35,14 @@ std::vector<int>	sampleVector( std::vector<int> vector, size_t sampleSize )
 	return	sample;
 } // end function sampleVector
 
+
+// chooses a random double number which satisfies:
+// a <= returned < b
+double	randomFromDoubleInterval( double a, double b )
+{
+    double random = ((double) rand()) / (double) RAND_MAX;
+    double diff = b - a;
+    double r = random * diff;
+    return a + r;
+} // end function randomFromDoubleInterval
+
