@@ -24,9 +24,17 @@
 #define	SYNAPTIC_DECREMENT	0.001
 
 // This is the period of updates
-#define	UPDATE_PERIOD	100
+#define	UPDATE_PERIOD	10000
 
 // This is threshold imposed to the input information
 #define	INPUT_THRESHOLD		0.000001
+
+// This is the threshold from which a massive activation
+// is considered as a prediction fault
+#define	PREDICTION_FAULT_THRESHOLD	10
+
+// This is the busting taken for distal synapses
+// growing when there is a prediction fault
+#define	BUSTING	10
 
 #endif
