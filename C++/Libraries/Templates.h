@@ -29,7 +29,6 @@
 #include <cassert>
 #include <unordered_map>
 
-
 #include "DataTypes.h"
 
 // Fisher-Yates shuffle that stops after num_random iterations.
@@ -50,6 +49,20 @@ bidiiter random_unique(bidiiter begin, bidiiter end, size_t num_random)
 	}
 	return begin;
 } // end template random_unique
+
+
+// Choose sampleSize elements randomly from a vector containing vector.size() elements.
+template< typename T >
+void	sample_vector( std::vector<T> vec, std::vector<T>& sample, size_t sampleSize )
+{
+	assert(vec.size() >= sampleSize);
+	sample.clear();
+	random_unique(vec.begin(), vec.end(), sampleSize);
+	for ( std::size_t i = 0; i < sampleSize; i++ )
+		sample.push_back (vec[i]);
+
+	sample.shrink_to_fit();
+} // end template sample_vector
 
 
 // Sort vector indexes based on vector values (ascending orfder)
@@ -112,15 +125,16 @@ std::valarray<std::size_t> vector2valarray( const std::vector<T>& vec )
 // A1 = {-3,-3,-3}; and
 // A2 = {4,5,6};
 template <typename T>
-std::vector<T> operator-=(std::vector<T>& a, const std::vector<T>& b)
+void operator-=(std::vector<T>& a, const std::vector<T>& b)
 {
     assert(a.size() == b.size());
 
+    std::vector<T>	aux;
     std::transform(a.begin(), a.end(), b.begin(), 
-                   std::back_inserter(a), std::minus<T>());
-    a.erase(a.begin(),a.begin()+a.size()/2);
-    a.shrink_to_fit();
-    return a;
+                   std::back_inserter(aux), std::minus<T>());
+
+    aux.shrink_to_fit();
+    a=aux;
 }
 
 
@@ -132,15 +146,16 @@ std::vector<T> operator-=(std::vector<T>& a, const std::vector<T>& b)
 // A1 = {5,7,9}; and
 // A2 = {4,5,6};
 template <typename T>
-std::vector<T> operator+=(std::vector<T>& a, const std::vector<T>& b)
+void operator+=(std::vector<T>& a, const std::vector<T>& b)
 {
     assert(a.size() == b.size());
 
+    std::vector<T>	aux;
     std::transform(a.begin(), a.end(), b.begin(), 
-                   std::back_inserter(a), std::plus<T>());
-    a.erase(a.begin(),a.begin()+a.size()/2);
-    a.shrink_to_fit();
-    return a;
+                   std::back_inserter(aux), std::plus<T>());
+
+    aux.shrink_to_fit();
+    a=aux;
 }
 
 // Add two vectors and put the result in another vector; operator+ overload for std::vector.
@@ -624,6 +639,45 @@ void	to_multi_dimentional_vector( std::vector<T>& v, std::vector<V>& vec,
 	for (auto& s : v)
 		to_multi_dimentional_vector(s, vec, true);
 } // end template to_multi_dimentional_vector
+
+
+// this is a recursive overloaded system of templates to resize a
+// generally nested vector of vectors of ... (multidimensional vector)
+// according to a vector with the dimensionality information
+// entered as an argument
+// the template tests if the nested vector structure satisfies
+// the dimensionality entered as argument, and throws
+// an error in the negative case
+template<typename T>
+void	resize_multi_dimentional_vector( std::vector<T>& v, const std::vector<std::size_t> vec,
+					const bool )
+{
+	assert(vec.size() == 1);
+	v.resize(vec.front());
+}
+
+template<typename T>
+void	resize_multi_dimentional_vector( std::vector<std::vector<T>>& v, std::vector<std::size_t> vec,
+					const bool testConsistency = true )
+{
+	if ( testConsistency ) {
+		auto dimensions = get_dimensionality(v);
+		if ( dimensions.size() != vec.size() ) throw std::domain_error(
+		"resize_multi_dimentional_vector template inconsistence.\n"
+		"Nested vector of vectors of ... has not the\n"
+		"same number of dimensions than spesified via input argument.\n" ) ;
+	}
+
+	v.resize(vec.front());
+	std::vector<std::size_t> aux(vec.begin()+1,vec.end());
+	vec = aux;
+
+	for (auto& s : v)
+		resize_multi_dimentional_vector(s, vec, false);
+} // end template resize_multi_dimentional_vector
+
+
+
 
 
 #endif
