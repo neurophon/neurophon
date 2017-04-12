@@ -16,9 +16,12 @@
 //			member functions prototyped in StrongPopulation.h.
 
 #include<algorithm>
+#include <random>
+
 #include "StrongPopulation.h"				// includes definition of class StrongPopulation
 #include "../Libraries/Utilities.h"
 #include "../Libraries/Templates.h"
+#include "../Libraries/Random.h"
 
 // constructor initializes populationDimensions and numberOfInputs with variables supplied as arguments
 // this initializes _strongUnits to zero by default

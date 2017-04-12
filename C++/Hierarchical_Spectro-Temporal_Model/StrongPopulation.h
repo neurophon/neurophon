@@ -27,7 +27,6 @@
 
 #include "Structs.h"									// includes structs difinition
 #include "../Libraries/DataTypes.h"
-#include "../Libraries/Random.h"
 #include "StrongUnits.h"								// StrongUnits class declaration
 
 class StrongPopulation : public StrongUnits
