@@ -16,9 +16,7 @@
 //			member functions prototyped in SelfOrganizingMap.h.
 
 #include <iostream>
-#include <fstream>
 #include <algorithm>
-#include <time.h>
 
 #include "SelfOrganizingMap.h"				// include definition of class SelfOrganizingMap
 #include "../Libraries/Utilities.h"
@@ -28,7 +26,7 @@
 
 using namespace std;
 
-// constructor that initializes vectors to zero
+// constructor that initializes _weights at random
 SelfOrganizingMap::SelfOrganizingMap( const std::vector<int>& unitsArrayDimensionality, int inputDimensionality )
 {
 	_inputDimensionality = inputDimensionality;
@@ -45,45 +43,21 @@ SelfOrganizingMap::SelfOrganizingMap( const std::vector<int>& unitsArrayDimensio
 
 	for ( int row = 0; row < _unitsDimensionality; row++ )
 		for ( int column = 0; column < inputDimensionality; column++ )
-			_weights[row][column] = ((double) rand() / (RAND_MAX)) + 1;	// generate secret number between 0 and 1
+			_weights[row][column] = ((double) rand() / (RAND_MAX));		// generate secret number between 0 and 1
 } // end SelfOrganizingMap default constructor
 
-// constructor that initializes vectors to zero except _weights which is initialized from a file
-SelfOrganizingMap::SelfOrganizingMap( const std::vector<int>& unitsArrayDimensionality, int inputDimensionality,
-				      const std::vector<std::vector<double>>& weights )
+
+// constructor that initializes _weights with previous values from file
+SelfOrganizingMap::SelfOrganizingMap( const std::string& fileName, const std::string& selfOrganizingMapIdentifier )
 {
-	_inputDimensionality = inputDimensionality;
-	_unitsDimensionality = std::accumulate(unitsArrayDimensionality.begin(), unitsArrayDimensionality.end(), 1, std::multiplies<int>());
-	_unitsArrayDimensionality.resize(unitsArrayDimensionality.size());
-	for ( unsigned int dim = 0; dim < unitsArrayDimensionality.size(); dim++ )
-		_unitsArrayDimensionality[dim] = unitsArrayDimensionality[dim];
+	// open a file in read mode.
+	ifstream infile;
+	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
 
-	SelfOrganizingMap::validateObject();
+	SelfOrganizingMap::loadSelfOrganizingMapStatus(selfOrganizingMapIdentifier, infile);
 
-	_weights.resize(_unitsDimensionality);
-	for ( int row = 0; row < _unitsDimensionality; row++ )
-		_weights[row].resize(inputDimensionality);
-
-	if ( (int)weights.size() != _unitsDimensionality ) {
-		cout << "SelfOrganizingMap object inconsistence:" << endl;
-		cout << "Wrong number of rows in parameter weigts: " << weights.size() << endl;
-		cout << "The expected number of rows is: " << _weights.size() << endl;
-		exit( EXIT_FAILURE );
-	}
-	else {
-		for ( int row = 0; row < _unitsDimensionality; row++ ) {
-			if ( (int)weights[row].size() != inputDimensionality ) {
-				cout << "SelfOrganizingMap object inconsistence:" << endl;
-				cout << "Wrong number of columns (" << weights[row].size() << ") in parameter weigts row: " << row << endl;
-				cout << "The expected number of columns for every row is: " << inputDimensionality << endl;
-				exit( EXIT_FAILURE );
-			}
-		}
-	}
-
-	for ( int row = 0; row < _unitsDimensionality; row++ )
-		for ( int column = 0; column < inputDimensionality; column++ )
-			_weights[row][column] = weights[row][column];
+	// close the opened file.
+	infile.close();
 } // end SelfOrganizingMap explicit constructor
 
 // function to validate the object created of this class
@@ -125,6 +99,8 @@ void	SelfOrganizingMap::validateObject()
 void	SelfOrganizingMap::learningRule( double learningRate, double neighborParameter, int unitsWinnerPosition,
 					 const std::vector<double>& input )
 {
+	assert((int)input.size() == _inputDimensionality);
+	assert(unitsWinnerPosition < _unitsDimensionality);
 	double	neighborhoodValue;
 	std::vector<std::vector<double>>	deltaWeights;
 
@@ -145,6 +121,7 @@ void	SelfOrganizingMap::learningRule( double learningRate, double neighborParame
 // function to compute the neighborhood value in the lateral interaction between units in the array for learning process
 double	SelfOrganizingMap::learningNeighborhood( double widthParameter, int winnerPosition, int otherPosition, const std::string& str )
 {
+	assert(winnerPosition < _unitsDimensionality && otherPosition < _unitsDimensionality);
 	std::vector<int>	winnerPositionArray, otherPositionArray, auxiliary;
 
 	winnerPositionArray = unravelIndex(winnerPosition, _unitsArrayDimensionality);		// gets a vector with the array coordinates corresponding to the winnerPosition
@@ -175,6 +152,7 @@ double	SelfOrganizingMap::learningNeighborhood( double widthParameter, int winne
 // function to get the response information from the input
 responseInfo	SelfOrganizingMap::getResponse( const std::vector<double>& input )
 {
+	assert((int)input.size() == _inputDimensionality);
 	responseInfo response;
 
 	response.distances.resize(_unitsDimensionality);
@@ -188,32 +166,53 @@ responseInfo	SelfOrganizingMap::getResponse( const std::vector<double>& input )
 
 
 // function to save the Self Organizing Map's status in a file
-void	SelfOrganizingMap::saveSelfOrganizingMapStatus()
+void	SelfOrganizingMap::saveSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier, ofstream& outfile )
 {
-        // open a file in write mode.
-        ofstream outfile;
-        outfile.open("../../Octave/SOM_Status.mat", ios::out | ios::trunc);
-
-        // file preamble.
-        outfile << "# This is a file created by saveSelfOrganizingMapStatus member function in SelfOrganizingMap class." << endl;
-        outfile << "# Author: Dematties Dario Jesus." << endl;
-
-        outfile << "\n\n" << endl;
+	std::string	str = "SelfOrganizingMap_";
+	std::string	STR;
+	str += selfOrganizingMapIdentifier;
+	str += "_";
 
         // saves _inputDimensionality
-	save_as_scalar("inputDimensionality", _inputDimensionality, outfile);
+	save_as_scalar(str + "inputDimensionality", _inputDimensionality, outfile);
 
         // saves _unitsDimensionality
-	save_as_scalar("unitsDimensionality", _unitsDimensionality, outfile);
+	save_as_scalar(str + "unitsDimensionality", _unitsDimensionality, outfile);
 
         // saves _unitsArrayDimensionality
-	save_vector_as_matrix("unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
+	save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
 
         // saves _weights
-	save_vector_of_vectors_as_matrix("weights", _weights, outfile);
-
-	// close the opened file.
-	outfile.close();
+	save_vector_of_vectors_as_matrix(str + "weights", _weights, outfile);
 } // end functiom saveSelfOrganizingMapStatus
+
+
+// function to load the Self Organizing Map's status from a file
+void	SelfOrganizingMap::loadSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier, ifstream& infile )
+{
+	std::string	str;
+	std::string	STR = "SelfOrganizingMap_";
+	STR += selfOrganizingMapIdentifier;
+	STR += "_";
+
+	while ( std::getline(infile, str) ) {
+
+		auto	auxiliary = "# name: " + STR + "inputDimensionality";
+		if ( str.compare(auxiliary) == 0 )
+			load_scalar(_inputDimensionality, infile);
+
+		auxiliary = "# name: " + STR + "unitsDimensionality";
+		if ( str.compare(auxiliary) == 0 )
+			load_scalar(_unitsDimensionality, infile);
+
+		auxiliary = "# name: " + STR + "unitsArrayDimensionality";
+		if ( str.compare(auxiliary) == 0 )
+			load_matrix_to_vector(_unitsArrayDimensionality, infile);
+
+		auxiliary = "# name: " + STR + "weights";
+		if ( str.compare(auxiliary) == 0 )
+			load_matrix_to_vector_of_vectors(_weights, infile);
+	}
+} // end functiom loadSelfOrganizingMapStatus
 
 
