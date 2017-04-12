@@ -72,11 +72,35 @@ KohonenFeatureMapPred H1_layer4Cluster_1(dim, inputDim, unitsDim, outputDim);	//
 KohonenFeatureMapPred H1_layer4Cluster_2(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
 KohonenFeatureMapPred H1_layer4Cluster_3(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
 KohonenFeatureMapPred H1_layer4Cluster_4(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_5(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_6(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_7(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_8(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_9(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_10(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_11(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_12(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_13(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_14(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_15(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H1_layer4Cluster_16(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
 
 H1_layer4Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
 H1_layer4Cluster_2.reserveMemory(weights);					// reserves memory for the cluster's arrays
 H1_layer4Cluster_3.reserveMemory(weights);					// reserves memory for the cluster's arrays
 H1_layer4Cluster_4.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_5.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_6.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_7.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_8.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_9.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_10.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_11.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_12.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_13.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_14.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_15.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H1_layer4Cluster_16.reserveMemory(weights);					// reserves memory for the cluster's arrays
 
 free(weights);
 weights = NULL;
@@ -92,9 +116,13 @@ generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random mat
 
 KohonenFeatureMapPred H2_layer4Cluster_1(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
 KohonenFeatureMapPred H2_layer4Cluster_2(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H2_layer4Cluster_3(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
+KohonenFeatureMapPred H2_layer4Cluster_4(dim, inputDim, unitsDim, outputDim);	// generates the layer 4 cluster of neurons
 
 H2_layer4Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
 H2_layer4Cluster_2.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H2_layer4Cluster_3.reserveMemory(weights);					// reserves memory for the cluster's arrays
+H2_layer4Cluster_4.reserveMemory(weights);					// reserves memory for the cluster's arrays
 
 free(weights);
 weights = NULL;
@@ -122,136 +150,6 @@ weights = NULL;
 
 
 
-////////////////////////////////////////// generates cortical layer 5 cluster
-
-///////////// First hierarchical layer
-dim = H1_CLUSTERDIMENSIONALITY;							// dimensionality of the cluster of neurons
-inputDim = H1_CLUSTERSPERBACKWARDGROUP*H1_OUTPUTSPERGROUPCLUSTER;		// number of components in the input
-unitsDim = H1_NEURONSPERCLUSTER;						// number of units in the array
-outputDim = H1_OUTPUTSPERCLUSTER;						// number of components in the output
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-KohonenFeatureMapAbs H1_layer5Cluster_1(dim, inputDim, unitsDim, outputDim);	// generates the layer 5 cluster of neurons
-KohonenFeatureMapAbs H1_layer5Cluster_2(dim, inputDim, unitsDim, outputDim);	// generates the layer 5 cluster of neurons
-KohonenFeatureMapAbs H1_layer5Cluster_3(dim, inputDim, unitsDim, outputDim);	// generates the layer 5 cluster of neurons
-KohonenFeatureMapAbs H1_layer5Cluster_4(dim, inputDim, unitsDim, outputDim);	// generates the layer 5 cluster of neurons
-
-H1_layer5Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H1_layer5Cluster_2.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H1_layer5Cluster_3.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H1_layer5Cluster_4.reserveMemory(weights);					// reserves memory for the cluster's arrays
-
-free(weights);
-weights = NULL;
-
-///////////// Second hierarchical layer
-dim = H2_CLUSTERDIMENSIONALITY;							// dimensionality of the cluster of neurons
-inputDim = H2_CLUSTERSPERBACKWARDGROUP*H2_OUTPUTSPERGROUPCLUSTER;		// number of components in the input
-unitsDim = H2_NEURONSPERCLUSTER;						// number of units in the array
-outputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the output
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-KohonenFeatureMapAbs H2_layer5Cluster_1(dim, inputDim, unitsDim, outputDim);	// generates the layer 5 cluster of neurons
-KohonenFeatureMapAbs H2_layer5Cluster_2(dim, inputDim, unitsDim, outputDim);	// generates the layer 5 cluster of neurons
-
-H2_layer5Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H2_layer5Cluster_2.reserveMemory(weights);					// reserves memory for the cluster's arrays
-
-free(weights);
-weights = NULL;
-
-///////////// Third hierarchical layer
-dim = H3_CLUSTERDIMENSIONALITY;							// dimensionality of the cluster of neurons
-inputDim = H3_CLUSTERSPERBACKWARDGROUP*H3_OUTPUTSPERGROUPCLUSTER;		// number of components in the input
-unitsDim = H3_NEURONSPERCLUSTER;						// number of units in the array
-outputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the output
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-KohonenFeatureMapAbs H3_layer5Cluster_1(dim, inputDim, unitsDim, outputDim);	// generates the layer 5 cluster of neurons
-
-H3_layer5Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
-
-free(weights);
-weights = NULL;
-
-////////////////////////////////////////// cortical layer 5 cluster generated
-
-
-
-
-
-
-////////////////////////////////////////// generates cortical layer 6 cluster
-
-///////////// First hierarchical layer
-dim = H1_CLUSTERDIMENSIONALITY;							// dimensionality of the cluster of neurons
-inputDim = H1_FORWARDINPUTNODE+H1_OUTPUTSPERCLUSTER;				// number of components in the input
-unitsDim = H1_NEURONSPERCLUSTER;						// number of units in the array
-outputDim = H1_OUTPUTSPERCLUSTER;						// number of components in the output
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-KohonenFeatureMapAbs H1_layer6Cluster_1(dim, inputDim, unitsDim, outputDim);	// generates the layer 6 cluster of neurons
-KohonenFeatureMapAbs H1_layer6Cluster_2(dim, inputDim, unitsDim, outputDim);	// generates the layer 6 cluster of neurons
-KohonenFeatureMapAbs H1_layer6Cluster_3(dim, inputDim, unitsDim, outputDim);	// generates the layer 6 cluster of neurons
-KohonenFeatureMapAbs H1_layer6Cluster_4(dim, inputDim, unitsDim, outputDim);	// generates the layer 6 cluster of neurons
-
-H1_layer6Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H1_layer6Cluster_2.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H1_layer6Cluster_3.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H1_layer6Cluster_4.reserveMemory(weights);					// reserves memory for the cluster's arrays
-
-free(weights);
-weights = NULL;
-
-///////////// Second hierarchical layer
-dim = H2_CLUSTERDIMENSIONALITY;							// dimensionality of the cluster of neurons
-inputDim = H2_FORWARDINPUTNODE+H2_OUTPUTSPERCLUSTER;				// number of components in the input
-unitsDim = H2_NEURONSPERCLUSTER;						// number of units in the array
-outputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the output
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-KohonenFeatureMapAbs H2_layer6Cluster_1(dim, inputDim, unitsDim, outputDim);	// generates the layer 6 cluster of neurons
-KohonenFeatureMapAbs H2_layer6Cluster_2(dim, inputDim, unitsDim, outputDim);	// generates the layer 6 cluster of neurons
-
-H2_layer6Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
-H2_layer6Cluster_2.reserveMemory(weights);					// reserves memory for the cluster's arrays
-
-free(weights);
-weights = NULL;
-
-///////////// Third hierarchical layer
-dim = H3_CLUSTERDIMENSIONALITY;							// dimensionality of the cluster of neurons
-inputDim = H3_FORWARDINPUTNODE+H3_OUTPUTSPERCLUSTER;				// number of components in the input
-unitsDim = H3_NEURONSPERCLUSTER;						// number of units in the array
-outputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the output
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-KohonenFeatureMapAbs H3_layer6Cluster_1(dim, inputDim, unitsDim, outputDim);	// generates the layer 6 cluster of neurons
-
-H3_layer6Cluster_1.reserveMemory(weights);					// reserves memory for the cluster's arrays
-
-free(weights);
-weights = NULL;
-
-////////////////////////////////////////// cortical layer 6 cluster generated
-
-
-
-
-
-
 ////////////////////////////////////////// generates forward group cluster array
 
 int i;
@@ -269,6 +167,18 @@ std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_1(clusters,Kohonen
 std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_2(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
 std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_3(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
 std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_4(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_5(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_6(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_7(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_8(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_9(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_10(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_11(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_12(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_13(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_14(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_15(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H1_forwardGroupArrayCluster_16(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
 
 for (i = 0; i < clusters; i++)
 {
@@ -276,6 +186,18 @@ for (i = 0; i < clusters; i++)
 	H1_forwardGroupArrayCluster_2[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
 	H1_forwardGroupArrayCluster_3[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
 	H1_forwardGroupArrayCluster_4[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_5[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_6[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_7[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_8[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_9[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_10[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_11[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_12[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_13[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_14[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_15[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H1_forwardGroupArrayCluster_16[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
 }
 free(weights);
 weights = NULL;
@@ -292,10 +214,14 @@ generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random mat
 
 std::vector<KohonenFeatureMapAbs> H2_forwardGroupArrayCluster_1(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
 std::vector<KohonenFeatureMapAbs> H2_forwardGroupArrayCluster_2(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H2_forwardGroupArrayCluster_3(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
+std::vector<KohonenFeatureMapAbs> H2_forwardGroupArrayCluster_4(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the forward group cluster array
 for (i = 0; i < clusters; i++)
 {
 	H2_forwardGroupArrayCluster_1[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
 	H2_forwardGroupArrayCluster_2[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H2_forwardGroupArrayCluster_3[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
+	H2_forwardGroupArrayCluster_4[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
 }
 free(weights);
 weights = NULL;
@@ -319,80 +245,6 @@ free(weights);
 weights = NULL;
 
 ////////////////////////////////////////// forward group cluster array generated
-
-
-
-
-
-
-////////////////////////////////////////// generates backward group cluster array
-
-///////////// First hierarchical layer
-dim = H1_CLUSTERGROUPDIMENSIONALITY;						// dimensionality of the cluster of neurons
-inputDim = H1_CLUSTERSPERBACKWARDGROUP*H1_OUTPUTSPERGROUPCLUSTER+1;		// number of components in the input
-unitsDim = H1_NEURONSPERGROUPCLUSTER;						// number of units in the array
-outputDim = H1_OUTPUTSPERGROUPCLUSTER;						// number of components in the output
-clusters = H1_CLUSTERSPERBACKWARDGROUP;						// number of clusters per group
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-std::vector<KohonenFeatureMapAbs> H1_backwardGroupArrayCluster_1(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the backward group cluster array
-std::vector<KohonenFeatureMapAbs> H1_backwardGroupArrayCluster_2(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the backward group cluster array
-std::vector<KohonenFeatureMapAbs> H1_backwardGroupArrayCluster_3(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the backward group cluster array
-std::vector<KohonenFeatureMapAbs> H1_backwardGroupArrayCluster_4(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the backward group cluster array
-for (i = 0; i < clusters; i++)
-{
-	H1_backwardGroupArrayCluster_1[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
-	H1_backwardGroupArrayCluster_2[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
-	H1_backwardGroupArrayCluster_3[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
-	H1_backwardGroupArrayCluster_4[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
-}
-
-free(weights);
-weights = NULL;
-
-///////////// Second hierarchical layer
-dim = H2_CLUSTERGROUPDIMENSIONALITY;						// dimensionality of the cluster of neurons
-inputDim = H2_CLUSTERSPERBACKWARDGROUP*H2_OUTPUTSPERGROUPCLUSTER+1;		// number of components in the input
-unitsDim = H2_NEURONSPERGROUPCLUSTER;						// number of units in the array
-outputDim = H2_OUTPUTSPERGROUPCLUSTER;						// number of components in the output
-clusters = H2_CLUSTERSPERBACKWARDGROUP;						// number of clusters per group
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-std::vector<KohonenFeatureMapAbs> H2_backwardGroupArrayCluster_1(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the backward group cluster array
-std::vector<KohonenFeatureMapAbs> H2_backwardGroupArrayCluster_2(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the backward group cluster array
-for (i = 0; i < clusters; i++)
-{
-	H2_backwardGroupArrayCluster_1[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
-	H2_backwardGroupArrayCluster_2[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
-}
-
-free(weights);
-weights = NULL;
-
-///////////// Third hierarchical layer
-dim = H3_CLUSTERGROUPDIMENSIONALITY;						// dimensionality of the cluster of neurons
-inputDim = H3_CLUSTERSPERBACKWARDGROUP*H3_OUTPUTSPERGROUPCLUSTER+1;		// number of components in the input
-unitsDim = H3_NEURONSPERGROUPCLUSTER;						// number of units in the array
-outputDim = H3_OUTPUTSPERGROUPCLUSTER;						// number of components in the output
-clusters = H3_CLUSTERSPERBACKWARDGROUP;						// number of clusters per group
-
-weights = (double*)calloc(unitsDim*inputDim, sizeof(double));			// reserves space for the weights of the cluster's neurons
-generateWeights(0, 1, inputDim, unitsDim, weights);				// generates a random matrix with the weights of the cluster's neurons
-
-std::vector<KohonenFeatureMapAbs> H3_backwardGroupArrayCluster_1(clusters,KohonenFeatureMapAbs(dim, inputDim, unitsDim, outputDim));	// generates the backward group cluster array
-for (i = 0; i < clusters; i++)
-{
-	H3_backwardGroupArrayCluster_1[i].reserveMemory(weights);		// reserves memory for the cluster's arrays
-}
-
-free(weights);
-weights = NULL;
-
-////////////////////////////////////////// backward group cluster array generated
 
 
 
@@ -424,6 +276,18 @@ L23GroupAbs H1_forwardGroup_1(inputDim, outputDim, clusters, H1_forwardGroupArra
 L23GroupAbs H1_forwardGroup_2(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_2);	// generates the layer 2/3 forward group
 L23GroupAbs H1_forwardGroup_3(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_3);	// generates the layer 2/3 forward group
 L23GroupAbs H1_forwardGroup_4(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_4);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_5(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_5);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_6(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_6);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_7(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_7);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_8(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_8);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_9(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_9);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_10(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_10);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_11(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_11);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_12(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_12);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_13(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_13);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_14(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_14);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_15(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_15);	// generates the layer 2/3 forward group
+L23GroupAbs H1_forwardGroup_16(inputDim, outputDim, clusters, H1_forwardGroupArrayCluster_16);	// generates the layer 2/3 forward group
 
 ///////////// Second hierarchical layer
 inputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the input
@@ -432,6 +296,8 @@ clusters = H2_CLUSTERSPERFORWARDGROUP;						// number of clusters per group
 
 L23GroupAbs H2_forwardGroup_1(inputDim, outputDim, clusters, H2_forwardGroupArrayCluster_1);	// generates the layer 2/3 forward group
 L23GroupAbs H2_forwardGroup_2(inputDim, outputDim, clusters, H2_forwardGroupArrayCluster_2);	// generates the layer 2/3 forward group
+L23GroupAbs H2_forwardGroup_3(inputDim, outputDim, clusters, H2_forwardGroupArrayCluster_3);	// generates the layer 2/3 forward group
+L23GroupAbs H2_forwardGroup_4(inputDim, outputDim, clusters, H2_forwardGroupArrayCluster_4);	// generates the layer 2/3 forward group
 
 ///////////// Third hierarchical layer
 inputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the input
@@ -441,40 +307,6 @@ clusters = H3_CLUSTERSPERFORWARDGROUP;						// number of clusters per group
 L23GroupAbs H3_forwardGroup_1(inputDim, outputDim, clusters, H3_forwardGroupArrayCluster_1);	// generates the layer 2/3 forward group
 
 ////////////////////////////////////////// cortical layer 2/3 forward group generated
-
-
-
-
-
-
-////////////////////////////////////////// generates cortical layer 2/3 backward group
-
-///////////// First hierarchical layer
-inputDim = H1_OUTPUTSPERCLUSTER+H1_BACKWARDINPUTNODE;				// number of components in the input
-outputDim = H1_CLUSTERSPERBACKWARDGROUP*H1_OUTPUTSPERGROUPCLUSTER;		// number of components in the output
-clusters = H1_CLUSTERSPERBACKWARDGROUP;						// number of clusters per group
-
-L23GroupAbs H1_backwardGroup_1(inputDim, outputDim, clusters, H1_backwardGroupArrayCluster_1);	// generates the layer 2/3 backward group
-L23GroupAbs H1_backwardGroup_2(inputDim, outputDim, clusters, H1_backwardGroupArrayCluster_2);	// generates the layer 2/3 backward group
-L23GroupAbs H1_backwardGroup_3(inputDim, outputDim, clusters, H1_backwardGroupArrayCluster_3);	// generates the layer 2/3 backward group
-L23GroupAbs H1_backwardGroup_4(inputDim, outputDim, clusters, H1_backwardGroupArrayCluster_4);	// generates the layer 2/3 backward group
-
-///////////// Second hierarchical layer
-inputDim = H2_OUTPUTSPERCLUSTER+H2_BACKWARDINPUTNODE;				// number of components in the input
-outputDim = H2_CLUSTERSPERBACKWARDGROUP*H2_OUTPUTSPERGROUPCLUSTER;		// number of components in the output
-clusters = H2_CLUSTERSPERBACKWARDGROUP;						// number of clusters per group
-
-L23GroupAbs H2_backwardGroup_1(inputDim, outputDim, clusters, H2_backwardGroupArrayCluster_1);	// generates the layer 2/3 backward group
-L23GroupAbs H2_backwardGroup_2(inputDim, outputDim, clusters, H2_backwardGroupArrayCluster_2);	// generates the layer 2/3 backward group
-
-///////////// Third hierarchical layer
-inputDim = H3_OUTPUTSPERCLUSTER+H3_BACKWARDINPUTNODE;				// number of components in the input
-outputDim = H3_CLUSTERSPERBACKWARDGROUP*H3_OUTPUTSPERGROUPCLUSTER;		// number of components in the output
-clusters = H3_CLUSTERSPERBACKWARDGROUP;						// number of clusters per group
-
-L23GroupAbs H3_backwardGroup_1(inputDim, outputDim, clusters, H3_backwardGroupArrayCluster_1);	// generates the layer 2/3 backward group
-
-////////////////////////////////////////// cortical layer 2/3 backward group generated
 
 
 
@@ -505,6 +337,18 @@ CorticalLayer4Base H1_layer4_1(inputDim, outputDim, H1_layer4Cluster_1);		// gen
 CorticalLayer4Base H1_layer4_2(inputDim, outputDim, H1_layer4Cluster_2);		// generates the layer 4
 CorticalLayer4Base H1_layer4_3(inputDim, outputDim, H1_layer4Cluster_3);		// generates the layer 4
 CorticalLayer4Base H1_layer4_4(inputDim, outputDim, H1_layer4Cluster_4);		// generates the layer 4
+CorticalLayer4Base H1_layer4_5(inputDim, outputDim, H1_layer4Cluster_5);		// generates the layer 4
+CorticalLayer4Base H1_layer4_6(inputDim, outputDim, H1_layer4Cluster_6);		// generates the layer 4
+CorticalLayer4Base H1_layer4_7(inputDim, outputDim, H1_layer4Cluster_7);		// generates the layer 4
+CorticalLayer4Base H1_layer4_8(inputDim, outputDim, H1_layer4Cluster_8);		// generates the layer 4
+CorticalLayer4Base H1_layer4_9(inputDim, outputDim, H1_layer4Cluster_9);		// generates the layer 4
+CorticalLayer4Base H1_layer4_10(inputDim, outputDim, H1_layer4Cluster_10);		// generates the layer 4
+CorticalLayer4Base H1_layer4_11(inputDim, outputDim, H1_layer4Cluster_11);		// generates the layer 4
+CorticalLayer4Base H1_layer4_12(inputDim, outputDim, H1_layer4Cluster_12);		// generates the layer 4
+CorticalLayer4Base H1_layer4_13(inputDim, outputDim, H1_layer4Cluster_13);		// generates the layer 4
+CorticalLayer4Base H1_layer4_14(inputDim, outputDim, H1_layer4Cluster_14);		// generates the layer 4
+CorticalLayer4Base H1_layer4_15(inputDim, outputDim, H1_layer4Cluster_15);		// generates the layer 4
+CorticalLayer4Base H1_layer4_16(inputDim, outputDim, H1_layer4Cluster_16);		// generates the layer 4
 
 ///////////// Second hierarchical layer
 inputDim = H2_FORWARDINPUTNODE;							// number of components in the input
@@ -512,6 +356,8 @@ outputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the output
 
 CorticalLayer4 H2_layer4_1(inputDim, outputDim, H2_layer4Cluster_1);		// generates the layer 4
 CorticalLayer4 H2_layer4_2(inputDim, outputDim, H2_layer4Cluster_2);		// generates the layer 4
+CorticalLayer4 H2_layer4_3(inputDim, outputDim, H2_layer4Cluster_3);		// generates the layer 4
+CorticalLayer4 H2_layer4_4(inputDim, outputDim, H2_layer4Cluster_4);		// generates the layer 4
 
 ///////////// Third hierarchical layer
 inputDim = H3_FORWARDINPUTNODE;							// number of components in the input
@@ -520,71 +366,6 @@ outputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the output
 CorticalLayer4 H3_layer4_1(inputDim, outputDim, H3_layer4Cluster_1);		// generates the layer 4
 
 ////////////////////////////////////////// cortical layer 4 generated
-
-
-
-
-
-
-////////////////////////////////////////// generates cortical layer 5
-
-///////////// First hierarchical layer
-inputDim = H1_CLUSTERSPERBACKWARDGROUP*H1_OUTPUTSPERGROUPCLUSTER;		// number of components in the input
-outputDim = H1_OUTPUTSPERCLUSTER;						// number of components in the output
-
-CorticalLayer5 H1_layer5_1(inputDim, outputDim, H1_layer5Cluster_1);		// generates the layer 5
-CorticalLayer5 H1_layer5_2(inputDim, outputDim, H1_layer5Cluster_2);		// generates the layer 5
-CorticalLayer5 H1_layer5_3(inputDim, outputDim, H1_layer5Cluster_3);		// generates the layer 5
-CorticalLayer5 H1_layer5_4(inputDim, outputDim, H1_layer5Cluster_4);		// generates the layer 5
-
-///////////// Second hierarchical layer
-inputDim = H2_CLUSTERSPERBACKWARDGROUP*H2_OUTPUTSPERGROUPCLUSTER;		// number of components in the input
-outputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the output
-
-CorticalLayer5 H2_layer5_1(inputDim, outputDim, H2_layer5Cluster_1);		// generates the layer 5
-CorticalLayer5 H2_layer5_2(inputDim, outputDim, H2_layer5Cluster_2);		// generates the layer 5
-
-///////////// Third hierarchical layer
-inputDim = H3_CLUSTERSPERBACKWARDGROUP*H3_OUTPUTSPERGROUPCLUSTER;		// number of components in the input
-outputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the output
-
-CorticalLayer5 H3_layer5_1(inputDim, outputDim, H3_layer5Cluster_1);		// generates the layer 5
-
-////////////////////////////////////////// cortical layer 5 generated
-
-
-
-
-
-
-////////////////////////////////////////// generates cortical layer 6
-
-///////////// First hierarchical layer
-extraInputDim = H1_OUTPUTSPERCLUSTER;						// number of components in the extra input
-inputDim = H1_FORWARDINPUTNODE;							// number of components in the input
-outputDim = H1_OUTPUTSPERCLUSTER;						// number of components in the output
-
-CorticalLayer6Base H1_layer6_1(extraInputDim, inputDim, outputDim, H1_layer6Cluster_1);	// generates the layer 6
-CorticalLayer6Base H1_layer6_2(extraInputDim, inputDim, outputDim, H1_layer6Cluster_2);	// generates the layer 6
-CorticalLayer6Base H1_layer6_3(extraInputDim, inputDim, outputDim, H1_layer6Cluster_3);	// generates the layer 6
-CorticalLayer6Base H1_layer6_4(extraInputDim, inputDim, outputDim, H1_layer6Cluster_4);	// generates the layer 6
-
-///////////// Second hierarchical layer
-extraInputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the extra input
-inputDim = H2_FORWARDINPUTNODE;							// number of components in the input
-outputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the output
-
-CorticalLayer6 H2_layer6_1(extraInputDim, inputDim, outputDim, H2_layer6Cluster_1);	// generates the layer 6
-CorticalLayer6 H2_layer6_2(extraInputDim, inputDim, outputDim, H2_layer6Cluster_2);	// generates the layer 6
-
-///////////// Third hierarchical layer
-extraInputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the extra input
-inputDim = H3_FORWARDINPUTNODE;							// number of components in the input
-outputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the output
-
-CorticalLayer6 H3_layer6_1(extraInputDim, inputDim, outputDim, H3_layer6Cluster_1);	// generates the layer 6
-
-////////////////////////////////////////// cortical layer 6 generated
 
 
 
@@ -602,10 +383,22 @@ extraInputDim = H1_OUTPUTSPERCLUSTER+H2_OUTPUTSPERCLUSTER;			// number of compon
 extraOutputDim = H1_CLUSTERSPERBACKWARDGROUP*H1_OUTPUTSPERGROUPCLUSTER;		// number of components in the backward output
 temporal = H1_TEMPORALPOOLING;							// number of temporal intances in the layer
 
-CorticalLayer23 H1_layer23_1(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_1, H1_backwardGroup_1);	// generates the layer 2/3
-CorticalLayer23 H1_layer23_2(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_2, H1_backwardGroup_2);	// generates the layer 2/3
-CorticalLayer23 H1_layer23_3(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_3, H1_backwardGroup_3);	// generates the layer 2/3
-CorticalLayer23 H1_layer23_4(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_4, H1_backwardGroup_4);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_1(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_1);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_2(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_2);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_3(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_3);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_4(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_4);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_5(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_5);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_6(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_6);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_7(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_7);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_8(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_8);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_9(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_9);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_10(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_10);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_11(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_11);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_12(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_12);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_13(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_13);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_14(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_14);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_15(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_15);	// generates the layer 2/3
+CorticalLayer23 H1_layer23_16(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H1_forwardGroup_16);	// generates the layer 2/3
 
 ///////////// Second hierarchical layer
 inputDim = H2_OUTPUTSPERCLUSTER;						// number of components in the forward input
@@ -614,8 +407,10 @@ extraInputDim = H2_OUTPUTSPERCLUSTER+H3_OUTPUTSPERCLUSTER;			// number of compon
 extraOutputDim = H2_CLUSTERSPERBACKWARDGROUP*H2_OUTPUTSPERGROUPCLUSTER;		// number of components in the backward output
 temporal = H2_TEMPORALPOOLING;							// number of temporal intances in the layer
 
-CorticalLayer23 H2_layer23_1(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H2_forwardGroup_1, H2_backwardGroup_1);	// generates the layer 2/3
-CorticalLayer23 H2_layer23_2(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H2_forwardGroup_2, H2_backwardGroup_2);	// generates the layer 2/3
+CorticalLayer23 H2_layer23_1(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H2_forwardGroup_1);	// generates the layer 2/3
+CorticalLayer23 H2_layer23_2(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H2_forwardGroup_2);	// generates the layer 2/3
+CorticalLayer23 H2_layer23_3(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H2_forwardGroup_3);	// generates the layer 2/3
+CorticalLayer23 H2_layer23_4(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H2_forwardGroup_4);	// generates the layer 2/3
 
 ///////////// Third hierarchical layer
 inputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the forward input
@@ -624,7 +419,7 @@ extraInputDim = H3_OUTPUTSPERCLUSTER;						// number of components in the backwa
 extraOutputDim = H3_CLUSTERSPERBACKWARDGROUP*H3_OUTPUTSPERGROUPCLUSTER;		// number of components in the backward output
 temporal = H3_TEMPORALPOOLING;							// number of temporal intances in the layer
 
-CorticalLayer23 H3_layer23_1(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H3_forwardGroup_1, H3_backwardGroup_1);	// generates the layer 2/3
+CorticalLayer23 H3_layer23_1(temporal, inputDim, outputDim, extraInputDim, extraOutputDim, 0, H3_forwardGroup_1);	// generates the layer 2/3
 
 ////////////////////////////////////////// cortical layer 2/3 generated
 
@@ -644,17 +439,31 @@ printf("\nAll layers of the region have been generated correctly\n");
 ////////////////////////////////////////// generates cortical nodes
 
 ///////////// First hierarchical layer
-CorticalNodeAbsBase H1_node_1(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_BACKWARDINPUTNODE, H1_BACKWARDOUTPUTNODE, H1_BACKWARDEXTRAOUTPUTNODE, H1_layer4_1, H1_layer5_1, H1_layer6_1, H1_layer23_1);	// generates node
-CorticalNodeAbsBase H1_node_2(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_BACKWARDINPUTNODE, H1_BACKWARDOUTPUTNODE, H1_BACKWARDEXTRAOUTPUTNODE, H1_layer4_2, H1_layer5_2, H1_layer6_2, H1_layer23_2);	// generates node
-CorticalNodeAbsBase H1_node_3(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_BACKWARDINPUTNODE, H1_BACKWARDOUTPUTNODE, H1_BACKWARDEXTRAOUTPUTNODE, H1_layer4_3, H1_layer5_3, H1_layer6_3, H1_layer23_3);	// generates node
-CorticalNodeAbsBase H1_node_4(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_BACKWARDINPUTNODE, H1_BACKWARDOUTPUTNODE, H1_BACKWARDEXTRAOUTPUTNODE, H1_layer4_4, H1_layer5_4, H1_layer6_4, H1_layer23_4);	// generates node
+CorticalNodeAbsBase H1_node_1(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_1, H1_layer23_1);	// generates node
+CorticalNodeAbsBase H1_node_2(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_2, H1_layer23_2);	// generates node
+CorticalNodeAbsBase H1_node_3(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_3, H1_layer23_3);	// generates node
+CorticalNodeAbsBase H1_node_4(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_4, H1_layer23_4);	// generates node
+CorticalNodeAbsBase H1_node_5(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_5, H1_layer23_5);	// generates node
+CorticalNodeAbsBase H1_node_6(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_6, H1_layer23_6);	// generates node
+CorticalNodeAbsBase H1_node_7(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_7, H1_layer23_7);	// generates node
+CorticalNodeAbsBase H1_node_8(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_8, H1_layer23_8);	// generates node
+CorticalNodeAbsBase H1_node_9(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_9, H1_layer23_9);	// generates node
+CorticalNodeAbsBase H1_node_10(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_10, H1_layer23_10);	// generates node
+CorticalNodeAbsBase H1_node_11(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_11, H1_layer23_11);	// generates node
+CorticalNodeAbsBase H1_node_12(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_12, H1_layer23_12);	// generates node
+CorticalNodeAbsBase H1_node_13(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_13, H1_layer23_13);	// generates node
+CorticalNodeAbsBase H1_node_14(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_14, H1_layer23_14);	// generates node
+CorticalNodeAbsBase H1_node_15(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_15, H1_layer23_15);	// generates node
+CorticalNodeAbsBase H1_node_16(H1_FORWARDINPUTNODE, H1_FORWARDOUTPUTNODE, H1_layer4_16, H1_layer23_16);	// generates node
 
 ///////////// Second hierarchical layer
-CorticalNodeAbs H2_node_1(H2_FORWARDINPUTNODE, H2_FORWARDOUTPUTNODE, H2_BACKWARDINPUTNODE, H2_BACKWARDOUTPUTNODE, H2_BACKWARDEXTRAOUTPUTNODE, H2_layer4_1, H2_layer5_1, H2_layer6_1, H2_layer23_1);	// generates node
-CorticalNodeAbs H2_node_2(H2_FORWARDINPUTNODE, H2_FORWARDOUTPUTNODE, H2_BACKWARDINPUTNODE, H2_BACKWARDOUTPUTNODE, H2_BACKWARDEXTRAOUTPUTNODE, H2_layer4_2, H2_layer5_2, H2_layer6_2, H2_layer23_2);	// generates node
+CorticalNodeAbs H2_node_1(H2_FORWARDINPUTNODE, H2_FORWARDOUTPUTNODE, H2_layer4_1, H2_layer23_1);	// generates node
+CorticalNodeAbs H2_node_2(H2_FORWARDINPUTNODE, H2_FORWARDOUTPUTNODE, H2_layer4_2, H2_layer23_2);	// generates node
+CorticalNodeAbs H2_node_3(H2_FORWARDINPUTNODE, H2_FORWARDOUTPUTNODE, H2_layer4_3, H2_layer23_3);	// generates node
+CorticalNodeAbs H2_node_4(H2_FORWARDINPUTNODE, H2_FORWARDOUTPUTNODE, H2_layer4_4, H2_layer23_4);	// generates node
 
 ///////////// Third hierarchical layer
-CorticalNodeAbs H3_node_1(H3_FORWARDINPUTNODE, H3_FORWARDOUTPUTNODE, H3_BACKWARDINPUTNODE, H3_BACKWARDOUTPUTNODE, H3_BACKWARDEXTRAOUTPUTNODE, H3_layer4_1, H3_layer5_1, H3_layer6_1, H3_layer23_1);	// generates node
+CorticalNodeAbs H3_node_1(H3_FORWARDINPUTNODE, H3_FORWARDOUTPUTNODE, H3_layer4_1, H3_layer23_1);	// generates node
 
 printf("\n\nCorticalNodeAbs objects generated\n\n");
 
@@ -674,7 +483,12 @@ printf("\n\nCorticalNodeAbs objects generated\n\n");
 ////////////////////////////////////////// 
 ////////////////////////////////////////// generates cortical region
 
-CorticalRegionAbs region(INPUTREGION, OUTPUTREGION, H1_node_1, H1_node_2, H1_node_3, H1_node_4, H2_node_1, H2_node_2, H3_node_1);	// generates region
+CorticalRegionAbs region(INPUTREGION, OUTPUTREGION, H1_node_1, H1_node_2, H1_node_3, H1_node_4,
+						    H1_node_5, H1_node_6, H1_node_7, H1_node_8,
+						    H1_node_9, H1_node_10, H1_node_11, H1_node_12,
+						    H1_node_13, H1_node_14, H1_node_15, H1_node_16,
+						    H2_node_1, H2_node_2, H2_node_3, H2_node_4,
+						    H3_node_1);	// generates region
 
 printf("\n\nCorticalRegion object generated\n\n");
 
@@ -718,22 +532,6 @@ if ( option == 'Y' )
 	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
 	connectomeNode.l4S = NULL;
 
-	H1_layer5Cluster_1.setSynapticWeights(connectomeNode.l5W);				// sets the layer 5 cluster synaptic weights
-	free(connectomeNode.l5W);								// frees the memory used by connectomeNode.l5W
-	connectomeNode.l5W = NULL;
-
-	H1_layer5Cluster_1.setStrongUnits(connectomeNode.l5S);					// sets the layer 5 cluster strong units synaptic weights
-	free(connectomeNode.l5S);								// frees the memory used by connectomeNode.l5S
-	connectomeNode.l5S = NULL;
-
-	H1_layer6Cluster_1.setSynapticWeights(connectomeNode.l6W);				// sets the layer 6 cluster synaptic weights
-	free(connectomeNode.l6W);								// frees the memory used by connectomeNode.l6W
-	connectomeNode.l6W = NULL;
-
-	H1_layer6Cluster_1.setStrongUnits(connectomeNode.l6S);					// sets the layer 6 cluster strong units synaptic weights
-	free(connectomeNode.l6S);								// frees the memory used by connectomeNode.l6S
-	connectomeNode.l6S = NULL;
-
 	for ( i = 0; i < forwardClusters; i++ )
 	{
 		H1_forwardGroupArrayCluster_1[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
@@ -743,17 +541,6 @@ if ( option == 'Y' )
 		H1_forwardGroupArrayCluster_1[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
 		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
 		connectomeNode.l23FGAS[i] = NULL;
-	}
-
-	for ( i = 0; i < backwardClusters; i++ )
-	{
-		H1_backwardGroupArrayCluster_1[i].setSynapticWeights(connectomeNode.l23BGAW[i]);// sets the backward group array cluster [i] synaptic weights
-		free(connectomeNode.l23BGAW[i]);						// frees the memory used by connectomeNode.l23BGAW[i]
-		connectomeNode.l23BGAW[i] = NULL;
-
-		H1_backwardGroupArrayCluster_1[i].setStrongUnits(connectomeNode.l23BGAS[i]);	// sets the backward group array cluster [i] strong units weights
-		free(connectomeNode.l23BGAS[i]);						// frees the memory used by connectomeNode.l23BGAS[i]
-		connectomeNode.l23BGAS[i] = NULL;
 	}
 
 	// Cortical Node number 2
@@ -772,22 +559,6 @@ if ( option == 'Y' )
 	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
 	connectomeNode.l4S = NULL;
 
-	H1_layer5Cluster_2.setSynapticWeights(connectomeNode.l5W);				// sets the layer 5 cluster synaptic weights
-	free(connectomeNode.l5W);								// frees the memory used by connectomeNode.l5W
-	connectomeNode.l5W = NULL;
-
-	H1_layer5Cluster_2.setStrongUnits(connectomeNode.l5S);					// sets the layer 5 cluster strong units synaptic weights
-	free(connectomeNode.l5S);								// frees the memory used by connectomeNode.l5S
-	connectomeNode.l5S = NULL;
-
-	H1_layer6Cluster_2.setSynapticWeights(connectomeNode.l6W);				// sets the layer 6 cluster synaptic weights
-	free(connectomeNode.l6W);								// frees the memory used by connectomeNode.l6W
-	connectomeNode.l6W = NULL;
-
-	H1_layer6Cluster_2.setStrongUnits(connectomeNode.l6S);					// sets the layer 6 cluster strong units synaptic weights
-	free(connectomeNode.l6S);								// frees the memory used by connectomeNode.l6S
-	connectomeNode.l6S = NULL;
-
 	for ( i = 0; i < forwardClusters; i++ )
 	{
 		H1_forwardGroupArrayCluster_2[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
@@ -797,17 +568,6 @@ if ( option == 'Y' )
 		H1_forwardGroupArrayCluster_2[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
 		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
 		connectomeNode.l23FGAS[i] = NULL;
-	}
-
-	for ( i = 0; i < backwardClusters; i++ )
-	{
-		H1_backwardGroupArrayCluster_2[i].setSynapticWeights(connectomeNode.l23BGAW[i]);// sets the backward group array cluster [i] synaptic weights
-		free(connectomeNode.l23BGAW[i]);						// frees the memory used by connectomeNode.l23BGAW[i]
-		connectomeNode.l23BGAW[i] = NULL;
-
-		H1_backwardGroupArrayCluster_2[i].setStrongUnits(connectomeNode.l23BGAS[i]);	// sets the backward group array cluster [i] strong units weights
-		free(connectomeNode.l23BGAS[i]);						// frees the memory used by connectomeNode.l23BGAS[i]
-		connectomeNode.l23BGAS[i] = NULL;
 	}
 
 	// Cortical Node number 3
@@ -826,22 +586,6 @@ if ( option == 'Y' )
 	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
 	connectomeNode.l4S = NULL;
 
-	H1_layer5Cluster_3.setSynapticWeights(connectomeNode.l5W);				// sets the layer 5 cluster synaptic weights
-	free(connectomeNode.l5W);								// frees the memory used by connectomeNode.l5W
-	connectomeNode.l5W = NULL;
-
-	H1_layer5Cluster_3.setStrongUnits(connectomeNode.l5S);					// sets the layer 5 cluster strong units synaptic weights
-	free(connectomeNode.l5S);								// frees the memory used by connectomeNode.l5S
-	connectomeNode.l5S = NULL;
-
-	H1_layer6Cluster_3.setSynapticWeights(connectomeNode.l6W);				// sets the layer 6 cluster synaptic weights
-	free(connectomeNode.l6W);								// frees the memory used by connectomeNode.l6W
-	connectomeNode.l6W = NULL;
-
-	H1_layer6Cluster_3.setStrongUnits(connectomeNode.l6S);					// sets the layer 6 cluster strong units synaptic weights
-	free(connectomeNode.l6S);								// frees the memory used by connectomeNode.l6S
-	connectomeNode.l6S = NULL;
-
 	for ( i = 0; i < forwardClusters; i++ )
 	{
 		H1_forwardGroupArrayCluster_3[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
@@ -851,17 +595,6 @@ if ( option == 'Y' )
 		H1_forwardGroupArrayCluster_3[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
 		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
 		connectomeNode.l23FGAS[i] = NULL;
-	}
-
-	for ( i = 0; i < backwardClusters; i++ )
-	{
-		H1_backwardGroupArrayCluster_3[i].setSynapticWeights(connectomeNode.l23BGAW[i]);// sets the backward group array cluster [i] synaptic weights
-		free(connectomeNode.l23BGAW[i]);						// frees the memory used by connectomeNode.l23BGAW[i]
-		connectomeNode.l23BGAW[i] = NULL;
-
-		H1_backwardGroupArrayCluster_3[i].setStrongUnits(connectomeNode.l23BGAS[i]);	// sets the backward group array cluster [i] strong units weights
-		free(connectomeNode.l23BGAS[i]);						// frees the memory used by connectomeNode.l23BGAS[i]
-		connectomeNode.l23BGAS[i] = NULL;
 	}
 
 	// Cortical Node number 4
@@ -880,22 +613,6 @@ if ( option == 'Y' )
 	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
 	connectomeNode.l4S = NULL;
 
-	H1_layer5Cluster_4.setSynapticWeights(connectomeNode.l5W);				// sets the layer 5 cluster synaptic weights
-	free(connectomeNode.l5W);								// frees the memory used by connectomeNode.l5W
-	connectomeNode.l5W = NULL;
-
-	H1_layer5Cluster_4.setStrongUnits(connectomeNode.l5S);					// sets the layer 5 cluster strong units synaptic weights
-	free(connectomeNode.l5S);								// frees the memory used by connectomeNode.l5S
-	connectomeNode.l5S = NULL;
-
-	H1_layer6Cluster_4.setSynapticWeights(connectomeNode.l6W);				// sets the layer 6 cluster synaptic weights
-	free(connectomeNode.l6W);								// frees the memory used by connectomeNode.l6W
-	connectomeNode.l6W = NULL;
-
-	H1_layer6Cluster_4.setStrongUnits(connectomeNode.l6S);					// sets the layer 6 cluster strong units synaptic weights
-	free(connectomeNode.l6S);								// frees the memory used by connectomeNode.l6S
-	connectomeNode.l6S = NULL;
-
 	for ( i = 0; i < forwardClusters; i++ )
 	{
 		H1_forwardGroupArrayCluster_4[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
@@ -907,15 +624,328 @@ if ( option == 'Y' )
 		connectomeNode.l23FGAS[i] = NULL;
 	}
 
-	for ( i = 0; i < backwardClusters; i++ )
-	{
-		H1_backwardGroupArrayCluster_4[i].setSynapticWeights(connectomeNode.l23BGAW[i]);// sets the backward group array cluster [i] synaptic weights
-		free(connectomeNode.l23BGAW[i]);						// frees the memory used by connectomeNode.l23BGAW[i]
-		connectomeNode.l23BGAW[i] = NULL;
+	// Cortical Node number 5
 
-		H1_backwardGroupArrayCluster_4[i].setStrongUnits(connectomeNode.l23BGAS[i]);	// sets the backward group array cluster [i] strong units weights
-		free(connectomeNode.l23BGAS[i]);						// frees the memory used by connectomeNode.l23BGAS[i]
-		connectomeNode.l23BGAS[i] = NULL;
+	connectomeNode = loadConnectome(1, 5);							// loads the connectome
+
+	H1_layer4Cluster_5.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_5.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_5.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_5[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_5[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 6
+
+	connectomeNode = loadConnectome(1, 6);							// loads the connectome
+
+	H1_layer4Cluster_6.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_6.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_6.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_6[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_6[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 7
+
+	connectomeNode = loadConnectome(1, 7);							// loads the connectome
+
+	H1_layer4Cluster_7.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_7.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_7.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_7[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_7[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 8
+
+	connectomeNode = loadConnectome(1, 8);							// loads the connectome
+
+	H1_layer4Cluster_8.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_8.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_8.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_8[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_8[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 9
+
+	connectomeNode = loadConnectome(1, 9);							// loads the connectome
+
+	H1_layer4Cluster_9.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_9.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_9.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_9[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_9[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 10
+
+	connectomeNode = loadConnectome(1, 10);							// loads the connectome
+
+	H1_layer4Cluster_10.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_10.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_10.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_10[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_10[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 11
+
+	connectomeNode = loadConnectome(1, 11);							// loads the connectome
+
+	H1_layer4Cluster_11.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_11.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_11.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_11[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_11[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 12
+
+	connectomeNode = loadConnectome(1, 12);							// loads the connectome
+
+	H1_layer4Cluster_12.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_12.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_12.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_12[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_12[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 13
+
+	connectomeNode = loadConnectome(1, 13);							// loads the connectome
+
+	H1_layer4Cluster_13.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_13.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_13.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_13[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_13[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 14
+
+	connectomeNode = loadConnectome(1, 14);							// loads the connectome
+
+	H1_layer4Cluster_14.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_14.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_14.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_14[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_14[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 15
+
+	connectomeNode = loadConnectome(1, 15);							// loads the connectome
+
+	H1_layer4Cluster_15.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_15.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_15.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_15[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_15[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 16
+
+	connectomeNode = loadConnectome(1, 16);							// loads the connectome
+
+	H1_layer4Cluster_16.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H1_layer4Cluster_16.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H1_layer4Cluster_16.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H1_forwardGroupArrayCluster_16[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H1_forwardGroupArrayCluster_16[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
 	}
 
 	// This is for the second hierarchical layer
@@ -939,22 +969,6 @@ if ( option == 'Y' )
 	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
 	connectomeNode.l4S = NULL;
 
-	H2_layer5Cluster_1.setSynapticWeights(connectomeNode.l5W);				// sets the layer 5 cluster synaptic weights
-	free(connectomeNode.l5W);								// frees the memory used by connectomeNode.l5W
-	connectomeNode.l5W = NULL;
-
-	H2_layer5Cluster_1.setStrongUnits(connectomeNode.l5S);					// sets the layer 5 cluster strong units synaptic weights
-	free(connectomeNode.l5S);								// frees the memory used by connectomeNode.l5S
-	connectomeNode.l5S = NULL;
-
-	H2_layer6Cluster_1.setSynapticWeights(connectomeNode.l6W);				// sets the layer 6 cluster synaptic weights
-	free(connectomeNode.l6W);								// frees the memory used by connectomeNode.l6W
-	connectomeNode.l6W = NULL;
-
-	H2_layer6Cluster_1.setStrongUnits(connectomeNode.l6S);					// sets the layer 6 cluster strong units synaptic weights
-	free(connectomeNode.l6S);								// frees the memory used by connectomeNode.l6S
-	connectomeNode.l6S = NULL;
-
 	for ( i = 0; i < forwardClusters; i++ )
 	{
 		H2_forwardGroupArrayCluster_1[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
@@ -964,17 +978,6 @@ if ( option == 'Y' )
 		H2_forwardGroupArrayCluster_1[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
 		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
 		connectomeNode.l23FGAS[i] = NULL;
-	}
-
-	for ( i = 0; i < backwardClusters; i++ )
-	{
-		H2_backwardGroupArrayCluster_1[i].setSynapticWeights(connectomeNode.l23BGAW[i]);// sets the backward group array cluster [i] synaptic weights
-		free(connectomeNode.l23BGAW[i]);						// frees the memory used by connectomeNode.l23BGAW[i]
-		connectomeNode.l23BGAW[i] = NULL;
-
-		H2_backwardGroupArrayCluster_1[i].setStrongUnits(connectomeNode.l23BGAS[i]);	// sets the backward group array cluster [i] strong units weights
-		free(connectomeNode.l23BGAS[i]);						// frees the memory used by connectomeNode.l23BGAS[i]
-		connectomeNode.l23BGAS[i] = NULL;
 	}
 
 	// Cortical Node number 2
@@ -993,22 +996,6 @@ if ( option == 'Y' )
 	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
 	connectomeNode.l4S = NULL;
 
-	H2_layer5Cluster_2.setSynapticWeights(connectomeNode.l5W);				// sets the layer 5 cluster synaptic weights
-	free(connectomeNode.l5W);								// frees the memory used by connectomeNode.l5W
-	connectomeNode.l5W = NULL;
-
-	H2_layer5Cluster_2.setStrongUnits(connectomeNode.l5S);					// sets the layer 5 cluster strong units synaptic weights
-	free(connectomeNode.l5S);								// frees the memory used by connectomeNode.l5S
-	connectomeNode.l5S = NULL;
-
-	H2_layer6Cluster_2.setSynapticWeights(connectomeNode.l6W);				// sets the layer 6 cluster synaptic weights
-	free(connectomeNode.l6W);								// frees the memory used by connectomeNode.l6W
-	connectomeNode.l6W = NULL;
-
-	H2_layer6Cluster_2.setStrongUnits(connectomeNode.l6S);					// sets the layer 6 cluster strong units synaptic weights
-	free(connectomeNode.l6S);								// frees the memory used by connectomeNode.l6S
-	connectomeNode.l6S = NULL;
-
 	for ( i = 0; i < forwardClusters; i++ )
 	{
 		H2_forwardGroupArrayCluster_2[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
@@ -1020,15 +1007,58 @@ if ( option == 'Y' )
 		connectomeNode.l23FGAS[i] = NULL;
 	}
 
-	for ( i = 0; i < backwardClusters; i++ )
-	{
-		H2_backwardGroupArrayCluster_2[i].setSynapticWeights(connectomeNode.l23BGAW[i]);// sets the backward group array cluster [i] synaptic weights
-		free(connectomeNode.l23BGAW[i]);						// frees the memory used by connectomeNode.l23BGAW[i]
-		connectomeNode.l23BGAW[i] = NULL;
+	// Cortical Node number 3
 
-		H2_backwardGroupArrayCluster_2[i].setStrongUnits(connectomeNode.l23BGAS[i]);	// sets the backward group array cluster [i] strong units weights
-		free(connectomeNode.l23BGAS[i]);						// frees the memory used by connectomeNode.l23BGAS[i]
-		connectomeNode.l23BGAS[i] = NULL;
+	connectomeNode = loadConnectome(2, 3);							// loads the connectome
+
+	H2_layer4Cluster_3.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H2_layer4Cluster_3.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H2_layer4Cluster_3.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H2_forwardGroupArrayCluster_3[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H2_forwardGroupArrayCluster_3[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
+	}
+
+	// Cortical Node number 4
+
+	connectomeNode = loadConnectome(2, 4);							// loads the connectome
+
+	H2_layer4Cluster_4.setSynapticWeights(connectomeNode.l4W);				// sets the layer 4 cluster synaptic weights
+	free(connectomeNode.l4W);								// frees the memory used by connectomeNode.l4W
+	connectomeNode.l4W = NULL;
+
+	H2_layer4Cluster_4.setPredictionSynapsis(connectomeNode.l4P);				// sets the layer 4 cluster prediction synaptic weights
+	free(connectomeNode.l4P);								// frees the memory used by connectomeNode.l4P
+	connectomeNode.l4P = NULL;
+
+	H2_layer4Cluster_4.setStrongUnits(connectomeNode.l4S);					// sets the layer 4 cluster strong units synaptic weights
+	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
+	connectomeNode.l4S = NULL;
+
+	for ( i = 0; i < forwardClusters; i++ )
+	{
+		H2_forwardGroupArrayCluster_4[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
+		free(connectomeNode.l23FGAW[i]);						// frees the memory used by connectomeNode.l23FGAW[i]
+		connectomeNode.l23FGAW[i] = NULL;
+
+		H2_forwardGroupArrayCluster_4[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
+		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
+		connectomeNode.l23FGAS[i] = NULL;
 	}
 
 	// This is for the third hierarchical layer
@@ -1052,22 +1082,6 @@ if ( option == 'Y' )
 	free(connectomeNode.l4S);								// frees the memory used by connectomeNode.l4S
 	connectomeNode.l4S = NULL;
 
-	H3_layer5Cluster_1.setSynapticWeights(connectomeNode.l5W);				// sets the layer 5 cluster synaptic weights
-	free(connectomeNode.l5W);								// frees the memory used by connectomeNode.l5W
-	connectomeNode.l5W = NULL;
-
-	H3_layer5Cluster_1.setStrongUnits(connectomeNode.l5S);					// sets the layer 5 cluster strong units synaptic weights
-	free(connectomeNode.l5S);								// frees the memory used by connectomeNode.l5S
-	connectomeNode.l5S = NULL;
-
-	H3_layer6Cluster_1.setSynapticWeights(connectomeNode.l6W);				// sets the layer 6 cluster synaptic weights
-	free(connectomeNode.l6W);								// frees the memory used by connectomeNode.l6W
-	connectomeNode.l6W = NULL;
-
-	H3_layer6Cluster_1.setStrongUnits(connectomeNode.l6S);					// sets the layer 6 cluster strong units synaptic weights
-	free(connectomeNode.l6S);								// frees the memory used by connectomeNode.l6S
-	connectomeNode.l6S = NULL;
-
 	for ( i = 0; i < forwardClusters; i++ )
 	{
 		H3_forwardGroupArrayCluster_1[i].setSynapticWeights(connectomeNode.l23FGAW[i]);	// sets the forward group array cluster [i] synaptic weights
@@ -1077,17 +1091,6 @@ if ( option == 'Y' )
 		H3_forwardGroupArrayCluster_1[i].setStrongUnits(connectomeNode.l23FGAS[i]);	// sets the forward group array cluster [i] strong units weights
 		free(connectomeNode.l23FGAS[i]);						// frees the memory used by connectomeNode.l23FGAS[i]
 		connectomeNode.l23FGAS[i] = NULL;
-	}
-
-	for ( i = 0; i < backwardClusters; i++ )
-	{
-		H3_backwardGroupArrayCluster_1[i].setSynapticWeights(connectomeNode.l23BGAW[i]);// sets the backward group array cluster [i] synaptic weights
-		free(connectomeNode.l23BGAW[i]);						// frees the memory used by connectomeNode.l23BGAW[i]
-		connectomeNode.l23BGAW[i] = NULL;
-
-		H3_backwardGroupArrayCluster_1[i].setStrongUnits(connectomeNode.l23BGAS[i]);	// sets the backward group array cluster [i] strong units weights
-		free(connectomeNode.l23BGAS[i]);						// frees the memory used by connectomeNode.l23BGAS[i]
-		connectomeNode.l23BGAS[i] = NULL;
 	}
 
 }
@@ -1101,9 +1104,11 @@ if ( option == 'Y' )
 
 ////////////////////////////////////////// loads the cortical region inputs data
 
-inputData	trainingData;
+inputData	trainingData[NUMBER_OF_INPUT_VECTORS];
 
-trainingData = loadInputData();									// loads the input data to train the model
+for ( i = 0; i < NUMBER_OF_INPUT_VECTORS; i++ ) {
+	trainingData[i] = loadInputData(i);									// loads the input data to train the model
+}
 
 printf("\nThe training data to feed the model have been loaded correctly.\n\n");
 
@@ -1142,20 +1147,18 @@ else
 
 scanf(" %c", &option);
 
-int	clustersPerForwardGroup1, clustersPerForwardGroup2, clustersPerForwardGroup3;
-int	clustersPerBackwardGroup1, clustersPerBackwardGroup2, clustersPerBackwardGroup3, n;
+int	clustersPerForwardGroup1, clustersPerForwardGroup2, clustersPerForwardGroup3, n;
 bool	*vector1;
-double	*input, *vector, *outputFiring, *weightsCluster, *unitsFiring;
-double	*energy;
+double	*input[NUMBER_OF_INPUT_VECTORS], *vector, *outputFiring, *weightsCluster, *unitsFiring;
 double	firingNeighbor = 0.5+0;
 
-neuromodulators hierarchy1[4], hierarchy2[2], hierarchy3;
+neuromodulators hierarchy1[16], hierarchy2[4], hierarchy3;
 
 if ( option == 'Y' )
 {
 
 	// This is for the first hierarchical layer neuromodulators.
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 16; i++)
 	{
 		if ( enableLearning != 0 )
 		{
@@ -1193,7 +1196,7 @@ if ( option == 'Y' )
 	}
 
 	// This is for the second hierarchical layer neuromodulators.
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < 4; i++)
 	{
 		if ( enableLearning != 0 )
 		{
@@ -1265,9 +1268,9 @@ if ( option == 'Y' )
 	}
 	//*/
 
-	input = (double*)calloc(trainingData.filters, sizeof(double));				// reserves space for the input vector
-	energy = (double*)calloc(iterations*trainingData.chunks, sizeof(double));		// reserves space for the input vector
-
+	for ( i = 0; i < NUMBER_OF_INPUT_VECTORS; i++ ) {
+		input[i] = (double*)calloc(trainingData[i].filters, sizeof(double));				// reserves space for the input vector
+	}
 
 	clustersPerForwardGroup1 = H1_CLUSTERSPERFORWARDGROUP;
 	clustersPerBackwardGroup1 = H1_CLUSTERSPERBACKWARDGROUP;
@@ -1298,23 +1301,86 @@ if ( option == 'Y' )
 	int H1_CC3_CL4_Prediction_Fault = 0;
 	int H1_CC4_CL4_Prediction_Fault = 0;
 
+	int H1_CC5_CL4_unitsDim, H1_CC5_CL4_outputDim, H1_CC5_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC5_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC6_CL4_unitsDim, H1_CC6_CL4_outputDim, H1_CC6_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC6_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC7_CL4_unitsDim, H1_CC7_CL4_outputDim, H1_CC7_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC7_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC8_CL4_unitsDim, H1_CC8_CL4_outputDim, H1_CC8_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC8_CL23_FG_outputDim[clustersPerForwardGroup1];
+
+	int H1_CC5_CL4_Prediction_Fault = 0;
+	int H1_CC6_CL4_Prediction_Fault = 0;
+	int H1_CC7_CL4_Prediction_Fault = 0;
+	int H1_CC8_CL4_Prediction_Fault = 0;
+
+	int H1_CC9_CL4_unitsDim, H1_CC9_CL4_outputDim, H1_CC9_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC9_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC10_CL4_unitsDim, H1_CC10_CL4_outputDim, H1_CC10_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC10_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC11_CL4_unitsDim, H1_CC11_CL4_outputDim, H1_CC11_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC11_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC12_CL4_unitsDim, H1_CC12_CL4_outputDim, H1_CC12_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC12_CL23_FG_outputDim[clustersPerForwardGroup1];
+
+	int H1_CC9_CL4_Prediction_Fault = 0;
+	int H1_CC10_CL4_Prediction_Fault = 0;
+	int H1_CC11_CL4_Prediction_Fault = 0;
+	int H1_CC12_CL4_Prediction_Fault = 0;
+
+	int H1_CC13_CL4_unitsDim, H1_CC13_CL4_outputDim, H1_CC13_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC13_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC14_CL4_unitsDim, H1_CC14_CL4_outputDim, H1_CC14_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC14_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC15_CL4_unitsDim, H1_CC15_CL4_outputDim, H1_CC15_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC15_CL23_FG_outputDim[clustersPerForwardGroup1];
+	int H1_CC16_CL4_unitsDim, H1_CC16_CL4_outputDim, H1_CC16_CL23_FG_unitsDim[clustersPerForwardGroup1], H1_CC16_CL23_FG_outputDim[clustersPerForwardGroup1];
+
+	int H1_CC13_CL4_Prediction_Fault = 0;
+	int H1_CC14_CL4_Prediction_Fault = 0;
+	int H1_CC15_CL4_Prediction_Fault = 0;
+	int H1_CC16_CL4_Prediction_Fault = 0;
+
+
+
 	int H2_CC1_CL4_unitsDim, H2_CC1_CL4_outputDim, H2_CC1_CL23_FG_unitsDim[clustersPerForwardGroup2], H2_CC1_CL23_FG_outputDim[clustersPerForwardGroup2];
 	int H2_CC2_CL4_unitsDim, H2_CC2_CL4_outputDim, H2_CC2_CL23_FG_unitsDim[clustersPerForwardGroup2], H2_CC2_CL23_FG_outputDim[clustersPerForwardGroup2];
 
 	int H2_CC1_CL4_Prediction_Fault = 0;
 	int H2_CC2_CL4_Prediction_Fault = 0;
 
+	int H2_CC3_CL4_unitsDim, H2_CC3_CL4_outputDim, H2_CC3_CL23_FG_unitsDim[clustersPerForwardGroup2], H2_CC3_CL23_FG_outputDim[clustersPerForwardGroup2];
+	int H2_CC4_CL4_unitsDim, H2_CC4_CL4_outputDim, H2_CC4_CL23_FG_unitsDim[clustersPerForwardGroup2], H2_CC4_CL23_FG_outputDim[clustersPerForwardGroup2];
+
+	int H2_CC3_CL4_Prediction_Fault = 0;
+	int H2_CC4_CL4_Prediction_Fault = 0;
+
+
+
 	int H3_CC1_CL4_unitsDim, H3_CC1_CL4_outputDim, H3_CC1_CL23_FG_unitsDim[clustersPerForwardGroup3], H3_CC1_CL23_FG_outputDim[clustersPerForwardGroup3];
 
 	int H3_CC1_CL4_Prediction_Fault = 0;
+
+
 
 	double *H1_CC1_CL4_unitsFiring, *H1_CC1_CL4_outputFiring, *H1_CC1_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC1_CL23_FG_outputFiring[clustersPerForwardGroup1];
 	double *H1_CC2_CL4_unitsFiring, *H1_CC2_CL4_outputFiring, *H1_CC2_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC2_CL23_FG_outputFiring[clustersPerForwardGroup1];
 	double *H1_CC3_CL4_unitsFiring, *H1_CC3_CL4_outputFiring, *H1_CC3_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC3_CL23_FG_outputFiring[clustersPerForwardGroup1];
 	double *H1_CC4_CL4_unitsFiring, *H1_CC4_CL4_outputFiring, *H1_CC4_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC4_CL23_FG_outputFiring[clustersPerForwardGroup1];
 
+	double *H1_CC5_CL4_unitsFiring, *H1_CC5_CL4_outputFiring, *H1_CC5_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC5_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC6_CL4_unitsFiring, *H1_CC6_CL4_outputFiring, *H1_CC6_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC6_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC7_CL4_unitsFiring, *H1_CC7_CL4_outputFiring, *H1_CC7_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC7_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC8_CL4_unitsFiring, *H1_CC8_CL4_outputFiring, *H1_CC8_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC8_CL23_FG_outputFiring[clustersPerForwardGroup1];
+
+	double *H1_CC9_CL4_unitsFiring, *H1_CC9_CL4_outputFiring, *H1_CC9_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC9_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC10_CL4_unitsFiring, *H1_CC10_CL4_outputFiring, *H1_CC10_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC10_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC11_CL4_unitsFiring, *H1_CC11_CL4_outputFiring, *H1_CC11_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC11_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC12_CL4_unitsFiring, *H1_CC12_CL4_outputFiring, *H1_CC12_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC12_CL23_FG_outputFiring[clustersPerForwardGroup1];
+
+	double *H1_CC13_CL4_unitsFiring, *H1_CC13_CL4_outputFiring, *H1_CC13_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC13_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC14_CL4_unitsFiring, *H1_CC14_CL4_outputFiring, *H1_CC14_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC14_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC15_CL4_unitsFiring, *H1_CC15_CL4_outputFiring, *H1_CC15_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC15_CL23_FG_outputFiring[clustersPerForwardGroup1];
+	double *H1_CC16_CL4_unitsFiring, *H1_CC16_CL4_outputFiring, *H1_CC16_CL23_FG_unitsFiring[clustersPerForwardGroup1], *H1_CC16_CL23_FG_outputFiring[clustersPerForwardGroup1];
+
+
+
 	double *H2_CC1_CL4_unitsFiring, *H2_CC1_CL4_outputFiring, *H2_CC1_CL23_FG_unitsFiring[clustersPerForwardGroup2], *H2_CC1_CL23_FG_outputFiring[clustersPerForwardGroup2];
 	double *H2_CC2_CL4_unitsFiring, *H2_CC2_CL4_outputFiring, *H2_CC2_CL23_FG_unitsFiring[clustersPerForwardGroup2], *H2_CC2_CL23_FG_outputFiring[clustersPerForwardGroup2];
+	double *H2_CC3_CL4_unitsFiring, *H2_CC3_CL4_outputFiring, *H2_CC3_CL23_FG_unitsFiring[clustersPerForwardGroup2], *H2_CC3_CL23_FG_outputFiring[clustersPerForwardGroup2];
+	double *H2_CC4_CL4_unitsFiring, *H2_CC4_CL4_outputFiring, *H2_CC4_CL23_FG_unitsFiring[clustersPerForwardGroup2], *H2_CC4_CL23_FG_outputFiring[clustersPerForwardGroup2];
+
+
 
 	double *H3_CC1_CL4_unitsFiring, *H3_CC1_CL4_outputFiring, *H3_CC1_CL23_FG_unitsFiring[clustersPerForwardGroup3], *H3_CC1_CL23_FG_outputFiring[clustersPerForwardGroup3];
 
@@ -1400,53 +1466,55 @@ if ( option == 'Y' )
 			}
 //*/
 			cinch = false;
-			for (j = 0; j < trainingData.filters; j++)
-			{
-				*(input + j) = *((trainingData.inputs + i*trainingData.filters) + j);
+			for ( l = 0; l < NUMBER_OF_INPUT_VECTORS; l++ ) {
+				for (j = 0; j < trainingData[l].filters; j++)
+				{
+					*(input[l] + j) = *((trainingData[l].inputs + i*trainingData[l].filters) + j);
 
-				if ( (*(input + j) >= threshold) )
-					cinch = true;
+					if ( (*(input[l] + j) >= threshold) )
+						cinch = true;
+				}
 			}
 
 			if ( cinch )
 			{
-				for (n = 0; n < 4; n++)
+				for (n = 0; n < 16; n++)
 				{
 					hierarchy1[n].layer4.sharpThreshold = 0;
-					hierarchy1[n].layer6.sharpThreshold = 0;
 				}
 			}
 			else
 			{
-				for (n = 0; n < 4; n++)
+				for (n = 0; n < 16; n++)
 				{
 					hierarchy1[n].layer4.sharpThreshold = 1000;
-					hierarchy1[n].layer6.sharpThreshold = 1000;
 				}
 			}
 			region.setInputSynchronization(true);					// sets the synchronization of the region
-			region.setInputVector(input);						// sets the input vector of the region
+			for ( l = 0; l < NUMBER_OF_INPUT_VECTORS; l++ ) {
+				region.setInputVector(input[l]);				// sets the input vector of the region
+			}
 			vector = region.getOutputVector();					// gets the output vector of the region
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// This is the array of neuromodulators
-			neuromodulators	modulators[7];
+			neuromodulators	modulators[21];
 
 			// First hierarchical layer of neuromodulators
-			for (k = 0; k < 4; k++)
+			for (k = 0; k < 16; k++)
 			{
 				modulators[k] = hierarchy1[k];
 			}
 
 			// Second hierarchical layer of neuromodulators
-			for (k = 0; k < 2; k++)
+			for (k = 0; k < 4; k++)
 			{
-				modulators[k+4] = hierarchy2[k];
+				modulators[k+16] = hierarchy2[k];
 			}
 
 			// Third hierarchical layer of neuromodulators
-			modulators[6] = hierarchy3;
+			modulators[20] = hierarchy3;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -35,8 +35,8 @@ public:
 	int	getOutputDimensionality();		// function that gets the dimensionality of the output vector
 
 	void	reservInputVector();			// function that reserves space for the inputs vector
-	void	setInputVector( double * );		// function that sets the inputs vector
-	double	*getInputVector();			// function that gets the inputs vector
+	void	setInputVector( int, double * );	// function that sets the inputs vector
+	double	*getInputVector( int );			// function that gets the inputs vector
 
 	void	reservOutputVector();			// function that reserves space for the outputs vector
 	void	setOutputVector( double * );		// function that sets the outputs vector
@@ -54,7 +54,7 @@ private:
 	bool	inputSynchronization;			// this is the synchronization input of the region
 	bool	outputSynchronization;			// this is the synchronization output of the region
 
-	double	*inputVector;				// vector of inputs
+	double	*inputVector[5];			// vector of inputs
 	double	*outputVector;				// vector of outputs
 }; // end class CorticalRegion
 

@@ -17,21 +17,33 @@
 #include <stdio.h>
 
 // This is for the region dimensionality
-#define	INPUTREGION			28
+#define	INPUTREGION			128
+#define	NUMBER_OF_INPUT_VECTORS		5
 #define	OUTPUTREGION			8
 
 // This is for the nodes' dimensionality of the first hierarchical layer in the region
-#define	H1_FORWARDINPUTNODE		11
+#define	H1_INPUTNODE		11
 #define	H1_FORWARDOUTPUTNODE		12
 #define	H1_BACKWARDINPUTNODE		4
 #define	H1_BACKWARDOUTPUTNODE		2
 #define H1_BACKWARDEXTRAOUTPUTNODE	2
 
-#define H1_CLUSTERDIMENSIONALITY	2
+
 #define H1_CLUSTERGROUPDIMENSIONALITY	2
-#define	H1_OUTPUTSPERCLUSTER		2
+
+
+
+
+
+#define H1_MAPDIMENSIONALITY	2
+#define	H1_MAPINPUT		11
+#define	H1_MAPOUTPUT		2
+#define H1_UNITSPERMAP		900 //30*30
+
+
+
+
 #define H1_OUTPUTSPERGROUPCLUSTER	2
-#define H1_NEURONSPERCLUSTER		900 //30*30
 #define H1_NEURONSPERGROUPCLUSTER	900 //30*30
 #define H1_CLUSTERSPERFORWARDGROUP	2
 #define H1_CLUSTERSPERBACKWARDGROUP	6

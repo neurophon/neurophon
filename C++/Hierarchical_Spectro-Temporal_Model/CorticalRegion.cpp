@@ -91,19 +91,19 @@ void	CorticalRegion::reservInputVector()
 
 
 // function to set the inputs vector
-void	CorticalRegion::setInputVector( double *inputs )
+void	CorticalRegion::setInputVector( int index, double *inputs )
 {
 	int j, numberOfInputs;
 
 	numberOfInputs = CorticalRegion::getInputDimensionality();		// gets the number of inputs
 
 	for (j = 0; j < numberOfInputs; j++)
-		*(inputVector + j) = *(inputs + j);				// store the inputs in the inputVector vector
+		*(inputVector[index] + j) = *(inputs + j);			// store the inputs in the inputVector vector
 } // end function setInputVector
 
 
 // function to get the inputs vector
-double	*CorticalRegion::getInputVector()
+double	*CorticalRegion::getInputVector( int index )
 {
 	int j, numberOfInputs;
 	double *vector;
@@ -113,7 +113,7 @@ double	*CorticalRegion::getInputVector()
 	vector = (double*)calloc(numberOfInputs, sizeof(double));		// reserves space for vector
 
 	for (j = 0; j < numberOfInputs; j++)
-		*(vector + j) = *(inputVector + j);				// stores the inputVector in vector
+		*(vector + j) = *(inputVector[index] + j);			// stores the inputVector in vector
 
 	return vector;								// returns vector pointer
 } // end function getInputVector
