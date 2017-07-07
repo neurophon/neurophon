@@ -27,6 +27,11 @@ if (nargin != 5)
 	return;
 endif
 
+# Holds the sequence of words in the corpus
+# Such variable is specified by a sequence of numbers corresponding to the location
+# of the words in the vocabulary
+global	wordsSequence;
+
 filename = [nameOfFile, ".sable"];
 fid = fopen (filename, "w");
 
@@ -96,5 +101,7 @@ endfor
 
 fputs (fid, "\n\n");
 CloseHeader(fid);
+
+save	wordsSequence.mat wordsSequence
 
 endfunction
