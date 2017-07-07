@@ -35,7 +35,12 @@ if ( totalNumberOfWords < numberOfWords )
 	return;
 endif
 
-# Every speaker has to pronounce "numberOfWords" words without using the words already used by him and withput repeating the last word pronounced
+# Holds the sequence of words in the corpus
+# Such variable is specified by a sequence of numbers corresponding to the location
+# of the words in the vocabulary
+global	wordsSequence;
+
+# Every speaker has to pronounce "numberOfWords" words without using the words already used by him and without repeating the last word pronounced
 # by the last participant speaker
 count = 0;
 while (count < numberOfWords)
@@ -47,16 +52,18 @@ while (count < numberOfWords)
 	r = randi(totalNumberOfWords);
 	if ( count == 0 && activity.usedWords(1,r) == 0 && !strcmp(activity.lastWord,vocabulary(r,:)) && !strcmp(lastWord,vocabulary(r,:)) || ...
 	     count  > 0 && activity.usedWords(1,r) == 0 && !strcmp(activity.lastWord,vocabulary(r,:)) )
-		temporalString = [" ", vocabulary(r,:), "<VOLUME LEVEL=\"-100%\">silence</VOLUME>\n"];
+		temporalString = [" ", vocabulary(r,:), "<VOLUME LEVEL=\"-100%\">Cat.</VOLUME>\n"];
 		fputs (identifier, temporalString);
 		activity.lastWord = vocabulary(r,:);
 		activity.usedWords(1,r) = 1;
+		wordsSequence = [wordsSequence, r];
 		count++;
 	elseif ( count == 0 && numberOfRemainingWords == 1 && strcmp(lastWord,vocabulary(remainingWords,:)) )
-		temporalString = [" ", vocabulary(remainingWords,:), "<VOLUME LEVEL=\"-100%\">silence</VOLUME>\n"];
+		temporalString = [" ", vocabulary(remainingWords,:), "<VOLUME LEVEL=\"-100%\">Cat.</VOLUME>\n"];
 		fputs (identifier, temporalString);
 		activity.lastWord = vocabulary(remainingWords,:);
 		activity.usedWords(1,remainingWords) = 1;
+		wordsSequence = [wordsSequence, r];
 		count++;
 	endif
 endwhile
