@@ -42,7 +42,8 @@ public:
 					const std::size_t,
 					const std::vector<int>&,
 					const std::vector<int>&,
-					const std::vector<int>& );	// Layer constructor
+					const std::vector<int>&,
+					const bool );	// Layer constructor
 
 				Layer( std::string& );			// Layer constructor with data from file
 
@@ -113,7 +114,9 @@ public:
 	void			learn( const int, const std::vector<int>&,
 					const std::vector<responseInfo>&,
 					const twodvector<double>&,
-					const std::vector<int>&, const twodvector<int>&,
+					const std::vector<int>&,
+				       	const std::vector<int>&,
+					const twodvector<int>&,
 					const double,
 					const layerLearningParameters& );	// modifies proximal and distal synaptic weights in
 										// certain population indexed by column agument
@@ -127,6 +130,12 @@ public:
 	void			computeProximalAlternatives( const threedvector<double>&,
 					size_t, const std::vector<double>,
 					twodvector<double>& );			// computes all proximal inputs alternatives
+
+	void			computeProximalAlternatives( threedvector<double>,
+					size_t, const std::vector<double>,
+					twodvector<double>&,
+		       			std::size_t );				// computes randomly just certain number of 
+       										// the proximal inputs alternatives
 
 	void			computeDistalAlternatives( const twodvector<int>&,
 					size_t, const std::vector<int>,
@@ -147,6 +156,12 @@ public:
 										// such ranking depends on the selection criteria
 
 	std::vector<int>	chooseBestIndexes( const twodvector<int>& );	// chooses the best indexes
+										// In case that more than one index is returned,
+										// the elements in the returned vector are
+										// not ordered in a ranking
+
+	std::vector<int>	chooseBestIndexes( const twodvector<int>&,
+		       				   const int );			// chooses the n best indexes
 										// In case that more than one index is returned,
 										// the elements in the returned vector are
 										// not ordered in a ranking
@@ -241,6 +256,8 @@ private:
 	int					_afferentUpdateStep;
 	twodvector<std::array<double, 2>>	_proximalLateralLimits;
 	int					_lateralUpdateStep;
+	
+	bool					_binaryProcessing;
 }; // end class Layer
 
 #endif

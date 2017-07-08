@@ -18,6 +18,8 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <random>
+#include <omp.h>
 
 #include "../Libraries/Random.h"
 #include "../Libraries/Topology.h"
@@ -44,8 +46,11 @@ Layer::Layer( const std::vector<int>& afferentArrayDimensionality, const std::ve
 	      const std::size_t temporalGatheringAfferentValue,
 	      const std::vector<int>& populationsArrayDimensionality,
 	      const std::vector<int>& afferentPopulationsArrayDimensionality,
-	      const std::vector<int>& apicalPopulationsArrayDimensionality )
+	      const std::vector<int>& apicalPopulationsArrayDimensionality,
+	      const bool binaryProcessing )
 {
+	_binaryProcessing = binaryProcessing; 	
+
 	Layer::validateLayer(afferentArrayDimensionality, apicalArrayDimensionality,
 			     columnsArrayDimensionality,
 			     afferentReceptiveField, afferentPercentage,
@@ -83,7 +88,8 @@ Layer::Layer( const std::vector<int>& afferentArrayDimensionality, const std::ve
 	_afferentUpdateStep = 0;
 	_lateralUpdateStep = 0;
 
-	Layer::initializeProximalInputLimits(temporalGatheringAfferentValue);
+	if ( !binaryProcessing )
+		Layer::initializeProximalInputLimits(temporalGatheringAfferentValue);
 
 	if ( _temporalGatheringAfferentValue > 1 )
 		Layer::initializeInternalTemporallyGatheredInputs();
@@ -434,34 +440,57 @@ void	Layer::generateColumns( const std::vector<int>&	populationsArrayDimensional
 	for ( int column = 0; column < _columnsDimensionality; column++ ) {
 		numberOfInputs = 0;
 
-		if ( _afferentConnections.size() > 0 )
-			for ( int afferentInput = 0; afferentInput < (int)_afferentConnections[column].size(); afferentInput++ )
-				numberOfInputs += (int)afferentPopulationsArrayDimensionality.size();
-
+		if ( _afferentConnections.size() > 0 ) {
+			if ( _binaryProcessing ) {
+				for ( int afferentInput = 0; afferentInput < (int)_afferentConnections[column].size(); afferentInput++ )
+					numberOfInputs += std::accumulate(afferentPopulationsArrayDimensionality.begin(),
+									  afferentPopulationsArrayDimensionality.end(),
+									  1, std::multiplies<double>()); 
+			}
+			else {
+				for ( int afferentInput = 0; afferentInput < (int)_afferentConnections[column].size(); afferentInput++ )
+					numberOfInputs += (int)afferentPopulationsArrayDimensionality.size();
+			}
+		}
 		numberOfInputs *= temporalGatheringAfferentValue;
 
-		if ( _lateralProximalConnections.size() > 0 )
-			for ( int lateralProximalInput = 0; lateralProximalInput < (int)_lateralProximalConnections[column].size(); lateralProximalInput++ )
-				numberOfInputs += (int)populationsArrayDimensionality.size();
+		if ( _lateralProximalConnections.size() > 0 ) {
+			if ( _binaryProcessing ) {
+				for ( int lateralProximalInput = 0; lateralProximalInput < (int)_lateralProximalConnections[column].size(); lateralProximalInput++ )
+					numberOfInputs += std::accumulate(populationsArrayDimensionality.begin(),
+									  populationsArrayDimensionality.end(),
+									  1, std::multiplies<double>());
+			}
+			else {
+				for ( int lateralProximalInput = 0; lateralProximalInput < (int)_lateralProximalConnections[column].size(); lateralProximalInput++ )
+					numberOfInputs += (int)populationsArrayDimensionality.size();
+			}
+		}
 
 		if ( _apicalConnections.size() > 0 )
 			for ( int link = 0; link < (int)_apicalConnections[column].size(); link++ ) {
 				auto	auxiliary = (int)std::accumulate(apicalPopulationsArrayDimensionality.begin(),
-									apicalPopulationsArrayDimensionality.end(),
-									1, std::multiplies<int>());
+									 apicalPopulationsArrayDimensionality.end(),
+									 1, std::multiplies<int>());
 				temporalUnits.push_back(auxiliary);
 			}
 
 		if ( _lateralDistalConnections.size() > 0 )
 			for ( int link = 0; link < (int)_lateralDistalConnections[column].size(); link++ ) {
 				auto	auxiliary = (int)std::accumulate(populationsArrayDimensionality.begin(),
-									populationsArrayDimensionality.end(),
-									1, std::multiplies<int>());
+									 populationsArrayDimensionality.end(),
+									 1, std::multiplies<int>());
 				temporalUnits.push_back(auxiliary);
 			}
 
 		temporalUnits.shrink_to_fit();
-		_layerColumns.push_back(TemporalPopulation(populationsArrayDimensionality, numberOfInputs, temporalUnits));
+		if( !_binaryProcessing ) {
+			_layerColumns.push_back(TemporalPopulation(populationsArrayDimensionality, numberOfInputs, temporalUnits));
+		}
+		else {
+			std::array<double,2>	weightLimits = {SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT};
+			_layerColumns.push_back(TemporalPopulation(populationsArrayDimensionality, numberOfInputs, temporalUnits, weightLimits));
+		}
 		temporalUnits.clear();
 	}
 	_layerColumns.shrink_to_fit();
@@ -575,113 +604,266 @@ layerResponse	Layer::computeResponse( const layerResponse& afferent, const layer
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
+	omp_set_num_threads(NUM_THREADS);
+
+	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output)
 	for ( int column = 0; column < _columnsDimensionality; column++ ) {
 		auto	proximalInputs = Layer::gatherProximalInputs(column, afferent, lateral);
 		auto	distalInputs = Layer::gatherDistalInputs(column, apical, lateral);
 
-		bool	proximalSynchronizations = !std::all_of(proximalInputs.synchronization.begin(),
-							       proximalInputs.synchronization.end(),
-							       [](bool v) { return !v; });
+		bool	synchronizations;
+		bool	information;
 
-		bool	distalSynchronizations = !std::all_of(distalInputs.synchronization.begin(),
-							       distalInputs.synchronization.end(),
-							       [](bool v) { return !v; });
+		bool	proximalSynchronizations;
+		bool	distalSynchronizations;
 
-		auto	proximalInformation = truePercentage(proximalInputs.information);
-		auto	distalInformation = truePercentage(proximalInputs.information);
-		if ( proximalSynchronizations || distalSynchronizations ) { // If there is proximal OR distal synchronization
-			if ( proximalInformation >= parameters.proximalInformationThreshold ||
-			     distalInformation >= parameters.distalInformationThreshold ) { // If there is enough proximal or distal information
+		double	proximalInformation;
+		double	distalInformation;
 
-				std::vector<double>	coordinatesInputSoFar;
-				twodvector<double>	proximalInputAlternatives;
-				Layer::computeProximalAlternatives(proximalInputs.coordinates, 0, coordinatesInputSoFar, proximalInputAlternatives);
-				assert(proximalInputAlternatives.size() != 0 && is_rectangular(proximalInputAlternatives));
+		// computes synchronizations and information corresponding to proximal inputs
+		//if ( proximalInputs.coordinates.size() != 0 || proximalInputs.sparseDistributedRepresentation.size() != 0 ) {
+		if ( proximalInputs.synchronization.size() != 0 && proximalInputs.information.size() != 0 ) {
+			proximalSynchronizations = !std::all_of(proximalInputs.synchronization.begin(),
+								       proximalInputs.synchronization.end(),
+								       [](bool v) { return !v; });
+			proximalInformation = truePercentage(proximalInputs.information);
+		}
+		else {
+			proximalSynchronizations = false;
+			proximalInformation = 0.0;
+		}
 
-				//std::vector<int>	indexesInputSoFar;
-				//twodvector<int>		distalInputAlternatives;
-				//Layer::computeDistalAlternatives(distalInputs.currentIndexes, 0, indexesInputSoFar, distalInputAlternatives);
-				//assert(distalInputAlternatives.size() != 0 && is_rectangular(distalInputAlternatives));
+		// computes synchronizations and information corresponding to distal inputs
+		//if ( distalInputs.currentIndexes.size() != 0 ) {
+		if ( distalInputs.synchronization.size() != 0 && distalInputs.information.size() != 0 ) {
+			distalSynchronizations = !std::all_of(distalInputs.synchronization.begin(),
+								       distalInputs.synchronization.end(),
+								       [](bool v) { return !v; });
+			distalInformation = truePercentage(distalInputs.information);
+		}
+		else {
+			distalSynchronizations = false;
+			distalInformation = 0.0;
+		}
 
-				//std::cout << "\n proximalInputAlternatives.size() is " << proximalInputAlternatives.size() << "\n";
+		// if distalSensitivity, then takes into account distal inputs
+		// for the computation of synchronizations and information
+		if ( parameters.distalSensitivity ) {
+			synchronizations = proximalSynchronizations | distalSynchronizations;
+			information = (proximalInformation >= parameters.proximalInformationThreshold) |
+				      (distalInformation   >= parameters.distalInformationThreshold);
+		}
+		// if not distalSensitivity, then does not take into account distal inputs
+		// for the computation of synchronizations and information
+		else {
+			synchronizations = proximalSynchronizations;
+			information = (proximalInformation >= parameters.proximalInformationThreshold);
+		}
 
-				// if there are more than 1000 alternatives, then
-				// samples the proximalInputAlternatives so its size is 1000
-				if ( proximalInputAlternatives.size() > 1000 ) {
-					twodvector<double>	sample;
-					sample_vector(proximalInputAlternatives, sample, 1000);
-					proximalInputAlternatives = sample;
-				}
+		if ( synchronizations ) { // If there is proximal OR distal synchronization
+			if ( information ) { // If there is enough proximal OR distal information
+				if ( _binaryProcessing ) {
+					if( proximalInputs.coordinates.size() != 0 ) throw std::domain_error(
+						"Layer::computeResponse inconsistence.\n"
+						"proximalInputs.coordinates.size() != 0\n" ) ;
 
-				std::vector<responseInfo>	responseAlternatives;
-				for ( int alternative = 0; alternative < (int)proximalInputAlternatives.size(); alternative++ )
-					responseAlternatives.push_back(_layerColumns[column].getResponse(proximalInputAlternatives[alternative]));
+					std::vector<int>	activeUnits;
+					responseInfo		response;
+					if ( parameters.enableLearning ) {
+						if ( parameters.learning.enableProximalLearning ) {
+							response = _layerColumns[column].learningRule(parameters.learning.proximalLearningRate,
+												      parameters.learning.proximalNeighborhood,
+												      parameters.learning.plasticity,
+												      proximalInputs.sparseDistributedRepresentation,
+												      PROXIMAL_SYNAPTIC_THRESHOLD,
+												      parameters.activationHomeostasis);
+							
+							_layerColumns[column].homeostasis(true,
+											  parameters.learning.synapticHomeostasis,
+											  parameters.activationHomeostasis,
+											  PROXIMAL_SYNAPTIC_THRESHOLD);
+						}
+						else {
+							response = _layerColumns[column].getResponse(proximalInputs.sparseDistributedRepresentation);
 
-				responseAlternatives.shrink_to_fit();
+							_layerColumns[column].homeostasis(false,
+											  parameters.learning.synapticHomeostasis,
+											  parameters.activationHomeostasis,
+											  PROXIMAL_SYNAPTIC_THRESHOLD);
+						}
+						std::size_t	numberOfExcitedUnits = 0.1*std::accumulate(_populationsArrayDimensionality.begin(),
+										       			   _populationsArrayDimensionality.end(),
+										       			   1, std::multiplies<int>());	
+						activeUnits = _layerColumns[column].Activate(response,
+											     distalInputs.currentIndexes,
+						      					     numberOfExcitedUnits,
+											     parameters.sparsity);
 
-				std::vector<int>	bestResponsesIndexes =
-								Layer::chooseBestResponsesIndexes(responseAlternatives,
-										parameters.numberOfBestResponses,
-										parameters.selectionCriteria);
-
-				twodvector<int>	newResponseIndexesAlternatives;
-				//for ( int bestAlternative = 0; bestAlternative < (int)bestResponsesIndexes.size(); bestAlternative++ )
-				//	for ( int distalInputAlternative = 0; distalInputAlternative < (int)distalInputAlternatives.size(); distalInputAlternative++ )
-				//		newResponseIndexesAlternatives.push_back(
-				//			_layerColumns[column].Activate(responseAlternatives[bestResponsesIndexes[bestAlternative]],
-				//			distalInputAlternatives[distalInputAlternative],
-				//			parameters.activationRadius));
-
-				for ( std::size_t bestAlternative = 0; bestAlternative < bestResponsesIndexes.size(); bestAlternative++ )
-					newResponseIndexesAlternatives.push_back(
-						_layerColumns[column].Activate(responseAlternatives[bestResponsesIndexes[bestAlternative]],
-						distalInputs.currentIndexes,
-						parameters.activationRadius));
-
-				auto	bestIndexes = Layer::chooseBestIndexes(newResponseIndexesAlternatives);
-
-				if ( parameters.enableLearning )	// If learning is enabled, then it calls learn member function
-					Layer::learn(column, bestResponsesIndexes, responseAlternatives, proximalInputAlternatives, 
-							bestIndexes, distalInputs.currentIndexes,
-							proximalInformation, parameters.learning);
-
-				if ( bestIndexes.size() == 1 ) {	// If there is just one best index
-					if ( bestIndexes[0] == -1 ) {	// If this index offers no information
-						output.currentIndexes[column].resize(1);
-						output.currentIndexes[column][0] = -1;
-						output.synchronization[column] = true;
-						output.information[column] = false;
+						if ( parameters.learning.enableDistalLearning ) {
+							if ( activeUnits.size() > PREDICTION_FAULT_THRESHOLD ) {
+								_layerColumns[column].Update(activeUnits,
+											     distalInputs.currentIndexes,
+											     true, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate*BUSTING);
+							}
+							else {
+								_layerColumns[column].Update(activeUnits,
+											     distalInputs.currentIndexes,
+											     true, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate);
+							}
+							
+							if ( parameters.learning.spikeTimeDependentSynapticPlasticity ) {
+								auto	lastActiveUnits = lateral.currentIndexes[column]; 
+								_layerColumns[column].Update(lastActiveUnits,
+									       		     distalInputs.currentIndexes,
+											     false, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate);
+							}						
+						}
 					}
-					else {				// If this index offers information
-						output.currentIndexes[column] = bestIndexes;
-						output.synchronization[column] = true;
-						output.information[column] = true;
+					else {
+						response = _layerColumns[column].getResponse(proximalInputs.sparseDistributedRepresentation);
+						
+						_layerColumns[column].homeostasis(false,
+										  parameters.learning.synapticHomeostasis,
+										  parameters.activationHomeostasis,
+										  PROXIMAL_SYNAPTIC_THRESHOLD);
+						
+						std::size_t	numberOfExcitedUnits = 0.1*std::accumulate(_populationsArrayDimensionality.begin(),
+										       			   _populationsArrayDimensionality.end(),
+										       			   1, std::multiplies<int>());	
+						activeUnits = _layerColumns[column].Activate(response,
+											     distalInputs.currentIndexes,
+						      					     numberOfExcitedUnits,
+											     parameters.sparsity);
+					}
+					#pragma omp critical
+					{
+						if ( activeUnits.size() == 1 ) {	// If there is just one active unit 
+							if ( activeUnits[0] == -1 ) {	// If this index offers no information
+								output.currentIndexes[column].resize(1);
+								output.currentIndexes[column][0] = -1;
+								output.synchronization[column] = true;
+								output.information[column] = false;
+							}
+							else {				// If this index offers information
+								output.currentIndexes[column] = activeUnits;
+								output.synchronization[column] = true;
+								output.information[column] = true;
+							}
+						}
+						else { // If there is more than one active unit, processes just the ones which offer information
+							for(auto& s: activeUnits)
+								if ( s != -1 ) // Stack only indexes that offers information
+									output.currentIndexes[column].push_back(s);
+
+							output.synchronization[column] = true;
+							output.information[column] = true;
+						}
 					}
 				}
-				else { // If there is more than one best index, processes just the ones which offer information
-					for(auto& s: bestIndexes)
-						if ( s != -1 ) // Stack only indexes that offers information
-							output.currentIndexes[column].push_back(s);
+				else {
+					if( proximalInputs.sparseDistributedRepresentation.size() != 0 ) throw std::domain_error(
+						"Layer::computeResponse inconsistence.\n"
+						"proximalInputs.sparseDistributedRepresentation.size() != 0\n" ) ;
 
-					output.synchronization[column] = true;
-					output.information[column] = true;
+					std::size_t		maxNumOfAlt = 10000;
+					std::vector<double>	coordinatesInputSoFar;
+					twodvector<double>	proximalInputAlternatives;
+					Layer::computeProximalAlternatives(proximalInputs.coordinates, 0, coordinatesInputSoFar, proximalInputAlternatives, maxNumOfAlt);
+					//assert(proximalInputAlternatives.size() != 0 && is_rectangular(proximalInputAlternatives));
+					if( proximalInputAlternatives.size() == 0 || !is_rectangular(proximalInputAlternatives) ) throw std::domain_error(
+						"Layer::computeResponse inconsistence.\n"
+						"proximalInputAlternatives.size() == 0 || !is_rectangular(proximalInputAlternatives)\n" ) ;
+
+
+					// if there are more than 100 alternatives, then
+					// samples the proximalInputAlternatives so its size is 100
+					if ( proximalInputAlternatives.size() > 100 ) {
+						twodvector<double>	sample;
+						sample_vector(proximalInputAlternatives, sample, 100);
+						proximalInputAlternatives = sample;
+					}
+
+					std::vector<responseInfo>	responseAlternatives;
+					for ( int alternative = 0; alternative < (int)proximalInputAlternatives.size(); alternative++ )
+						responseAlternatives.push_back(_layerColumns[column].getResponse(proximalInputAlternatives[alternative]));
+
+					responseAlternatives.shrink_to_fit();
+
+					std::vector<int>	bestResponsesIndexes =
+									Layer::chooseBestResponsesIndexes(responseAlternatives,
+											parameters.numberOfBestResponses,
+											parameters.selectionCriteria);
+
+					twodvector<int>	newResponseIndexesAlternatives;
+					for ( std::size_t bestAlternative = 0; bestAlternative < bestResponsesIndexes.size(); bestAlternative++ )
+						newResponseIndexesAlternatives.push_back(
+							_layerColumns[column].Activate(responseAlternatives[bestResponsesIndexes[bestAlternative]],
+							distalInputs.currentIndexes,
+							parameters.activationRadius, parameters.sparsity));
+				
+					int	numberOfBestIndexes = (int)((1.0-parameters.sparsity)*
+								       std::accumulate(_populationsArrayDimensionality.begin(),
+										       _populationsArrayDimensionality.end(),
+										       1, std::multiplies<int>()));	
+					auto	bestIndexes = Layer::chooseBestIndexes(newResponseIndexesAlternatives,numberOfBestIndexes);
+
+					if ( parameters.enableLearning ) {	// If learning is enabled, then it calls learn member function
+						auto	lastBestIndexes = lateral.currentIndexes[column]; 
+						Layer::learn(column, bestResponsesIndexes, responseAlternatives, proximalInputAlternatives, 
+								bestIndexes, lastBestIndexes, distalInputs.currentIndexes,
+								proximalInformation, parameters.learning);
+					}
+
+					#pragma omp critical
+					{
+						if ( bestIndexes.size() == 1 ) {	// If there is just one best index
+							if ( bestIndexes[0] == -1 ) {	// If this index offers no information
+								output.currentIndexes[column].resize(1);
+								output.currentIndexes[column][0] = -1;
+								output.synchronization[column] = true;
+								output.information[column] = false;
+							}
+							else {				// If this index offers information
+								output.currentIndexes[column] = bestIndexes;
+								output.synchronization[column] = true;
+								output.information[column] = true;
+							}
+						}
+						else { // If there is more than one best index, processes just the ones which offer information
+							for(auto& s: bestIndexes)
+								if ( s != -1 ) // Stack only indexes that offers information
+									output.currentIndexes[column].push_back(s);
+
+							output.synchronization[column] = true;
+							output.information[column] = true;
+						}
+					}
 				}
 			}
 			else { // If there is no proximal nor distal information
-				output.currentIndexes[column].resize(1);
-				output.currentIndexes[column][0] = -1;
-				output.synchronization[column] = true;
-				output.information[column] = false;
+				#pragma omp critical
+				{
+					output.currentIndexes[column].resize(1);
+					output.currentIndexes[column][0] = -1;
+					output.synchronization[column] = true;
+					output.information[column] = false;
+				}
 			}
 		}
 		else { // If there is no proximal nor distal synchronization
-			output.currentIndexes[column] = lateral.currentIndexes[column];
-			output.synchronization[column] = false;
-			output.information[column] = lateral.information[column];
+			#pragma omp critical
+			{
+				output.currentIndexes[column] = lateral.currentIndexes[column];
+				output.synchronization[column] = false;
+				output.information[column] = lateral.information[column];
+			}
 		}
 	}
 
-	if ( parameters.enableLearning )	// If learning is enabled, then it calls updateProximalInputLimits member function
+	if ( parameters.enableLearning && !_binaryProcessing )	// If learning is enabled, then it calls updateProximalInputLimits member function
 		Layer::updateProximalInputLimits(afferent, lateral, parameters.learning);
 
 	return	output;
@@ -763,7 +945,9 @@ layerResponse	Layer::temporalGatherer( const layerResponse& input )
 void	Layer::learn( const int column, const std::vector<int>& bestResponsesIndexes,
 			const std::vector<responseInfo>& responseAlternatives,
 			const twodvector<double>& proximalInputAlternatives,
-			const std::vector<int>& bestIndexes, const twodvector<int>& linkingUnits,
+			const std::vector<int>& bestIndexes,
+			const std::vector<int>& lastBestIndexes,
+		       	const twodvector<int>& linkingUnits,
 			const double proximalInformation, const layerLearningParameters& parameters )
 {
 	assert( parameters.proximalInformationThreshold >= 0.0 && parameters.proximalInformationThreshold <= 1.0 );
@@ -775,15 +959,19 @@ void	Layer::learn( const int column, const std::vector<int>& bestResponsesIndexe
 	}
 
 	if ( parameters.enableDistalLearning ) {
-		// if the massive activation is greater then certain threshold,
+		// if the massive activation is greater than certain threshold,
 		// it is considered as a prediction fault, then special distal
 		// learning considerations are taken
 		if ( bestIndexes.size() > PREDICTION_FAULT_THRESHOLD ) {
-			_layerColumns[column].Update(bestIndexes, linkingUnits, true, parameters.distalSynapsesThreshold,
+			_layerColumns[column].Update(bestIndexes, linkingUnits, true, DISTAL_SYNAPTIC_THRESHOLD,
 										parameters.distalLearningRate*BUSTING);
 		}
 		else {
-			_layerColumns[column].Update(bestIndexes, linkingUnits, true, parameters.distalSynapsesThreshold,
+			_layerColumns[column].Update(bestIndexes, linkingUnits, true, DISTAL_SYNAPTIC_THRESHOLD,
+										parameters.distalLearningRate);
+		}
+		if ( parameters.spikeTimeDependentSynapticPlasticity ) {
+			_layerColumns[column].Update(lastBestIndexes, linkingUnits, false, DISTAL_SYNAPTIC_THRESHOLD,
 										parameters.distalLearningRate);
 		}
 	}
@@ -795,12 +983,15 @@ layerResponse	Layer::gatherProximalInputs( const int column, const layerResponse
 {
 	layerResponse	proximalInputs;
 
-	int	offset = 0;
+	int		offset = 0;
+	std::size_t	SDR_offset = 0;
 	if ( afferent.inputs.size() != 0 ) {
+		assert( !_binaryProcessing );
 		assert(afferent.temporallyGatheredIndexes.size() == 0 &&
 			afferent.temporallyGatheredInformation.size() == 0 &&
 			afferent.currentIndexes.size() == 0 &&
 			afferent.coordinates.size() == 0 &&
+			afferent.sparseDistributedRepresentation.size() == 0 &&
 			_temporalGatheringAfferentValue == 1);
 
 		size_t	numberOfProximalConnections = 0;
@@ -834,24 +1025,85 @@ layerResponse	Layer::gatherProximalInputs( const int column, const layerResponse
 		offset += (int)_afferentConnections[column].size();
 	}
 	else if ( afferent.currentIndexes.size() != 0 ) {
-		assert(afferent.temporallyGatheredIndexes.size() == 0 &&
+		assert( afferent.temporallyGatheredIndexes.size() == 0 &&
 			afferent.temporallyGatheredInformation.size() == 0 &&
 			afferent.coordinates.size() == 0 &&
+			afferent.sparseDistributedRepresentation.size() == 0 &&
 			_temporalGatheringAfferentValue == 1);
 
-		size_t	numberOfProximalConnections = 0;
+		if ( _binaryProcessing ) {
+			size_t	numberOfProximalConnections = 0;
 
-		if ( _afferentConnections.size() != 0 )
-			numberOfProximalConnections += _afferentConnections[column].size();
+			if ( _afferentConnections.size() != 0 )
+				numberOfProximalConnections += _afferentConnections[column].size();
 
-		if ( _lateralProximalConnections.size() != 0 )
-			numberOfProximalConnections += _lateralProximalConnections[column].size();
+			if ( _lateralProximalConnections.size() != 0 )
+				numberOfProximalConnections += _lateralProximalConnections[column].size();
 
-		proximalInputs.coordinates.resize(numberOfProximalConnections);
-		proximalInputs.synchronization.resize(numberOfProximalConnections);
-		proximalInputs.information.resize(numberOfProximalConnections);
+			proximalInputs.synchronization.resize(numberOfProximalConnections);
+			proximalInputs.information.resize(numberOfProximalConnections);
+			if ( _afferentConnections.size() != 0 ) {
 
-		if ( _afferentConnections.size() != 0 ) { // TODO: Add this control statement to the first if
+				for ( int afferentConnection = 0; afferentConnection < (int)_afferentConnections[column].size(); afferentConnection++ ) {
+					auto	connection = _afferentConnections[column][afferentConnection];
+					auto	numberOfIndexes = afferent.currentIndexes[connection].size();
+					std::vector<std::size_t>	auxiliary;
+	
+					// If there is just one index and it doesn't bring information
+					if ( numberOfIndexes == 1 && afferent.currentIndexes[connection][0] == -1 ) {
+						assert(afferent.information[connection] == false);
+						assert(afferent.synchronization[connection] == true);
+						proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+						proximalInputs.information[offset+afferentConnection] = afferent.information[connection];
+					}
+					// If there is more than one index, but all the alternatives are equal to -1
+					else if ( std::all_of(afferent.currentIndexes[connection].begin(),
+								afferent.currentIndexes[connection].end(), [](int i){return i == -1;}) ) {
+						assert(numberOfIndexes > 1);
+						assert(afferent.information[connection] == false);
+						assert(afferent.synchronization[connection] == true);
+						proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+						proximalInputs.information[offset+afferentConnection] = afferent.information[connection];
+					}
+					// If there is more than one index, and not all are equal to -1, then, iterates through them
+					else {
+						assert(afferent.information[connection] == true);
+						for ( int alternative = 0; alternative < (int)numberOfIndexes; alternative++ ) {
+							// Only adds the binary units from the indexes that bring information
+							if ( afferent.currentIndexes[connection][alternative] != -1 ) {
+								proximalInputs.sparseDistributedRepresentation.push_back(
+									SDR_offset+afferent.currentIndexes[connection][alternative]);
+								auxiliary.push_back(SDR_offset+afferent.currentIndexes[connection][alternative]);
+							}
+						}
+						proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+						proximalInputs.information[offset+afferentConnection] = afferent.information[connection];
+					}
+					auto	old_SDR_offset = SDR_offset;
+					SDR_offset += std::accumulate(_afferentPopulationsArrayDimensionality.begin(),
+							      _afferentPopulationsArrayDimensionality.end(),
+							      1, std::multiplies<double>());
+
+					for (const auto& index : auxiliary)
+						assert(index >= old_SDR_offset && index < SDR_offset);
+				}
+				offset += (int)_afferentConnections[column].size();
+			}
+		}
+		else {
+			size_t	numberOfProximalConnections = 0;
+
+			if ( _afferentConnections.size() != 0 )
+				numberOfProximalConnections += _afferentConnections[column].size();
+
+			if ( _lateralProximalConnections.size() != 0 )
+				numberOfProximalConnections += _lateralProximalConnections[column].size();
+
+			proximalInputs.coordinates.resize(numberOfProximalConnections);
+			proximalInputs.synchronization.resize(numberOfProximalConnections);
+			proximalInputs.information.resize(numberOfProximalConnections);
+
+			if ( _afferentConnections.size() != 0 ) { // TODO: Add this control statement to the first if
 				for ( int afferentConnection = 0; afferentConnection < (int)_afferentConnections[column].size(); afferentConnection++ ) {
 					auto	connection = _afferentConnections[column][afferentConnection];
 					auto	numberOfIndexes = afferent.currentIndexes[connection].size();
@@ -890,98 +1142,222 @@ layerResponse	Layer::gatherProximalInputs( const int column, const layerResponse
 					}
 				}
 				offset += (int)_afferentConnections[column].size();
+			}
 		}
 	}
 	else {
 		assert(afferent.temporallyGatheredIndexes.size() == _temporalGatheringAfferentValue && _temporalGatheringAfferentValue > 1);
 		assert(afferent.temporallyGatheredIndexes.size() == afferent.temporallyGatheredInformation.size());
 		assert(afferent.coordinates.size() == 0 &&
-			afferent.synchronization.size() == 0 &&
 			afferent.information.size() == 0);
 
-		size_t	numberOfProximalConnections = 0;
+		if ( _binaryProcessing ) {
+			size_t	numberOfProximalConnections = 0;
 
-		if ( _afferentConnections.size() != 0 )
-			numberOfProximalConnections += afferent.temporallyGatheredIndexes.size() * _afferentConnections[column].size();
+			if ( _afferentConnections.size() != 0 )
+				numberOfProximalConnections += afferent.temporallyGatheredIndexes.size() * _afferentConnections[column].size();
 
-		if ( _lateralProximalConnections.size() != 0 )
-			numberOfProximalConnections += _lateralProximalConnections[column].size();
+			if ( _lateralProximalConnections.size() != 0 )
+				numberOfProximalConnections += _lateralProximalConnections[column].size();
 
-		proximalInputs.coordinates.resize(numberOfProximalConnections);
-		proximalInputs.synchronization.resize(numberOfProximalConnections);
-		proximalInputs.information.resize(numberOfProximalConnections);
 
-		if ( _afferentConnections.size() != 0 ) {
-			for ( int timeStep = 0; timeStep < (int)afferent.temporallyGatheredIndexes.size(); timeStep++ ) {
-				for ( int afferentConnection = 0; afferentConnection < (int)_afferentConnections[column].size(); afferentConnection++ ) {
-					auto	connection = _afferentConnections[column][afferentConnection];
-					auto	numberOfIndexes = afferent.temporallyGatheredIndexes[timeStep][connection].size();
+			proximalInputs.synchronization.resize(numberOfProximalConnections);
+			proximalInputs.information.resize(numberOfProximalConnections);
 
-					// If there is just one index and it doesn't bring information
-					if ( numberOfIndexes == 1 && afferent.temporallyGatheredIndexes[timeStep][connection][0] == -1 ) {
-						proximalInputs.coordinates[offset+afferentConnection].push_back(
-						Layer::getRandomInputCoordinates(_proximalAfferentLimits[timeStep][connection]));
-						proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
-						proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
-					}
-					// If there is more than one index, but all the alternatives are equal to -1
-					else if ( std::all_of(afferent.temporallyGatheredIndexes[timeStep][connection].begin(),
-								afferent.temporallyGatheredIndexes[timeStep][connection].end(),
-								[](int i){return i == -1;}) ) {
-						proximalInputs.coordinates[offset+afferentConnection].push_back(
-						Layer::getRandomInputCoordinates(_proximalAfferentLimits[timeStep][connection]));
-						proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
-						proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
-					}
-					// If there is more than one index, and not all are equal to -1, then, iterates through them
-					else {
-						for ( int alternative = 0; alternative < (int)numberOfIndexes; alternative++ ) {
-							// Only adds the coordinates whose indexes bring information
-							if ( afferent.temporallyGatheredIndexes[timeStep][connection][alternative] != -1 )
-								proximalInputs.coordinates[offset+afferentConnection].push_back(
-								Layer::Normalize(unravelIndex(afferent.temporallyGatheredIndexes[timeStep][connection][alternative],
-												_afferentPopulationsArrayDimensionality),
-												_afferentPopulationsArrayDimensionality));
+			if ( _afferentConnections.size() != 0 ) {
+				for ( int timeStep = 0; timeStep < (int)afferent.temporallyGatheredIndexes.size(); timeStep++ ) {
+					for ( int afferentConnection = 0; afferentConnection < (int)_afferentConnections[column].size(); afferentConnection++ ) {
+						auto	connection = _afferentConnections[column][afferentConnection];
+						auto	numberOfIndexes = afferent.temporallyGatheredIndexes[timeStep][connection].size();
+						std::vector<std::size_t>	auxiliary;
+		
+						// If there is just one index and it doesn't bring information
+						if ( numberOfIndexes == 1 && afferent.temporallyGatheredIndexes[timeStep][connection][0] == -1 ) {
+							assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
+							assert(afferent.synchronization[connection] == true);
+							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
 						}
-						proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
-						proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+						// If there is more than one index, but all the alternatives are equal to -1
+						else if ( std::all_of(afferent.temporallyGatheredIndexes[timeStep][connection].begin(),
+									afferent.temporallyGatheredIndexes[timeStep][connection].end(), [](int i){return i == -1;}) ) {
+							assert(numberOfIndexes > 1);
+							assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
+							assert(afferent.synchronization[connection] == true);
+							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+						}
+						// If there is more than one index, and not all are equal to -1, then, iterates through them
+						else {
+							assert(afferent.temporallyGatheredInformation[timeStep][connection] == true);
+							for ( int alternative = 0; alternative < (int)numberOfIndexes; alternative++ ) {
+								// Only adds the binary units from the indexes that bring information
+								if ( afferent.temporallyGatheredIndexes[timeStep][connection][alternative] != -1 ) {
+									proximalInputs.sparseDistributedRepresentation.push_back(
+									SDR_offset+afferent.temporallyGatheredIndexes[timeStep][connection][alternative]);
+									auxiliary.push_back(
+									SDR_offset+afferent.temporallyGatheredIndexes[timeStep][connection][alternative]);
+								}
+							}
+							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+						}
+						auto	old_SDR_offset = SDR_offset;
+						SDR_offset += std::accumulate(_afferentPopulationsArrayDimensionality.begin(),
+									      _afferentPopulationsArrayDimensionality.end(),
+									      1, std::multiplies<double>());
+
+						for (const auto& index : auxiliary)
+							assert(index >= old_SDR_offset && index < SDR_offset);
 					}
+					offset += (int)_afferentConnections[column].size();
 				}
-				offset += (int)_afferentConnections[column].size();
+			}
+		}
+		else {
+			size_t	numberOfProximalConnections = 0;
+
+			if ( _afferentConnections.size() != 0 )
+				numberOfProximalConnections += afferent.temporallyGatheredIndexes.size() * _afferentConnections[column].size();
+
+			if ( _lateralProximalConnections.size() != 0 )
+				numberOfProximalConnections += _lateralProximalConnections[column].size();
+
+			proximalInputs.coordinates.resize(numberOfProximalConnections);
+			proximalInputs.synchronization.resize(numberOfProximalConnections);
+			proximalInputs.information.resize(numberOfProximalConnections);
+
+			if ( _afferentConnections.size() != 0 ) {
+				for ( int timeStep = 0; timeStep < (int)afferent.temporallyGatheredIndexes.size(); timeStep++ ) {
+					for ( int afferentConnection = 0; afferentConnection < (int)_afferentConnections[column].size(); afferentConnection++ ) {
+						auto	connection = _afferentConnections[column][afferentConnection];
+						auto	numberOfIndexes = afferent.temporallyGatheredIndexes[timeStep][connection].size();
+
+						// If there is just one index and it doesn't bring information
+						if ( numberOfIndexes == 1 && afferent.temporallyGatheredIndexes[timeStep][connection][0] == -1 ) {
+							assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
+							proximalInputs.coordinates[offset+afferentConnection].push_back(
+							Layer::getRandomInputCoordinates(_proximalAfferentLimits[timeStep][connection]));
+							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+						}
+						// If there is more than one index, but all the alternatives are equal to -1
+						else if ( std::all_of(afferent.temporallyGatheredIndexes[timeStep][connection].begin(),
+									afferent.temporallyGatheredIndexes[timeStep][connection].end(),
+									[](int i){return i == -1;}) ) {
+							assert(numberOfIndexes > 1);
+							assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
+							proximalInputs.coordinates[offset+afferentConnection].push_back(
+							Layer::getRandomInputCoordinates(_proximalAfferentLimits[timeStep][connection]));
+							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+						}
+						// If there is more than one index, and not all are equal to -1, then, iterates through them
+						else {
+							assert(afferent.temporallyGatheredInformation[timeStep][connection] == true);
+							for ( int alternative = 0; alternative < (int)numberOfIndexes; alternative++ ) {
+								// Only adds the coordinates whose indexes bring information
+								if ( afferent.temporallyGatheredIndexes[timeStep][connection][alternative] != -1 )
+									proximalInputs.coordinates[offset+afferentConnection].push_back(
+									Layer::Normalize(unravelIndex(afferent.temporallyGatheredIndexes[timeStep][connection][alternative],
+													_afferentPopulationsArrayDimensionality),
+													_afferentPopulationsArrayDimensionality));
+							}
+							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+						}
+					}
+					offset += (int)_afferentConnections[column].size();
+				}
 			}
 		}
 	}
 
 	if ( _lateralProximalConnections.size() != 0 ) {
-		for ( int lateralProximalConnection = 0; lateralProximalConnection < (int)_lateralProximalConnections[column].size(); lateralProximalConnection++ ) {
-			auto	connection = _lateralProximalConnections[column][lateralProximalConnection];
-			auto	numberOfIndexes = lateral.currentIndexes[connection].size();
+		if ( _binaryProcessing ) {
+			for ( int lateralProximalConnection = 0;
+				  lateralProximalConnection < (int)_lateralProximalConnections[column].size();
+				  lateralProximalConnection++ ) {
+				auto	connection = _lateralProximalConnections[column][lateralProximalConnection];
+				auto	numberOfIndexes = lateral.currentIndexes[connection].size();
+				std::vector<std::size_t>	auxiliary;
 
-			// If there is just one index and it doesn't bring information
-			if ( numberOfIndexes == 1 && lateral.currentIndexes[connection][0] == -1 ) {
-				proximalInputs.coordinates[offset+lateralProximalConnection].push_back(
-				Layer::getRandomInputCoordinates(_proximalLateralLimits[connection]));
-				proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
-				proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
-			}
-			// If there is more than one index, but all the alternatives are equal to -1
-			else if ( std::all_of(lateral.currentIndexes[connection].begin(),
-						lateral.currentIndexes[connection].end(), [](int i){return i == -1;}) ) {
-				proximalInputs.coordinates[offset+lateralProximalConnection].push_back(
-				Layer::getRandomInputCoordinates(_proximalLateralLimits[connection]));
-				proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
-				proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
-			}
-			// If there is more than one index, and not all are equal to -1, then, iterates through them
-			else {
-				proximalInputs.coordinates[offset+lateralProximalConnection].resize(numberOfIndexes);
-				for ( int alternative = 0; alternative < (int)numberOfIndexes; alternative++ ) {
-					proximalInputs.coordinates[offset+lateralProximalConnection][alternative] =
-					Layer::Normalize(unravelIndex(lateral.currentIndexes[connection][alternative], _populationsArrayDimensionality),
-									_populationsArrayDimensionality);
+				// If there is just one index and it doesn't bring information
+				if ( numberOfIndexes == 1 && lateral.currentIndexes[connection][0] == -1 ) {
+					assert(lateral.information[connection] == false);
+					assert(lateral.synchronization[connection] == true);
+					proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+					proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
 				}
-				proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
-				proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+				// If there is more than one index, but all the alternatives are equal to -1
+				else if ( std::all_of(lateral.currentIndexes[connection].begin(),
+							lateral.currentIndexes[connection].end(), [](int i){return i == -1;}) ) {
+					assert(numberOfIndexes > 1);
+					assert(lateral.information[connection] == false);
+					assert(lateral.synchronization[connection] == true);
+					proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+					proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+				}
+				// If there is more than one index, and not all are equal to -1, then, iterates through them
+				else {
+					assert(lateral.information[connection] == true);
+					for ( int alternative = 0; alternative < (int)numberOfIndexes; alternative++ ) {
+						// Only adds the coordinates whose indexes bring information
+						if ( lateral.currentIndexes[connection][alternative] != -1 ) {
+							proximalInputs.sparseDistributedRepresentation.push_back(
+							SDR_offset+lateral.currentIndexes[connection][alternative]);
+							auxiliary.push_back(SDR_offset+lateral.currentIndexes[connection][alternative]);
+						}
+					}
+					proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+					proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+				}
+				auto	old_SDR_offset = SDR_offset;
+				SDR_offset += std::accumulate(_populationsArrayDimensionality.begin(),
+							      _populationsArrayDimensionality.end(),
+							      1, std::multiplies<double>());
+
+				for (const auto& index : auxiliary)
+					assert(index >= old_SDR_offset && index < SDR_offset);
+			}
+		}
+		else {
+			for ( int lateralProximalConnection = 0;
+				  lateralProximalConnection < (int)_lateralProximalConnections[column].size();
+				  lateralProximalConnection++ ) {
+				auto	connection = _lateralProximalConnections[column][lateralProximalConnection];
+				auto	numberOfIndexes = lateral.currentIndexes[connection].size();
+
+				// If there is just one index and it doesn't bring information
+				if ( numberOfIndexes == 1 && lateral.currentIndexes[connection][0] == -1 ) {
+					assert(lateral.information[connection] == false);
+					proximalInputs.coordinates[offset+lateralProximalConnection].push_back(
+					Layer::getRandomInputCoordinates(_proximalLateralLimits[connection]));
+					proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+					proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+				}
+				// If there is more than one index, but all the alternatives are equal to -1
+				else if ( std::all_of(lateral.currentIndexes[connection].begin(),
+							lateral.currentIndexes[connection].end(), [](int i){return i == -1;}) ) {
+					assert(numberOfIndexes > 1);
+					assert(lateral.information[connection] == false);
+					proximalInputs.coordinates[offset+lateralProximalConnection].push_back(
+					Layer::getRandomInputCoordinates(_proximalLateralLimits[connection]));
+					proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+					proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+				}
+				// If there is more than one index, and not all are equal to -1, then, iterates through them
+				else {
+					assert(lateral.information[connection] == true);
+					proximalInputs.coordinates[offset+lateralProximalConnection].resize(numberOfIndexes);
+					for ( int alternative = 0; alternative < (int)numberOfIndexes; alternative++ ) {
+						proximalInputs.coordinates[offset+lateralProximalConnection][alternative] =
+						Layer::Normalize(unravelIndex(lateral.currentIndexes[connection][alternative], _populationsArrayDimensionality),
+										_populationsArrayDimensionality);
+					}
+					proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+					proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+				}
 			}
 		}
 	}
@@ -1052,6 +1428,34 @@ void	Layer::computeProximalAlternatives( const threedvector<double>& coordinates
 
 		Layer::computeProximalAlternatives(coordinates, vecIndex+1, auxiliary, inputAlternatives);
 	}
+} // end function computeProximalAlternatives
+
+
+// computes randomly just certain number of the proximal inputs alternatives
+void	Layer::computeProximalAlternatives( threedvector<double> coordinates,
+					size_t vecIndex, std::vector<double> inputSoFar,
+					twodvector<double>& inputAlternatives,
+	       				std::size_t maxNumOfAlt)
+{
+	std::size_t	possibleNumOfAlt = 1;
+
+	for ( std::size_t index = 0; index < coordinates.size(); index++ )
+		possibleNumOfAlt *= coordinates[index].size();
+
+	while ( possibleNumOfAlt > maxNumOfAlt ) {
+		auto index = rand() % coordinates.size();
+		while ( coordinates[index].size() == 1 )
+			index = rand() % coordinates.size();
+		std::random_device rd;
+		std::mt19937 g(rd());
+		std::shuffle(coordinates[index].begin(), coordinates[index].end(), g);
+		coordinates[index].pop_back();
+		possibleNumOfAlt = 1;
+		for ( std::size_t index = 0; index < coordinates.size(); index++ )
+			possibleNumOfAlt *= coordinates[index].size();
+	}
+
+	Layer::computeProximalAlternatives(coordinates, vecIndex, inputSoFar, inputAlternatives);
 } // end function computeProximalAlternatives
 
 
@@ -1364,6 +1768,38 @@ std::vector<int>	Layer::chooseBestIndexes( const twodvector<int>& setsOfIndexesA
 } // end function chooseBestIndexes
 
 
+// chooses the best indexes
+std::vector<int>        Layer::chooseBestIndexes( const std::vector<std::vector<int>>& setsOfIndexesAlternatives,
+					   const int numberOfBestIndexes )
+{
+	std::vector<int>        bestIndexes, auxiliary;
+	auto    uniqueIndexes = get_unique_elements(setsOfIndexesAlternatives);
+	auto    histogram = get_histogram(setsOfIndexesAlternatives);
+
+	while ( (int)bestIndexes.size() < numberOfBestIndexes &&
+	uniqueIndexes.size() != 0 ) {
+		size_t  score = 0;
+		for(const auto& s: uniqueIndexes) {
+			if ( score == histogram[s] ) {
+				auxiliary.push_back(s);
+			}
+			else if ( score < histogram[s] ) {
+				auxiliary.clear();
+				auxiliary.push_back(s);
+				score = histogram[s];
+			}
+		}
+		bestIndexes.insert(bestIndexes.end(),auxiliary.begin(),auxiliary.end());
+		auxiliary.clear();
+		for(const auto& s : bestIndexes)
+			uniqueIndexes.erase(std::remove(uniqueIndexes.begin(), uniqueIndexes.end(), s),
+			uniqueIndexes.end());
+	}
+
+	return	bestIndexes;
+} // end function chooseBestIndexes
+
+
 // gets the afferent input components that correspond to a column.
 std::vector<int>	Layer::getAfferentInputs( const int index )
 {
@@ -1509,6 +1945,9 @@ void	Layer::saveLayerStatus( const std::string& fileName )
 	outfile << "# Author: Dematties Dario Jesus." << endl;
 
 	outfile << "\n\n" << endl;
+	
+	// saves binaryProcessing
+	save_as_bool("binaryProcessing", _binaryProcessing, outfile);
 
 	// saves afferentArrayDimensionality
 	save_vector_as_matrix("afferentArrayDimensionality", _afferentArrayDimensionality, outfile);
@@ -1643,7 +2082,7 @@ void	Layer::saveLayerStatus( const std::string& fileName )
 	// saves apicalPopulationsArrayDimensionality
 	save_vector_as_matrix("apicalPopulationsArrayDimensionality", _apicalPopulationsArrayDimensionality, outfile);
 
-	if ( _afferentConnections.size() != 0 ) {
+	if ( _afferentConnections.size() != 0 && !_binaryProcessing ) {
 		threedvector<double>	lowerAfferentLimits, upperAfferentLimits;
 		auto	timeSteps = _proximalAfferentLimits.size();
 		lowerAfferentLimits.resize(timeSteps);
@@ -1671,7 +2110,7 @@ void	Layer::saveLayerStatus( const std::string& fileName )
 		}
 	}
 
-	if ( _lateralProximalConnections.size() != 0 ) {
+	if ( _lateralProximalConnections.size() != 0 && !_binaryProcessing ) {
 		twodvector<double>	lowerLimits, upperLimits;
 		auto	numberOfLimits = _proximalLateralLimits.size();
 		lowerLimits.resize(numberOfLimits);
@@ -1732,7 +2171,7 @@ void	Layer::saveLayerStatus( const std::string& fileName )
 
 	for ( int column = 0; column < _columnsDimensionality; column++ ) {
 		_layerColumns[column].saveTemporalUnitsStatus(std::to_string(column), outfile);
-		_layerColumns[column].saveSelfOrganizingMapStatus(std::to_string(column), outfile);
+		_layerColumns[column].saveStaticUnitsStatus(std::to_string(column), outfile);
 	}
 	// close the opened file.
 	outfile.close();
@@ -1753,6 +2192,10 @@ void	Layer::loadLayerStatus( const std::string& fileName )
 	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
 
 	while ( std::getline(infile, str) ) {
+
+		STR = "# name: binaryProcessing";
+		if ( str.compare(STR) == 0 )
+			load_bool(_binaryProcessing, infile);
 
 		STR = "# name: afferentArrayDimensionality";
 		if ( str.compare(STR) == 0 )
