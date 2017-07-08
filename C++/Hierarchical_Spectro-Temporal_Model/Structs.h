@@ -26,7 +26,8 @@
 struct	responseInfo
 {
 	std::vector<int>	ranking;		// This is a vector with a ranking of the units' indexes distances (smaller distance first)
-	std::vector<double>	distances;		// This is a vector with the distance between every unit and the _inputVector
+	std::vector<double>	distances;		// This is a vector with the distance between every unit and the inputVector
+	std::vector<double>	excitation;		// This is a vector with the excitation on every unit due the inputVector
 };
 
 struct	layerResponse					// Holds layer's response information
@@ -51,6 +52,9 @@ struct	layerResponse					// Holds layer's response information
 								// from the population that information is received, and
 								// third index corresponds to the coordinate value that satisfies
 								// the unit's position from the population from which information is received.
+	std::vector<std::size_t>	sparseDistributedRepresentation;
+								// Sparse Distributive Representation (SDR).
+								// Every element contains an active element index from the binary unit representation.	
 	std::vector<bool>	synchronization;		// Columns synchronization outputs
 	std::vector<bool>	information;			// Columns information outputs
 	twodvector<bool>	temporallyGatheredInformation;	// Temporally gathered column information
@@ -63,10 +67,15 @@ struct	layerLearningParameters				// Specifies layer's learning parameters
 {
 	bool	enableProximalLearning;				// enable proximal synapses learning
 	bool	enableDistalLearning;				// enable distal synapses learning
-	double	proximalLearningRate;				// learning rate for the proximal synapses
+	bool	synapticHomeostasis;				// enable synaptic homeostasis in the learning process
+	double	proximalLearningRate;				// learning rate for proximal synapses
 	double	proximalNeighborhood;				// neighborhood for lateral interaction in the
 								// learning process of the proximal synapses
-	double	distalLearningRate;				// TODO to add to the model proximally
+	double	plasticity;					// percentage of population units affected by proximal
+								// synapses
+	bool	spikeTimeDependentSynapticPlasticity;		// enable the aplication of the Spike Time-Dependent
+								// Synaptic Plasticity (STDP) phenomena
+	double	distalLearningRate;				// learning rate for distal synapses
 	double	distalNeighborhood;				// neighborhood for lateral interaction in the
 	std::string	distalNeighborhoodFunction;		// distal neighborhood function to implement
 								// lateral interaction in the update of distal synapses
@@ -85,6 +94,9 @@ struct	layerParameters					// Specifies layer's parameters
 	int		numberOfBestResponses;			// Sets a maximum number of responses to be considered from all the responses
 								// returned from SelfOrganizingMap.getResponse
 	bool		enableLearning;				// Enables general learning in the layer
+	bool		distalSensitivity;			// if true, then takes into account distal inputs
+								// for the computation of of synchronizations and information
+	bool		activationHomeostasis;			// enable homeostasis in the units' activation processes
 	double		proximalInformationThreshold;		// Sets the proximal inputs' information threshold a column needs
 								// in order to process it								
 	double		distalInformationThreshold;		// Sets the distal inputs' information threshold a column needs
@@ -92,6 +104,7 @@ struct	layerParameters					// Specifies layer's parameters
 	double		activationRadius;			// Sets the minimum distance any unit in the population has to be from the
 								// proximal input in order to be considered for activation issues
 								// in TemporalPopulation.Activate
+	double		sparsity;				// activation population sparsity
 	std::string	selectionCriteria;			// Set the selection criteria of the best responses returned
 								// by SelfOrganizingMap.getResponse,
 								// the options are: "BMUsRanking" and "EnergyRanking".
