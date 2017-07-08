@@ -30,3 +30,13 @@ std::vector<int>	sampleVector( std::vector<int>, size_t );
 // a <= returned < b
 double	randomFromDoubleInterval( double, double );
 
+
+// this function produces random indices on the interval of indices of v (let's say [0 n)),
+// where the probability of each individual index i is defined by 
+// the weight of the value which corresponds to the ith index in v with respect to
+// the sum of all n weights (values), in v.
+// This function uses std::discrete_distribution which
+// satisfies all requirements of RandomNumberDistribution
+std::vector<int>	getRandomWeightedIndexes( std::vector<double>,
+	      					  const std::size_t );
+
