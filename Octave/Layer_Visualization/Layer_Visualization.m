@@ -1,8 +1,8 @@
 # Layer_Visualization. This function allows the Layer connections' visualization for a cortical column.
-function Layer_Visualization(column)
+function Layer_Visualization(column,fileName)
 
 	cd ..
-	load	MyLayer.mat;
+	load(fileName);
 	cd Layer_Visualization
 
 	if (size(afferentArrayDimensionality) > 2 || size(apicalArrayDimensionality) > 2 || size(columnsArrayDimensionality) > 2 )
