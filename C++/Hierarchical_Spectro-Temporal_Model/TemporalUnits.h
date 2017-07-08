@@ -17,7 +17,7 @@
 //			which are defined in TemporalUnits.cpp.
 
 
-// TemporalUnits class derived from class SelfOrganizingMap through inheritance.
+// TemporalUnits class derived from class StaticUnits through inheritance.
 // Class Description: This is a self organizing feature map kind class.
 // It elaborates a statistic relationship between different units activity.
 // This is about the frequency with which certain units activity happens.
@@ -31,9 +31,9 @@
 
 #include "Structs.h"							// includes struct difinitions
 #include "../Libraries/DataTypes.h"
-#include "SelfOrganizingMap.h"						// SelfOrganizingMap class declaration
+#include "StaticUnits.h"						// StaticUnits class declaration
 
-class TemporalUnits : public SelfOrganizingMap
+class TemporalUnits : public StaticUnits
 {
 public:
 		TemporalUnits( const std::vector<int>&, int,
@@ -43,6 +43,17 @@ public:
 										// the second one is the number of input components and the
 										// third one is a vector in which every component is the number of units
 										// that can be connected from the same or another group of units with this one.
+		TemporalUnits( const std::vector<int>&, int,
+			       const std::vector<int>&,
+			       const std::array<double,2>& );			// constructor that initializes _temporalUnits by default to zero
+										// the first parameter is the dimensionality of the array of units,
+										// for example (20,10,5) (a prisma with 1000 units);
+										// the second one is the number of input components and the
+										// third one is a vector in which every component is the number of units
+										// that can be connected from the same or another group of units with this one.
+										// The StaticUnits weights willbe initialized with random numbers
+										// between weightLimits
+
 		TemporalUnits( const std::string&, const std::string& );	// constructor that initializes _temporalUnits by means of previous
 										// values from file
 

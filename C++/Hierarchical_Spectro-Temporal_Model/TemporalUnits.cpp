@@ -31,7 +31,27 @@ using namespace std;
 TemporalUnits::TemporalUnits( const std::vector<int>& populationDimensions, int numberOfInputs,
 			      const std::vector<int>& temporalUnits )
 	// explicitly call base-class constructor
-	: SelfOrganizingMap(populationDimensions, numberOfInputs)
+	: StaticUnits(populationDimensions, numberOfInputs)
+{
+	int	rows;
+
+	_updateStep = 0;
+	_temporalUnits.resize(temporalUnits.size());
+	for ( int link = 0; link < (int)temporalUnits.size(); link++ ) {
+		rows = temporalUnits[link];
+		_temporalUnits[link].resize(rows);
+		for ( int row = 0; row < rows; row++ )
+			_temporalUnits[link][row].resize(_unitsDimensionality);
+	}
+} // end TemporalUnits constructor
+
+
+// constructor initializes populationDimensions, numberOfInputs and temporalUnits with variables supplied as arguments
+// The weights in the self StaticUnits will be initialized with random values between weightLimits
+TemporalUnits::TemporalUnits( const std::vector<int>& populationDimensions, int numberOfInputs,
+			      const std::vector<int>& temporalUnits, const std::array<double,2>& weightLimits )
+	// explicitly call base-class constructor
+	: StaticUnits(populationDimensions, numberOfInputs, 0.6, weightLimits, true)
 {
 	int	rows;
 
@@ -50,7 +70,7 @@ TemporalUnits::TemporalUnits( const std::vector<int>& populationDimensions, int 
 // This loads _temporalUnits with previous vector supplied as argument too
 TemporalUnits::TemporalUnits( const std::string& fileName, const std::string& temporalUnitsIdentification )
 	// explicitly call base-class constructor
-	: SelfOrganizingMap(fileName, temporalUnitsIdentification)
+	: StaticUnits(fileName, temporalUnitsIdentification)
 {
 	// open a file in read mode.
 	ifstream infile;
@@ -146,7 +166,7 @@ void	TemporalUnits::Update( const std::vector<double>& input, const std::vector<
 	double	sum;
 	responseInfo	response;
 
-	response = SelfOrganizingMap::getResponse(input);
+	response = StaticUnits::getResponse(input);
 
 	auto	minimumDistanceIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
 
@@ -328,7 +348,7 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 		auto	number = rand() % minimumDistanceIndexes.size();
 		if ( increment ) {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -341,7 +361,7 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 		}
 		else {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -356,7 +376,7 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 	else {
 		if ( increment ) {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -369,7 +389,7 @@ void	TemporalUnits::Update( const responseInfo& response, double neighborParamet
 		}
 		else {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -410,7 +430,7 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 	double	sum, neighborhoodValue;
 	responseInfo	response;
 
-	response = SelfOrganizingMap::getResponse(input);
+	response = StaticUnits::getResponse(input);
 
 	auto	minimumDistanceIndexes = get_indexes_from_value(response.distances, response.distances[response.ranking[0]]);
 
@@ -418,7 +438,7 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 		auto	number = rand() % minimumDistanceIndexes.size();
 		if ( increment ) {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -431,7 +451,7 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 		}
 		else {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, minimumDistanceIndexes[number], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -446,7 +466,7 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 	else {
 		if ( increment ) {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -459,7 +479,7 @@ void	TemporalUnits::Update( const std::vector<double>& input, double neighborPar
 		}
 		else {
 			for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-				neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
+				neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, response.ranking[0], unit, str);
 				for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 					if ( linkingUnits[link] != -1 ) {
 						_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -506,7 +526,7 @@ void	TemporalUnits::Update( const int index, double neighborParameter, const std
 
 	if ( increment ) {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
+			neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, index, unit, str);
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 				if ( linkingUnits[link] != -1 ) {
 					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -519,7 +539,7 @@ void	TemporalUnits::Update( const int index, double neighborParameter, const std
 	}
 	else {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
+			neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, index, unit, str);
 			for ( int link = 0; link < (int)linkingUnits.size(); link++ ) {
 				if ( linkingUnits[link] != -1 ) {
 					_temporalUnits[link][linkingUnits[link]][unit] = _temporalUnits[link][linkingUnits[link]][unit]
@@ -565,7 +585,7 @@ void	TemporalUnits::Update( const int index, double neighborParameter, const int
 
 	if ( increment ) {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
+			neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, index, unit, str);
 			_temporalUnits[link][linkingUnit][unit] = _temporalUnits[link][linkingUnit][unit]
 								       + neighborhoodValue*learningRate*SYNAPTIC_INCREMENT;
 			if ( _temporalUnits[link][linkingUnit][unit] < 0.0 )
@@ -574,7 +594,7 @@ void	TemporalUnits::Update( const int index, double neighborParameter, const int
 	}
 	else {
 		for ( int unit = 0; unit < _unitsDimensionality; unit++ ) {
-			neighborhoodValue = SelfOrganizingMap::learningNeighborhood(neighborParameter, index, unit, str);
+			neighborhoodValue = StaticUnits::learningNeighborhood(neighborParameter, index, unit, str);
 			_temporalUnits[link][linkingUnit][unit] = _temporalUnits[link][linkingUnit][unit]
 								       - neighborhoodValue*learningRate*SYNAPTIC_DECREMENT;
 			if ( _temporalUnits[link][linkingUnit][unit] < 0.0 )
@@ -641,7 +661,7 @@ void	TemporalUnits::Update( const std::vector<int>& indexes, const twodvector<in
 					for ( std::size_t alternative = 0; alternative < linkingUnits[link].size(); alternative++ ) {
 						if ( linkingUnits[link][alternative] >= 0 ) {
 							_temporalUnits[link][linkingUnits[link][alternative]][index] -=
-										learningRate*SYNAPTIC_INCREMENT;
+										learningRate*SYNAPTIC_DECREMENT;
 							// there must not exist negative unit synapses
 							if ( _temporalUnits[link][linkingUnits[link][alternative]][index] < 0.0 )
 								_temporalUnits[link][linkingUnits[link][alternative]][index] = 0.0;
@@ -682,7 +702,6 @@ void	TemporalUnits::saveTemporalUnitsStatus( const std::string temporalUnitsIden
 	str += temporalUnitsIdentification;
 	str += "_";
 	for ( int link = 0; link < (int)_temporalUnits.size(); link++ ) {
-
 		// convert from dense to sparse matrix
 		sparseMatrixes[link] = to_sparse(_temporalUnits[link]);
 
