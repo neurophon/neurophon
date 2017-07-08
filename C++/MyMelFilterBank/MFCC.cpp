@@ -29,7 +29,7 @@ bool		computeCepstrum = false;
 bool		gainControl = true;
 bool		computeDeltas = false;
 bool		applyPersistence = false;
-bool		leakyIntegration = true;
+bool		leakyIntegration = false;
 bool		kernelConvolution = true;
 double		delay = 0;
 
@@ -38,7 +38,7 @@ system("clear");					// clears the screen
 std::string	fileName = "MFB008";
 std::string	kernelName = "Kernel008";
 double		sampleWindow = 0.008;
-double		leakyCoefficient = 0.1;
+double		leakyCoefficient = 0.01;
 filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
 		   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
 		   kernelConvolution, delay, fileName, kernelName );
@@ -46,7 +46,7 @@ filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, 
 fileName = "MFB016";
 kernelName = "Kernel016";
 sampleWindow = 0.016;
-leakyCoefficient = 0,3;
+leakyCoefficient = 0.03;
 filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
 		   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
 		   kernelConvolution, delay, fileName, kernelName );
@@ -54,7 +54,7 @@ filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, 
 fileName = "MFB032";
 kernelName = "Kernel032";
 sampleWindow = 0.032;
-leakyCoefficient = 0,5;
+leakyCoefficient = 0.05;
 filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
 		   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
 		   kernelConvolution, delay, fileName, kernelName );
@@ -62,7 +62,7 @@ filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, 
 fileName = "MFB064";
 kernelName = "Kernel064";
 sampleWindow = 0.064;
-leakyCoefficient = 0,7;
+leakyCoefficient = 0.07;
 filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
 		   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
 		   kernelConvolution, delay, fileName, kernelName );
@@ -70,7 +70,7 @@ filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, 
 fileName = "MFB128";
 kernelName = "Kernel128";
 sampleWindow = 0.128;
-leakyCoefficient = 0,9;
+leakyCoefficient = 0.09;
 filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
 		   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
 		   kernelConvolution, delay, fileName, kernelName );
