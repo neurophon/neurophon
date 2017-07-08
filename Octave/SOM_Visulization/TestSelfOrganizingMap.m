@@ -20,14 +20,14 @@ cd ..
 load SOM_Status.mat
 cd SOM_Visulization
 
-if (inputDimensionality == 1)
-	plot(1:length(weights),weights,'-o');
-elseif (inputDimensionality == 2)
-	scatter(weights(:,1),weights(:,2));
-	DrawLattice(weights, unitsArrayDimensionality);
-elseif (inputDimensionality == 3)
-	scatter3(weights(:,1),weights(:,2),weights(:,3));
-	DrawLattice(weights, unitsArrayDimensionality);
+if (StaticUnits_SOM_inputDimensionality == 1)
+	plot(1:length(StaticUnits_SOM_weights),StaticUnits_SOM_weights,'-o');
+elseif (StaticUnits_SOM_inputDimensionality == 2)
+	scatter(StaticUnits_SOM_weights(:,1),StaticUnits_SOM_weights(:,2));
+	DrawLattice(StaticUnits_SOM_weights, StaticUnits_SOM_unitsArrayDimensionality);
+elseif (StaticUnits_SOM_inputDimensionality == 3)
+	scatter3(StaticUnits_SOM_weights(:,1),StaticUnits_SOM_weights(:,2),StaticUnits_SOM_weights(:,3));
+	DrawLattice(StaticUnits_SOM_weights, StaticUnits_SOM_unitsArrayDimensionality);
 else
 	error("inputDimensionality exceeds the plots' possibilities.")
 endif
