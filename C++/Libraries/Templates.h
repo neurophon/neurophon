@@ -105,6 +105,16 @@ void    set_elements(std::vector<T> &v, const std::vector<int> &indexes, const V
 } // end template set_elements
 
 
+// Adds vector elements with val value based on vector indexes
+template <typename T, typename V>
+void    add_elements(std::vector<T> &v, const std::vector<int> &indexes, const V &val) {
+
+	std::for_each (indexes.begin(), indexes.end(),//
+	[&v, &val](int element) {v.at(element)+=val;});
+
+} // end template add_elements
+
+
 // Does the conversion from std::vector to std::valarray<std::size_t>
 template < typename T >
 std::valarray<std::size_t> vector2valarray( const std::vector<T>& vec )
@@ -269,7 +279,8 @@ std::vector<int>	get_indexes_from_value(const std::vector<T>& v, const T& value)
 } // end template get_indexes_from_value
 
 
-// I owe you the comment ;)
+// finds element matches between two vectors,
+// then returns v1 indexes of the matching elements
 template<typename T>
 std::vector<int>    coincidence_indexes(std::vector<T> v1, std::vector<T> v2)
 {
@@ -297,6 +308,35 @@ T	get_minimum_element(const std::vector<T>& v)
 } // end template get_minimum_element
 
 
+// gets the maximum element from vector 
+template <typename T>
+T	get_maximum_element(const std::vector<T>& v)
+{
+	auto	result = std::max_element(std::begin(v), std::end(v));
+	return	v[std::distance(std::begin(v), result)];
+} // end template get_maximum_element
+
+
+// System of recursive overloaded templates
+// to get the number of non-zero elements in a multidimensional vector
+template <typename T>
+std::size_t	get_number_of_non_zero_elements(const std::vector<T>& v)
+{
+	return std::count_if(v.begin(), v.end(), [](T i){return i != (T)0;});
+} 
+
+template <typename T>
+std::size_t	get_number_of_non_zero_elements(const std::vector<std::vector<T>>& v)
+{
+	std::size_t	numberOfNonZeroElements = 0;
+	
+	for (const auto& s : v)
+		numberOfNonZeroElements += get_number_of_non_zero_elements(s); 
+
+	return	numberOfNonZeroElements;
+} // end template get_number_of_non_zero_elements
+
+
 // Converts from SparseMatrixElements to a dense vector of vectors
 template <typename T>
 std::vector<std::vector<T>>	from_sparse(const SparseMatrixElements<T>& arr)
@@ -314,7 +354,7 @@ std::vector<std::vector<T>>	from_sparse(const SparseMatrixElements<T>& arr)
 } // end template from_sparse
 
 
-// Converts from SparseMatrixElements to a dense vector of vectors
+// Converts from a dense vector of vectors to SparseMatrixElements
 template <typename V>
 SparseMatrixElements<V>	to_sparse(const std::vector<std::vector<V>>& v)
 {
@@ -425,14 +465,18 @@ template < typename T > bool is_rectangular( const std::vector< std::vector<T> >
 // multidimensional vector (vector of vectors of ...),
 // and returns the dimensions of the corresponsing
 // rectangular multidimensional vector
-template < typename T > std::vector<std::size_t> get_rectangular_indexes( std::vector<T>& matrix )
+// TODO: Review this template. It does not work well, in some cases, when some of the dimensions are NULL.
+// Yet it will never be the case in this aplication.
+// So, this condition can be put as an explicit restriction in the template.
+// i.e. "matrix cannot have NULL dimenssions".
+template < typename T > std::vector<std::size_t> get_rectangular_indexes( const std::vector<T>& matrix )
 {
     std::vector<std::size_t>    dimensions;
     dimensions.push_back(matrix.size());
     return  dimensions;
 }
 
-template < typename T > std::vector<std::size_t> get_rectangular_indexes( std::vector<std::vector<T>>& matrix )
+template < typename T > std::vector<std::size_t> get_rectangular_indexes( const std::vector<std::vector<T>>& matrix )
 {
     std::vector<std::size_t>    dimensions, auxiliary;
     for(auto& v : matrix) {
@@ -455,7 +499,7 @@ template < typename T > std::vector<std::size_t> get_rectangular_indexes( std::v
     return  dimensions;
 }
 
-template < typename T > std::vector<std::size_t> get_rectangular_indexes( std::vector<std::vector<std::vector<T>>>& matrix )
+template < typename T > std::vector<std::size_t> get_rectangular_indexes( const std::vector<std::vector<std::vector<T>>>& matrix )
 {
     std::vector<std::size_t>    dimensions, auxiliary;
     for(auto& v : matrix) {
@@ -555,7 +599,6 @@ to_one_dimentional_vector( const std::vector<T>& vec,
     if ( vec.empty() ) throw std::domain_error(
    "to_one_dimentional_vector template inconsistence.\n"
    "Nested vector of vectors of ... is empty.\n" ) ;
-
     for (const auto& v : vec)
         to_one_dimentional_vector( v, v1, true ) ;
 
@@ -677,6 +720,22 @@ void	resize_multi_dimentional_vector( std::vector<std::vector<T>>& v, std::vecto
 } // end template resize_multi_dimentional_vector
 
 
+// Gets the sparsity of a multidimennsional rectangular vector
+template <typename T>
+double	get_rectangular_sparsity(const std::vector<T>& v)
+{
+	assert(is_rectangular(v));
+	auto	dimensions = get_rectangular_indexes(v);
+	auto	numberOfElements = std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<double>());
+	auto	numberOfNonZeroElements = get_number_of_non_zero_elements(v);
+	return	1.0-(double)numberOfNonZeroElements/numberOfElements;
+} // end template get_rectangular_sparsity
+
+
+// computes the reciprocal of value
+template <typename T>
+T reciprocal ( T value )
+{ return (T)1/value ; }
 
 
 
