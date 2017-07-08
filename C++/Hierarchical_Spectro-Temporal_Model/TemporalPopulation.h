@@ -35,6 +35,13 @@ public:
 						    const std::vector<int>& );		// constructor that initializes TemporalPopulation
 											// _temporalUnits are initialized to zero
 
+				TemporalPopulation( const std::vector<int>&, int,
+						    const std::vector<int>&,
+					            const std::array<double,2>&	);	// constructor that initializes TemporalPopulation
+											// _temporalUnits are initialized to zero
+											// SelfOrganizingMap weights are initialized with random
+											// values between weight limits
+
 				TemporalPopulation( const std::string&,
 						    const std::string& );		// constructor that initializes TemporalPopulation
 											// _temporalUnits are initialized from previous vectors
@@ -132,14 +139,31 @@ public:
 											// depending on response info.
 											// in this case we have a vector of vectors of linking units,
 											// all those linking units are used to modify response
-
+	std::vector<int>	Activate( const responseInfo&, const twodvector<int>&,
+					  const double, const double );			// decides which units in the population to activate
+											// depending on response info.
+											// in this case we have a vector of vectors of linking units,
+											// all those linking units are used to modify response
+	
+	std::vector<int>	Activate( const responseInfo&, const twodvector<int>&,
+					  const std::size_t, const double,
+	       				  const bool randomness = false );		// decides which units in the population to activate
+       											// depending on response info.
+											// in this case we have a vector of vectors of linking units,
+											// all those linking units are used to modify response.
+											// For this function there exist the posibility of introduce
+											// weighted randomness in the process of selection of the
+											// excited units
+	
 	responseInfo	getTemporalResponse( const responseInfo&,
 					     const std::vector<int>& );			// modifies response ussing _temporalUnits
 											// the response is a responseInfo type structure which is compose of
 											// a vector with distances and an vector with indexes sorthed in ascending order
 											// corresponding to the vector of distances
+	
 responseInfo		getTemporalResponse( const responseInfo&,
-					     twodvector<int> );				// modifies response ussing _temporalUnits
+					     const twodvector<int>&,
+	       				     const bool excitation = false );		// modifies response ussing _temporalUnits
 											// in this case we have a vector of vectors of linking units,
 											// all those linking units are used to modify response
 private:

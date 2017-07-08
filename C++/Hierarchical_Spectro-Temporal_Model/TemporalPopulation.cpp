@@ -33,6 +33,16 @@ TemporalPopulation::TemporalPopulation( const std::vector<int>& populationDimens
 
 
 // constructor initializes populationDimensions, numberOfInputs and temporalUnits with variables supplied as arguments
+// StaticUnits weights are initialized with random numbers between weight limits
+TemporalPopulation::TemporalPopulation( const std::vector<int>& populationDimensions, int numberOfInputs,
+					const std::vector<int>& temporalUnits, const std::array<double,2>& weightLimits )
+	// explicitly call base-class constructor
+	: TemporalUnits(populationDimensions, numberOfInputs, temporalUnits, weightLimits)
+{
+} // end TemporalPopulation constructor
+
+
+// constructor initializes populationDimensions, numberOfInputs and temporalUnits with variables supplied as arguments
 TemporalPopulation::TemporalPopulation( const std::string& fileName, const std::string& temporalUnitsIdentification )
 	// explicitly call base-class constructor
 	: TemporalUnits(fileName, temporalUnitsIdentification)
@@ -76,7 +86,7 @@ std::vector<double>	TemporalPopulation::Activate( const responseInfo& response,
 std::vector<double>	TemporalPopulation::Activate( const std::vector<double>& input,
 						      const std::vector<int>& linkingUnits, const bool normalize )
 {
-	auto	newResponse = TemporalPopulation::getTemporalResponse(SelfOrganizingMap::getResponse(input), linkingUnits);
+	auto	newResponse = TemporalPopulation::getTemporalResponse(StaticUnits::getResponse(input), linkingUnits);
 
 	auto	minimumIndexes = get_indexes_from_value(newResponse.distances, newResponse.distances[newResponse.ranking[0]]);
 
@@ -179,7 +189,7 @@ twodvector<double>	TemporalPopulation::Activate( const std::vector<double>& inpu
 
 	output.resize(numberOfActiveUnits);
 
-	auto	newResponse = TemporalPopulation::getTemporalResponse(SelfOrganizingMap::getResponse(input), linkingUnits);
+	auto	newResponse = TemporalPopulation::getTemporalResponse(StaticUnits::getResponse(input), linkingUnits);
 
 	int	rankingPosition = 0;
 	int	offset = 0;
@@ -273,7 +283,7 @@ twodvector<double>	TemporalPopulation::Activate( const std::vector<double>& inpu
 						      const double activationRadius, const bool normalize )
 {
 	twodvector<double>	output;
-	auto	response = SelfOrganizingMap::getResponse(input);
+	auto	response = StaticUnits::getResponse(input);
 
 	if ( response.distances[response.ranking[1]] <= activationRadius ) {		// more than one unit is inside activationRadius
 		auto	distanceIndexes = less_than_or_equal_to_indexes(response.distances,activationRadius);
@@ -341,7 +351,7 @@ int	TemporalPopulation::Activate( const responseInfo& response,
 int	TemporalPopulation::Activate( const std::vector<double>& input,
 						      const std::vector<int>& linkingUnits )
 {
-	auto	newResponse = TemporalPopulation::getTemporalResponse(SelfOrganizingMap::getResponse(input), linkingUnits);
+	auto	newResponse = TemporalPopulation::getTemporalResponse(StaticUnits::getResponse(input), linkingUnits);
 
 	auto	minimumIndexes = get_indexes_from_value(newResponse.distances, newResponse.distances[newResponse.ranking[0]]);
 
@@ -405,7 +415,7 @@ std::vector<int>	TemporalPopulation::Activate( const std::vector<double>& input,
 {
 	std::vector<int>	output;
 
-	auto	response = TemporalPopulation::getTemporalResponse(SelfOrganizingMap::getResponse(input), linkingUnits);
+	auto	response = TemporalPopulation::getTemporalResponse(StaticUnits::getResponse(input), linkingUnits);
 
 	if ( numberOfActiveUnits > _unitsDimensionality )
 	{
@@ -480,7 +490,7 @@ std::vector<int>	TemporalPopulation::Activate( const std::vector<double>& input,
 						      const double activationRadius )
 {
 	std::vector<int>	output;
-	auto	response = SelfOrganizingMap::getResponse(input);
+	auto	response = StaticUnits::getResponse(input);
 
 	if ( response.distances[response.ranking[1]] <= activationRadius ) {		// more than one unit is inside activationRadius
 		auto	distanceIndexes = less_than_or_equal_to_indexes(response.distances,activationRadius);
@@ -540,21 +550,117 @@ std::vector<int>	TemporalPopulation::Activate( const responseInfo& response, con
 } // end function Activate
 
 
+// decides which units in the population to activate depending on response info.
+std::vector<int>	TemporalPopulation::Activate( const responseInfo& response, const twodvector<int>& linkingUnits,
+						      const double activationThreshold, const double sparsity )
+{
+	assert(sparsity <= 1.0 && sparsity > 0.0);
+	std::vector<int>	output;
+
+	int	minimumNumberOfActiveUnits = (int)((1.0-sparsity)*_unitsDimensionality);
+	if ( response.distances[response.ranking[1]] <= activationThreshold ) {		// more than one unit is below activationThreshold
+		auto	distanceIndexes = less_than_or_equal_to_indexes(response.distances,activationThreshold);
+		auto	newResponse = TemporalPopulation::getTemporalResponse(response, linkingUnits);
+		auto	newDistances = get_elements(newResponse.distances, distanceIndexes);
+		double	newDistanceMinimum = get_minimum_element(newDistances);
+		auto	minimumIndexes = get_indexes_from_value(newResponse.distances, newDistanceMinimum);
+		auto	aptToActivate = coincidence_indexes(distanceIndexes,minimumIndexes);
+		newDistances.erase(std::remove(newDistances.begin(), newDistances.end(), newDistanceMinimum), newDistances.end());
+		while ( (int)aptToActivate.size() < minimumNumberOfActiveUnits &&
+			newDistances.size() > 0 ) {
+			newDistanceMinimum = get_minimum_element(newDistances);
+			minimumIndexes = get_indexes_from_value(newResponse.distances, newDistanceMinimum);
+			auto	partialAptToActivate = coincidence_indexes(distanceIndexes,minimumIndexes);
+			aptToActivate.insert(aptToActivate.end(), partialAptToActivate.begin(), partialAptToActivate.end());
+			newDistances.erase(std::remove(newDistances.begin(), newDistances.end(), newDistanceMinimum), newDistances.end());
+		}
+		std::random_device rd;
+		std::mt19937 g(rd());
+		std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+
+		for ( int number = 0; number < (int)aptToActivate.size(); number++ )
+			output.push_back(distanceIndexes[aptToActivate[number]]);
+	}
+	else if ( response.distances[response.ranking[0]] <= activationThreshold ) {	// just the best matching unit is below activationThreshold
+		output.push_back(response.ranking[0]);
+	}
+	else {										// no unit is below activation threshold
+		output.push_back(-1);
+	}
+
+	output.shrink_to_fit();
+	return	output;
+} // end function Activate
+
+
+// decides which units in the population to activate depending on response info.
+std::vector<int>	TemporalPopulation::Activate( const responseInfo& response, const twodvector<int>& linkingUnits,
+						      const std::size_t numberOfExcitedUnits, const double sparsity,
+	       					      const bool randomness )
+{
+	assert(sparsity <= 1.0 && sparsity > 0.0);
+	std::vector<int>	output;
+
+	int	minimumNumberOfActiveUnits = (int)((1.0-sparsity)*_unitsDimensionality);
+	assert((int)numberOfExcitedUnits > minimumNumberOfActiveUnits);
+	
+	std::vector<int>	excitedUnits;
+	if ( !randomness ) {
+		excitedUnits.insert(excitedUnits.end(),
+				    response.ranking.end()-std::min(numberOfExcitedUnits,response.ranking.size()),
+				    response.ranking.end());
+	}
+	else {
+		excitedUnits = getRandomWeightedIndexes(response.excitation,
+							std::min(numberOfExcitedUnits,response.excitation.size()));
+	}
+
+	auto	newResponse = TemporalPopulation::getTemporalResponse(response, linkingUnits, true);
+	auto	newExcitations = get_elements(newResponse.excitation, excitedUnits);
+	double	newExcitationMaximum = get_maximum_element(newExcitations);
+	auto	maximumIndexes = get_indexes_from_value(newResponse.excitation, newExcitationMaximum);
+	auto	aptToActivate = coincidence_indexes(excitedUnits,maximumIndexes);
+	newExcitations.erase(std::remove(newExcitations.begin(), newExcitations.end(), newExcitationMaximum), newExcitations.end());
+	while ( (int)aptToActivate.size() < minimumNumberOfActiveUnits &&
+		newExcitations.size() > 0 ) {
+		newExcitationMaximum = get_maximum_element(newExcitations);
+		maximumIndexes = get_indexes_from_value(newResponse.excitation, newExcitationMaximum);
+		auto	partialAptToActivate = coincidence_indexes(excitedUnits,maximumIndexes);
+		aptToActivate.insert(aptToActivate.end(), partialAptToActivate.begin(), partialAptToActivate.end());
+		newExcitations.erase(std::remove(newExcitations.begin(), newExcitations.end(), newExcitationMaximum), newExcitations.end());
+	}
+	std::random_device rd;
+	std::mt19937 g(rd());
+	std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+
+	for ( std::size_t number = 0; number < aptToActivate.size(); number++ )
+		output.push_back(excitedUnits[aptToActivate[number]]);
+		
+	output.shrink_to_fit();
+	assert(output.size() != 0);
+	return	output;
+} // end function Activate
+
+
 // modifies response ussing _temporalUnits
 responseInfo	TemporalPopulation::getTemporalResponse( const responseInfo& response,
 							 const std::vector<int>& linkingUnits )
 {
 	assert(linkingUnits.size() == _temporalUnits.size());
+	std::vector<double>	totalTemporalUnits;
 	responseInfo	newResponse;
 
-	newResponse.distances = response.distances;
+	totalTemporalUnits.resize(_unitsDimensionality);
+	newResponse = response;
 
-	for ( int link = 0; link < (int)_temporalUnits.size(); link++ ) {
+	for( std::size_t link = 0; link < linkingUnits.size(); link++) {
 		if ( linkingUnits[link] != -1 )
-			std::transform(newResponse.distances.begin(), newResponse.distances.end(),
-				       _temporalUnits[link][linkingUnits[link]].begin(),
-				       newResponse.distances.begin(), std::divides<double>());
+			totalTemporalUnits += _temporalUnits[link][linkingUnits[link]];
 	}
+
+	std::transform(newResponse.distances.begin(), newResponse.distances.end(),
+		       totalTemporalUnits.begin(),
+		       newResponse.distances.begin(), std::divides<double>());
 
 	newResponse.ranking = sort_indexes(newResponse.distances);
 
@@ -564,29 +670,45 @@ responseInfo	TemporalPopulation::getTemporalResponse( const responseInfo& respon
 
 // modifies response ussing _temporalUnits
 responseInfo	TemporalPopulation::getTemporalResponse( const responseInfo& response,
-							 twodvector<int> linkingUnits )
+							 const twodvector<int>& linkingUnits,
+	       						 const bool excitation )
 {
 	assert(linkingUnits.size() == _temporalUnits.size());
+	if (excitation)
+		assert((int)response.excitation.size() == _unitsDimensionality &&
+		       response.distances.size() == 0);
+	else
+		assert((int)response.distances.size() == _unitsDimensionality &&
+		       response.excitation.size() == 0);
+
+	std::vector<double>	totalTemporalUnits;
 	std::vector<std::size_t>    aux;
 	responseInfo	newResponse;
 
-	newResponse.distances = response.distances;
+	totalTemporalUnits.resize(_unitsDimensionality);
+	newResponse = response;
 
-	if (!is_rectangular(linkingUnits))
-		make_rectangular(linkingUnits,-1,aux);
-
-	auto	numberOfLinks = linkingUnits.size();
-	auto	numberOfAlternatives = linkingUnits[0].size();
-	for ( std::size_t alternative = 0; alternative < numberOfAlternatives; alternative++ ) {
-		for ( std::size_t link = 0; link < numberOfLinks; link++ ) {
-			if ( linkingUnits[link][alternative] != -1 )
-				std::transform(newResponse.distances.begin(), newResponse.distances.end(),
-					       _temporalUnits[link][linkingUnits[link][alternative]].begin(),
-					       newResponse.distances.begin(), std::divides<double>());
+	for( std::size_t link = 0; link < linkingUnits.size(); link++) {
+		for(const auto& linkingUnitAlternative : linkingUnits[link]) {
+			if ( linkingUnitAlternative != -1 )
+				totalTemporalUnits += _temporalUnits[link][linkingUnitAlternative];
 		}
 	}
 
-	newResponse.ranking = sort_indexes(newResponse.distances);
+	if (excitation) {
+		std::transform(newResponse.excitation.begin(), newResponse.excitation.end(),
+			       totalTemporalUnits.begin(),
+			       newResponse.excitation.begin(), std::multiplies<double>());
+
+		newResponse.ranking = sort_indexes(newResponse.excitation);
+	}
+	else {
+		std::transform(newResponse.distances.begin(), newResponse.distances.end(),
+			       totalTemporalUnits.begin(),
+			       newResponse.distances.begin(), std::divides<double>());
+
+		newResponse.ranking = sort_indexes(newResponse.distances);
+	}
 
 	return	newResponse;
 } // end function getTemporalResponse
