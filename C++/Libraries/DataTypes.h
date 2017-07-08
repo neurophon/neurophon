@@ -17,6 +17,7 @@
 #ifndef DATATYPES_H
 #define DATATYPES_H
 
+#include <vector>
 
 // This defines a bi-dimensional vector
 template <typename T> 
