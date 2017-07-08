@@ -33,9 +33,9 @@
 
 using namespace std;
 
-#include "../Constants.h"
-#include "../DataTypes.h"
-#include "../OctaveInterface.h"
+#include "../Libraries/Constants.h"
+#include "../Libraries/DataTypes.h"
+#include "../Libraries/OctaveInterface.h"
 
 // function to filter AudioVector.mat through a Mel Filter Bank.
 void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWindow, int persistenceValue, double leakyCoefficient,
