@@ -23,12 +23,14 @@
 #include "../Libraries/OctaveInterface.h"
 #include "../Libraries/Templates.h"
 #include "../Libraries/DataTypes.h"
+#include "../Libraries/Random.h"
 
 using namespace std;
 
 // constructor that initializes _weights at random
 SelfOrganizingMap::SelfOrganizingMap( const std::vector<int>& unitsArrayDimensionality, int inputDimensionality )
 {
+	_updateStep = 0;
 	_inputDimensionality = inputDimensionality;
 	_unitsDimensionality = std::accumulate(unitsArrayDimensionality.begin(), unitsArrayDimensionality.end(), 1, std::multiplies<int>());
 	_unitsArrayDimensionality.resize(unitsArrayDimensionality.size());
@@ -44,6 +46,30 @@ SelfOrganizingMap::SelfOrganizingMap( const std::vector<int>& unitsArrayDimensio
 	for ( int row = 0; row < _unitsDimensionality; row++ )
 		for ( int column = 0; column < inputDimensionality; column++ )
 			_weights[row][column] = ((double) rand() / (RAND_MAX));		// generate secret number between 0 and 1
+} // end SelfOrganizingMap default constructor
+
+
+// constructor that initializes _weights at random
+// between weight limits
+SelfOrganizingMap::SelfOrganizingMap( const std::vector<int>& unitsArrayDimensionality, int inputDimensionality,
+	       			      const std::array<double,2>& weightLimits )
+{
+	_updateStep = 0;
+	_inputDimensionality = inputDimensionality;
+	_unitsDimensionality = std::accumulate(unitsArrayDimensionality.begin(), unitsArrayDimensionality.end(), 1, std::multiplies<int>());
+	_unitsArrayDimensionality.resize(unitsArrayDimensionality.size());
+	for ( unsigned int dim = 0; dim < unitsArrayDimensionality.size(); dim++ )
+		_unitsArrayDimensionality[dim] = unitsArrayDimensionality[dim];
+
+	SelfOrganizingMap::validateObject();
+
+	_weights.resize(_unitsDimensionality);
+	for ( int row = 0; row < _unitsDimensionality; row++ )
+		_weights[row].resize(inputDimensionality);
+
+	for ( int row = 0; row < _unitsDimensionality; row++ )
+		for ( int column = 0; column < inputDimensionality; column++ )
+			_weights[row][column] = randomFromDoubleInterval(weightLimits[0],weightLimits[1]);
 } // end SelfOrganizingMap default constructor
 
 
@@ -81,7 +107,9 @@ void	SelfOrganizingMap::validateObject()
 
 	if ( _inputDimensionality < (int)_unitsArrayDimensionality.size() )
 	{
-		cout << "SelfOrganizingMap object inconsistence: inputDimensionality = " << _inputDimensionality << " must be greater than or -at least- equal to unitsArrayDimensionality.size() = " << _unitsArrayDimensionality.size() << "\n" << endl;
+		cout << "SelfOrganizingMap object inconsistence: inputDimensionality = " << _inputDimensionality
+		     << " must be greater than or -at least- equal to unitsArrayDimensionality.size() = "
+		     << _unitsArrayDimensionality.size() << "\n" << endl;
 		exit( EXIT_FAILURE );
 	}
 
@@ -89,7 +117,9 @@ void	SelfOrganizingMap::validateObject()
 
 	if ( _unitsDimensionality != product )
 	{
-		cout << "SelfOrganizingMap object inconsistence: unitsDimensionality = " << _unitsDimensionality << " must be equal to the product of the elements in unitsArrayDimensionality which is = " << product << "\n" << endl;
+		cout << "SelfOrganizingMap object inconsistence: unitsDimensionality = " << _unitsDimensionality
+		     << " must be equal to the product of the elements in unitsArrayDimensionality which is = "
+		     << product << "\n" << endl;
 		exit( EXIT_FAILURE );
 	}
 } // end function validateObject
@@ -115,7 +145,7 @@ void	SelfOrganizingMap::learningRule( double learningRate, double neighborParame
 		std::bind1st(std::multiplies<double>(),learningRate*neighborhoodValue));
 		_weights[row]+=deltaWeights[row];
 	}
-} // end function learningRuleFunction
+} // end function learningRule
 
 
 // function to compute the neighborhood value in the lateral interaction between units in the array for learning process
@@ -124,9 +154,10 @@ double	SelfOrganizingMap::learningNeighborhood( double widthParameter, int winne
 	assert(winnerPosition < _unitsDimensionality && otherPosition < _unitsDimensionality);
 	std::vector<int>	winnerPositionArray, otherPositionArray, auxiliary;
 
-	winnerPositionArray = unravelIndex(winnerPosition, _unitsArrayDimensionality);		// gets a vector with the array coordinates corresponding to the winnerPosition
-	otherPositionArray = unravelIndex(otherPosition, _unitsArrayDimensionality);		// gets a vector with the array coordinates corresponding to the otherPosition
-
+	winnerPositionArray = unravelIndex(winnerPosition, _unitsArrayDimensionality);		// gets a vector with the array coordinates
+       												// corresponding to the winnerPosition
+	otherPositionArray = unravelIndex(otherPosition, _unitsArrayDimensionality);		// gets a vector with the array coordinates
+       												// corresponding to the otherPosition
 	auxiliary = winnerPositionArray - otherPositionArray;
 	std::transform(auxiliary.begin(), auxiliary.end(), auxiliary.begin(),
 		       static_cast<double(*)(double)>(&std::abs));
@@ -162,7 +193,7 @@ responseInfo	SelfOrganizingMap::getResponse( const std::vector<double>& input )
 	response.ranking = sort_indexes(response.distances);
 
 	return response;										// returns the units response
-} // end function findWinnerUnit
+} // end function getResponse
 
 
 // function to save the Self Organizing Map's status in a file
@@ -183,7 +214,10 @@ void	SelfOrganizingMap::saveSelfOrganizingMapStatus( const std::string& selfOrga
 	save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
 
         // saves _weights
-	save_vector_of_vectors_as_matrix(str + "weights", _weights, outfile);
+	save_vector_of_vectors_conditionally_as_sparse_matrix(str + "weights",_weights,SPARSITY_THRESHOLD,outfile);
+
+        // saves _updateStep
+	save_as_scalar(str + "updateStep", _updateStep, outfile);
 } // end functiom saveSelfOrganizingMapStatus
 
 
@@ -211,7 +245,11 @@ void	SelfOrganizingMap::loadSelfOrganizingMapStatus( const std::string& selfOrga
 
 		auxiliary = "# name: " + STR + "weights";
 		if ( str.compare(auxiliary) == 0 )
-			load_matrix_to_vector_of_vectors(_weights, infile);
+			load_conditional_sparse_matrix_to_vector_of_vectors(_weights,infile);
+
+		auxiliary = "# name: " + STR + "updateStep";
+		if ( str.compare(auxiliary) == 0 )
+			load_scalar(_updateStep, infile);
 	}
 } // end functiom loadSelfOrganizingMapStatus
 
