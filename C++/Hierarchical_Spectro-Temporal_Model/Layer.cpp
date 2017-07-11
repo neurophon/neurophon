@@ -676,7 +676,8 @@ layerResponse	Layer::computeResponse( const layerResponse& afferent, const layer
 												      parameters.learning.plasticity,
 												      proximalInputs.sparseDistributedRepresentation,
 												      PROXIMAL_SYNAPTIC_THRESHOLD,
-												      parameters.activationHomeostasis);
+												      parameters.activationHomeostasis,
+												      true);
 							
 							_layerColumns[column].homeostasis(true,
 											  parameters.learning.synapticHomeostasis,
