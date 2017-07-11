@@ -1,0 +1,1331 @@
+Aphril 20 2017
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_4 object
+layerParameters	parameters_H1_L4;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = true;
+parameters_H1_L4.distalSensitivity = true;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.5;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L4.learning.enableProximalLearning = true;
+parameters_H1_L4.learning.enableDistalLearning = true;
+parameters_H1_L4.learning.proximalLearningRate = 0.9;
+parameters_H1_L4.learning.proximalNeighborhood = 5;
+parameters_H1_L4.learning.distalLearningRate = 1;
+parameters_H1_L4.learning.distalNeighborhood = 5;
+parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.proximalInformationThreshold = 0.1;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 0.7;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L23.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_2_Layer_4 object
+layerParameters	parameters_H2_L4;
+parameters_H2_L4.numberOfBestResponses = 10;
+parameters_H2_L4.enableLearning = true;
+parameters_H2_L4.distalSensitivity = false;
+parameters_H2_L4.proximalInformationThreshold = 0.1;
+parameters_H2_L4.distalInformationThreshold = 0.5;
+parameters_H2_L4.activationRadius = 0.7;
+parameters_H2_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H2_L4.learning.enableProximalLearning = true;
+parameters_H2_L4.learning.enableDistalLearning = true;
+parameters_H2_L4.learning.proximalLearningRate = 0.9;
+parameters_H2_L4.learning.proximalNeighborhood = 5;
+parameters_H2_L4.learning.distalLearningRate = 1;
+parameters_H2_L4.learning.distalNeighborhood = 5;
+parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H2_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H2_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H2_L4.learning.limitsLearningRate = 0.1;
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 4
+
+	size_t	iterations = 2;
+
+	std::vector<int>	afferentArrayDimensionality = {5,128};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+	std::vector<int>	columnsArrayDimensionality = {2,8};
+
+	std::vector<int>	afferentReceptiveField = {1,9};
+	double			afferentPercentage = 0.5;
+	bool			afferentWrapAround = false;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = false;
+
+	std::vector<int>	lateralDistalReceptiveField = {0,1};
+	double			lateralDistalPercentage = 0.5;
+	bool			lateralDistalWrapAround = false;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {20,10};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {1};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	std::string	name = "Hierarchy_1_Layer_4";
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {2,8};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {2,8};
+
+	std::vector<int>	afferentReceptiveField = {1,2};
+	double			afferentPercentage = 0.5;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {0,0};
+	double			lateralProximalPercentage = 1.0;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {1,2};
+	double			lateralDistalPercentage = 0.5;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {20,10};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {20,10};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	name = "Hierarchy_1_Layer_23";
+
+	// This is Hierarchical Layer 2
+	// Cortical Layer 4
+	std::vector<int>	afferentArrayDimensionality = {2,8};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {2,8};
+
+	std::vector<int>	afferentReceptiveField = {1,2};
+	double			afferentPercentage = 0.15;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {0,0};
+	double			lateralDistalPercentage = 1.0;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {20,10};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {20,10};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 3;
+	name = "Hierarchy_2_Layer_4";
+
+
+
+Testing
+
+learn = false;
+
+
+// general layer parameters initialization
+// for the Hierarchy_1_Layer_4 object
+layerParameters parameters_H1_L4;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = learn;
+parameters_H1_L4.distalSensitivity = true;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.5;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L4.learning.enableProximalLearning = true;
+parameters_H1_L4.learning.enableDistalLearning = true;
+parameters_H1_L4.learning.proximalLearningRate = 0.9;
+parameters_H1_L4.learning.proximalNeighborhood = 5;
+parameters_H1_L4.learning.distalLearningRate = 1;
+parameters_H1_L4.learning.distalNeighborhood = 5;
+parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+parameters_H1_L4.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H1_L4.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H1_L4.learning.distalLearningRate = 0.1*0.01;
+parameters_H1_L4.learning.distalNeighborhood = 1;
+
+
+
+
+
+// general layer parameters initialization
+// for the Hierarchy_1_Layer_23 object
+layerParameters parameters_H1_L23;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = learn;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.proximalInformationThreshold = 0.1;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 0.7;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L23.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+parameters_H1_L23.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H1_L23.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H1_L23.learning.distalLearningRate = 0.1*0.01;
+parameters_H1_L23.learning.distalNeighborhood = 1;
+
+
+
+
+
+// general layer parameters initialization
+// for the Hierarchy_2_Layer_4 object
+layerParameters parameters_H2_L4;
+parameters_H2_L4.numberOfBestResponses = 10;
+parameters_H2_L4.enableLearning = learn;
+parameters_H2_L4.distalSensitivity = false;
+parameters_H2_L4.proximalInformationThreshold = 0.1;
+parameters_H2_L4.distalInformationThreshold = 0.5;
+parameters_H2_L4.activationRadius = 0.7;
+parameters_H2_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H2_L4.learning.enableProximalLearning = true;
+parameters_H2_L4.learning.enableDistalLearning = true;
+parameters_H2_L4.learning.proximalLearningRate = 0.9;
+parameters_H2_L4.learning.proximalNeighborhood = 5;
+parameters_H2_L4.learning.distalLearningRate = 1;
+parameters_H2_L4.learning.distalNeighborhood = 5;
+parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H2_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H2_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H2_L4.learning.limitsLearningRate = 0.1;
+
+parameters_H2_L4.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H2_L4.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H2_L4.learning.distalLearningRate = 0.1*0.01;
+parameters_H2_L4.learning.distalNeighborhood = 1;
+
+
+ 14 // File Name:           Constants.h
+ 15 // File Description:    Constant definitions. This file contains the constant definitions to be used in the code
+ 16 
+ 17 #ifndef CONTANTS_H
+ 18 #define CONTANTS_H
+ 19 
+ 20 // This is the synaptic increment
+ 21 #define SYNAPTIC_INCREMENT      0.001
+ 22 
+ 23 // This is the synaptic decrement
+ 24 #define SYNAPTIC_DECREMENT      0.001
+ 25 
+ 26 // This is the period of updates
+ 27 #define UPDATE_PERIOD   10000
+ 28 
+ 29 // This is threshold imposed to the input information
+ 30 #define INPUT_THRESHOLD         0.000001
+ 31 
+ 32 // This is the threshold from which a massive activation
+ 33 // is considered as a prediction fault
+ 34 #define PREDICTION_FAULT_THRESHOLD      10
+ 35 
+ 36 // This is the busting taken for distal synapses
+ 37 // growing when there is a prediction fault
+ 38 #define BUSTING 10
+ 39 
+ 40 #endif
+
+
+April 21 2017
+
+Training:
+parameters_H1_L23.proximalInformationThreshold = 0.3;
+	parameters_H1_L23.learning.proximalInformationThreshold = 0.3;
+
+parameters_H2_L4.proximalInformationThreshold = 0.3;
+	parameters_H2_L4.learning.proximalInformationThreshold = 0.3;
+
+Testing:
+parameters_H1_L23.proximalInformationThreshold = 0.3;
+	parameters_H1_L23.learning.proximalInformationThreshold = 0.3;
+
+parameters_H2_L4.proximalInformationThreshold = 0.3;
+	parameters_H2_L4.learning.proximalInformationThreshold = 0.3;
+
+April 22 2017
+
+Training:
+parameters_H1_L4.distalSensitivity = false;
+
+	std::vector<int>	afferentArrayDimensionality = {5,128};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+	std::vector<int>	columnsArrayDimensionality = {2,8};
+
+	std::vector<int>	afferentReceptiveField = {2,113};
+	double			afferentPercentage = 0.05;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = false;
+
+	std::vector<int>	lateralDistalReceptiveField = {0,1};
+	double			lateralDistalPercentage = 0.5;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+Testing:
+parameters_H1_L4.distalSensitivity = false;
+
+April 24 2017
+
+Training:
+parameters_H1_L4.activationRadius = 0.7;
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 4
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {20,20};
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {20,20};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {20,20};
+
+	// This is Hierarchical Layer 2
+	// Cortical Layer 4
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {20,20};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {20,20};
+
+Testing:
+parameters_H1_L4.activationRadius = 0.7;
+
+May 2 2017
+
+Training:
+// general layer parameters initialization
+// for Hierarchy_1_Layer_4 object
+layerParameters	parameters_H1_L4;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = true;
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.8;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L4.learning.enableProximalLearning = true;
+parameters_H1_L4.learning.enableDistalLearning = true;
+parameters_H1_L4.learning.proximalLearningRate = 0.9;
+parameters_H1_L4.learning.proximalNeighborhood = 5;
+parameters_H1_L4.learning.distalLearningRate = 1;
+parameters_H1_L4.learning.distalNeighborhood = 5;
+parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = true;
+parameters_H1_L23.proximalInformationThreshold = 0.3;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 0.8;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L23.learning.proximalInformationThreshold = 0.3;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_2_Layer_4 object
+layerParameters	parameters_H2_L4;
+parameters_H2_L4.numberOfBestResponses = 10;
+parameters_H2_L4.enableLearning = true;
+parameters_H2_L4.distalSensitivity = true;
+parameters_H2_L4.proximalInformationThreshold = 0.3;
+parameters_H2_L4.distalInformationThreshold = 0.5;
+parameters_H2_L4.activationRadius = 0.8;
+parameters_H2_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H2_L4.learning.enableProximalLearning = true;
+parameters_H2_L4.learning.enableDistalLearning = true;
+parameters_H2_L4.learning.proximalLearningRate = 0.9;
+parameters_H2_L4.learning.proximalNeighborhood = 5;
+parameters_H2_L4.learning.distalLearningRate = 1;
+parameters_H2_L4.learning.distalNeighborhood = 5;
+parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H2_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H2_L4.learning.proximalInformationThreshold = 0.3;
+parameters_H2_L4.learning.limitsLearningRate = 0.1;
+
+
+
+	std::vector<int>	afferentArrayDimensionality = {5,128};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+	std::vector<int>	columnsArrayDimensionality = {4,4};
+
+	std::vector<int>	afferentReceptiveField = {2,63};
+	double			afferentPercentage = 0.03;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = false;
+
+	std::vector<int>	lateralDistalReceptiveField = {0,0};
+	double			lateralDistalPercentage = 1.0;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {1};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	std::string	name = "Hierarchy_1_Layer_4";
+
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {4,4};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {4,4};
+
+	std::vector<int>	afferentReceptiveField = {1,1};
+	double			afferentPercentage = 0.5;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {1,1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {1,1};
+	double			lateralDistalPercentage = 0.5;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	name = "Hierarchy_1_Layer_23";
+
+
+
+	// This is Hierarchical Layer 2
+	// Cortical Layer 4
+	std::vector<int>	afferentArrayDimensionality = {4,4};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {4,4};
+
+	std::vector<int>	afferentReceptiveField = {1,1};
+	double			afferentPercentage = 0.5;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {0,0};
+	double			lateralDistalPercentage = 1.0;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 3;
+	name = "Hierarchy_2_Layer_4";
+
+Testing:
+// general layer parameters initialization
+// for the Hierarchy_1_Layer_4 object
+layerParameters parameters_H1_L4;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = learn;
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.8;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+	parameters_H1_L4.learning.enableProximalLearning = true;
+	parameters_H1_L4.learning.enableDistalLearning = true;
+	parameters_H1_L4.learning.proximalLearningRate = 0.9;
+	parameters_H1_L4.learning.proximalNeighborhood = 5;
+	parameters_H1_L4.learning.distalLearningRate = 1;
+	parameters_H1_L4.learning.distalNeighborhood = 5;
+	parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+	parameters_H1_L4.learning.distalSynapsesThreshold = 0.0001;
+	parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+	parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+parameters_H1_L4.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H1_L4.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H1_L4.learning.distalLearningRate = 0.1*0.01;
+parameters_H1_L4.learning.distalNeighborhood = 1;
+
+
+
+
+
+// general layer parameters initialization
+// for the Hierarchy_1_Layer_23 object
+layerParameters parameters_H1_L23;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = learn;
+parameters_H1_L23.distalSensitivity = true;
+parameters_H1_L23.proximalInformationThreshold = 0.3;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 0.8;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+	parameters_H1_L23.learning.enableProximalLearning = true;
+	parameters_H1_L23.learning.enableDistalLearning = true;
+	parameters_H1_L23.learning.proximalLearningRate = 0.9;
+	parameters_H1_L23.learning.proximalNeighborhood = 5;
+	parameters_H1_L23.learning.distalLearningRate = 1;
+	parameters_H1_L23.learning.distalNeighborhood = 5;
+	parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+	parameters_H1_L23.learning.distalSynapsesThreshold = 0.0001;
+	parameters_H1_L23.learning.proximalInformationThreshold = 0.3;
+	parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+parameters_H1_L23.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H1_L23.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H1_L23.learning.distalLearningRate = 0.1*0.01;
+parameters_H1_L23.learning.distalNeighborhood = 1;
+
+
+
+
+
+// general layer parameters initialization
+// for the Hierarchy_2_Layer_4 object
+layerParameters parameters_H2_L4;
+parameters_H2_L4.numberOfBestResponses = 10;
+parameters_H2_L4.enableLearning = learn;
+parameters_H2_L4.distalSensitivity = false;
+parameters_H2_L4.proximalInformationThreshold = 0.3;
+parameters_H2_L4.distalInformationThreshold = 0.5;
+parameters_H2_L4.activationRadius = 0.8;
+parameters_H2_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+	parameters_H2_L4.learning.enableProximalLearning = true;
+	parameters_H2_L4.learning.enableDistalLearning = true;
+	parameters_H2_L4.learning.proximalLearningRate = 0.9;
+	parameters_H2_L4.learning.proximalNeighborhood = 5;
+	parameters_H2_L4.learning.distalLearningRate = 1;
+	parameters_H2_L4.learning.distalNeighborhood = 5;
+	parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
+	parameters_H2_L4.learning.distalSynapsesThreshold = 0.0001;
+	parameters_H2_L4.learning.proximalInformationThreshold = 0.3;
+	parameters_H2_L4.learning.limitsLearningRate = 0.1;
+
+parameters_H2_L4.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H2_L4.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H2_L4.learning.distalLearningRate = 0.1*0.01;
+parameters_H2_L4.learning.distalNeighborhood = 1;
+
+may 5 2017
+
+Training:
+
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H2_L4.distalSensitivity = false;
+
+parameters_H1_L23.proximalInformationThreshold = 0.5;
+parameters_H1_L23.learning.proximalInformationThreshold = 0.5;
+
+	int	temporalGatheringAfferentValue = 6;
+	name = "Hierarchy_2_Layer_4";
+
+
+Testing:
+
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H2_L4.distalSensitivity = false;
+
+parameters_H1_L23.proximalInformationThreshold = 0.5;
+parameters_H1_L23.learning.proximalInformationThreshold = 0.5;
+
+
+may 13 2017
+
+Training:
+
+	it was just for the first layer of the model (H1_L4).
+	std::vector<int>	columnsArrayDimensionality = {6,6};
+
+may 28 2017
+
+Training:
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_4 object
+layerParameters	parameters_H1_L4;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = true;
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.8;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L4.learning.enableProximalLearning = true;
+parameters_H1_L4.learning.enableDistalLearning = true;
+parameters_H1_L4.learning.proximalLearningRate = 0.9;
+parameters_H1_L4.learning.proximalNeighborhood = 5;
+parameters_H1_L4.learning.distalLearningRate = 1;
+parameters_H1_L4.learning.distalNeighborhood = 5;
+parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.proximalInformationThreshold = 0.15;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 0.8;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.distalSynapsesThreshold = 0.0001;
+parameters_H1_L23.learning.proximalInformationThreshold = 0.15;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_2_Layer_4 object
+layerParameters	parameters_H2_L4;
+parameters_H2_L4.numberOfBestResponses = 10;
+parameters_H2_L4.enableLearning = true;
+parameters_H2_L4.distalSensitivity = false;
+parameters_H2_L4.proximalInformationThreshold = 0.2;
+parameters_H2_L4.distalInformationThreshold = 0.5;
+parameters_H2_L4.activationRadius = 0.8;
+parameters_H2_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H2_L4.learning.enableProximalLearning = true;
+parameters_H2_L4.learning.enableDistalLearning = true;
+parameters_H2_L4.learning.proximalLearningRate = 0.9;
+parameters_H2_L4.learning.proximalNeighborhood = 5;
+parameters_H2_L4.learning.distalLearningRate = 1;
+parameters_H2_L4.learning.distalNeighborhood = 5;
+parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H2_L4.learning.distalSynapsesThreshold = 0.0001;
+parameters_H2_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H2_L4.learning.limitsLearningRate = 0.1;
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 4
+
+	size_t	iterations = 2;
+
+	std::vector<int>	afferentArrayDimensionality = {5,128};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+	std::vector<int>	columnsArrayDimensionality = {4,4};
+
+	std::vector<int>	afferentReceptiveField = {2,63};
+	double			afferentPercentage = 0.03;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = false;
+
+	std::vector<int>	lateralDistalReceptiveField = {0,0};
+	double			lateralDistalPercentage = 1.0;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {1};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = false;
+	std::string	name = "Hierarchy_1_Layer_4";
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {4,4};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {2,2};
+	double			afferentPercentage = 0.5;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {4,4};
+	double			lateralProximalPercentage = 0.09;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.09;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {10,10};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = false;
+	name = "Hierarchy_1_Layer_23";
+
+	// This is Hierarchical Layer 2
+	// Cortical Layer 4
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {0,0};
+	double			afferentPercentage = 1.0;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.5;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {0,0};
+	double			lateralDistalPercentage = 1.0;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {10,10};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 4;
+	bool	binaryProcessing = false;
+	name = "Hierarchy_2_Layer_4";
+
+Testing:
+
+// general layer parameters initialization
+// for the Hierarchy_1_Layer_4 object
+layerParameters parameters_H1_L4;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = learn;
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.8;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+	parameters_H1_L4.learning.enableProximalLearning = true;
+	parameters_H1_L4.learning.enableDistalLearning = true;
+	parameters_H1_L4.learning.proximalLearningRate = 0.9;
+	parameters_H1_L4.learning.proximalNeighborhood = 5;
+	parameters_H1_L4.learning.distalLearningRate = 1;
+	parameters_H1_L4.learning.distalNeighborhood = 5;
+	parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+	parameters_H1_L4.learning.distalSynapsesThreshold = 0.0001;
+	parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+	parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+parameters_H1_L4.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H1_L4.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H1_L4.learning.distalLearningRate = 0.1*0.01;
+parameters_H1_L4.learning.distalNeighborhood = 1;
+
+
+
+
+
+// general layer parameters initialization
+// for the Hierarchy_1_Layer_23 object
+layerParameters parameters_H1_L23;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = learn;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.proximalInformationThreshold = 0.15;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 0.8;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+	parameters_H1_L23.learning.enableProximalLearning = true;
+	parameters_H1_L23.learning.enableDistalLearning = true;
+	parameters_H1_L23.learning.proximalLearningRate = 0.9;
+	parameters_H1_L23.learning.proximalNeighborhood = 5;
+	parameters_H1_L23.learning.distalLearningRate = 1;
+	parameters_H1_L23.learning.distalNeighborhood = 5;
+	parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+	parameters_H1_L23.learning.distalSynapsesThreshold = 0.0001;
+	parameters_H1_L23.learning.proximalInformationThreshold = 0.15;
+	parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+parameters_H1_L23.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H1_L23.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H1_L23.learning.distalLearningRate = 0.1*0.01;
+parameters_H1_L23.learning.distalNeighborhood = 1;
+
+
+
+
+
+// general layer parameters initialization
+// for the Hierarchy_2_Layer_4 object
+layerParameters parameters_H2_L4;
+parameters_H2_L4.numberOfBestResponses = 10;
+parameters_H2_L4.enableLearning = learn;
+parameters_H2_L4.distalSensitivity = false;
+parameters_H2_L4.proximalInformationThreshold = 0.2;
+parameters_H2_L4.distalInformationThreshold = 0.5;
+parameters_H2_L4.activationRadius = 0.8;
+parameters_H2_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+	parameters_H2_L4.learning.enableProximalLearning = true;
+	parameters_H2_L4.learning.enableDistalLearning = true;
+	parameters_H2_L4.learning.proximalLearningRate = 0.9;
+	parameters_H2_L4.learning.proximalNeighborhood = 5;
+	parameters_H2_L4.learning.distalLearningRate = 1;
+	parameters_H2_L4.learning.distalNeighborhood = 5;
+	parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
+	parameters_H2_L4.learning.distalSynapsesThreshold = 0.0001;
+	parameters_H2_L4.learning.proximalInformationThreshold = 0.2;
+	parameters_H2_L4.learning.limitsLearningRate = 0.1;
+
+parameters_H2_L4.learning.proximalLearningRate = 0.1*(0.01/0.9);
+parameters_H2_L4.learning.proximalNeighborhood = 0.5*0.01;
+parameters_H2_L4.learning.distalLearningRate = 0.1*0.01;
+parameters_H2_L4.learning.distalNeighborhood = 1;
+
+jul 8 2017
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_4 object
+layerParameters	parameters_H1_L4;
+parameters_H1_L4.sparsity = 0.99;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = true;
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L4.activationHomeostasis = false;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.8;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L4.learning.enableProximalLearning = true;
+parameters_H1_L4.learning.enableDistalLearning = true;
+parameters_H1_L4.learning.plasticity = 0.01;
+parameters_H1_L4.learning.spikeTimeDependentSynapticPlasticity = true;
+parameters_H1_L4.learning.synapticHomeostasis = false;
+parameters_H1_L4.learning.proximalLearningRate = 0.9;
+parameters_H1_L4.learning.proximalNeighborhood = 5;
+parameters_H1_L4.learning.distalLearningRate = 1;
+parameters_H1_L4.learning.distalNeighborhood = 5;
+parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.sparsity = 0.99;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.activationHomeostasis = true;
+parameters_H1_L23.proximalInformationThreshold = 0.5;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 1.0;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.plasticity = 0.01;
+parameters_H1_L23.learning.spikeTimeDependentSynapticPlasticity = true;
+parameters_H1_L23.learning.synapticHomeostasis = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.proximalInformationThreshold = 0.15;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+// general layer parameters initialization
+// for Hierarchy_2_Layer_4 object
+layerParameters	parameters_H2_L4;
+parameters_H2_L4.sparsity = 0.98;
+parameters_H2_L4.numberOfBestResponses = 10;
+parameters_H2_L4.enableLearning = true;
+parameters_H2_L4.distalSensitivity = false;
+parameters_H2_L4.activationHomeostasis = false;
+parameters_H2_L4.proximalInformationThreshold = 0.2;
+parameters_H2_L4.distalInformationThreshold = 0.5;
+parameters_H2_L4.activationRadius = 0.8;
+parameters_H2_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H2_L4.learning.enableProximalLearning = true;
+parameters_H2_L4.learning.enableDistalLearning = true;
+parameters_H2_L4.learning.plasticity = 0.01;
+parameters_H2_L4.learning.spikeTimeDependentSynapticPlasticity = false;
+parameters_H2_L4.learning.synapticHomeostasis = false;
+parameters_H2_L4.learning.proximalLearningRate = 0.9;
+parameters_H2_L4.learning.proximalNeighborhood = 5;
+parameters_H2_L4.learning.distalLearningRate = 1;
+parameters_H2_L4.learning.distalNeighborhood = 5;
+parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H2_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H2_L4.learning.limitsLearningRate = 0.1;
+
+/*
+
+std::size_t	startLearningAt = 2, finishLearningAt = 2;
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 4
+
+	size_t	iterations = 2;
+
+	std::vector<int>	afferentArrayDimensionality = {5,128};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+	std::vector<int>	columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {2,63};
+	double			afferentPercentage = 0.03;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.09;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.09;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {1};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = false;
+	std::string	name = "Hierarchy_1_Layer_4";
+
+	// This is for the first creation of the layer and its training
+	// This belongs to the Hierarchical layer 1 Cortical layer 4
+	std::cout << "\n";
+	std::cout << "Creating object layer 4 in hierarchy 1.";
+	std::cout << "\n";
+	Layer	Hierarchy_1_Layer_4(afferentArrayDimensionality, apicalArrayDimensionality, columnsArrayDimensionality,
+		      	afferentReceptiveField, afferentPercentage, afferentWrapAround,
+			lateralProximalReceptiveField, lateralProximalPercentage, lateralProximalWrapAround,
+		      	lateralDistalReceptiveField, lateralDistalPercentage, lateralDistalWrapAround,
+		      	apicalReceptiveField, apicalPercentage, apicalWrapAround,
+		      	iterationNum,
+			temporalGatheringAfferentValue,
+			populationsArrayDimensionality,
+			afferentPopulationsArrayDimensionality,
+			apicalPopulationsArrayDimensionality,
+			binaryProcessing);
+
+
+
+
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.09;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {1,1};
+	double			lateralProximalPercentage = 0.4;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.09;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+	// This is for the first creation of the layer and its training
+	// This belongs to the Hierarchical layer 1 Cortical layer 23
+	std::cout << "\n";
+	std::cout << "Creating object layer 23 in hierarchy 1.";
+	std::cout << "\n";
+	Layer	Hierarchy_1_Layer_23(afferentArrayDimensionality, apicalArrayDimensionality, columnsArrayDimensionality,
+		      	afferentReceptiveField, afferentPercentage, afferentWrapAround,
+			lateralProximalReceptiveField, lateralProximalPercentage, lateralProximalWrapAround,
+		      	lateralDistalReceptiveField, lateralDistalPercentage, lateralDistalWrapAround,
+		      	apicalReceptiveField, apicalPercentage, apicalWrapAround,
+		      	iterationNum,
+			temporalGatheringAfferentValue,
+			populationsArrayDimensionality,
+			afferentPopulationsArrayDimensionality,
+			apicalPopulationsArrayDimensionality,
+			binaryProcessing);
+
+
+
+	In Layer object we have
+
+				if ( _binaryProcessing ) {
+					if( proximalInputs.coordinates.size() != 0 ) throw std::domain_error(
+						"Layer::computeResponse inconsistence.\n"
+						"proximalInputs.coordinates.size() != 0\n" ) ;
+
+					std::vector<int>	activeUnits;
+					responseInfo		response;
+					if ( parameters.enableLearning ) {
+						if ( parameters.learning.enableProximalLearning ) {
+							response = _layerColumns[column].learningRule(parameters.learning.proximalLearningRate,
+												      parameters.learning.proximalNeighborhood,
+												      parameters.learning.plasticity,
+												      proximalInputs.sparseDistributedRepresentation,
+												      PROXIMAL_SYNAPTIC_THRESHOLD,
+												      parameters.activationHomeostasis);
+							
+							_layerColumns[column].homeostasis(true,
+											  parameters.learning.synapticHomeostasis,
+											  parameters.activationHomeostasis,
+											  PROXIMAL_SYNAPTIC_THRESHOLD);
+						}
+						else {
+							response = _layerColumns[column].getResponse(proximalInputs.sparseDistributedRepresentation);
+
+							_layerColumns[column].homeostasis(false,
+											  parameters.learning.synapticHomeostasis,
+											  parameters.activationHomeostasis,
+											  PROXIMAL_SYNAPTIC_THRESHOLD);
+						}
+						std::size_t	numberOfExcitedUnits = 0.1*std::accumulate(_populationsArrayDimensionality.begin(),
+										       			   _populationsArrayDimensionality.end(),
+										       			   1, std::multiplies<int>());	
+						activeUnits = _layerColumns[column].Activate(response,
+											     distalInputs.currentIndexes,
+						      					     numberOfExcitedUnits,
+											     parameters.sparsity);
+
+						if ( parameters.learning.enableDistalLearning ) {
+							if ( activeUnits.size() > PREDICTION_FAULT_THRESHOLD ) {
+								_layerColumns[column].Update(activeUnits,
+											     distalInputs.currentIndexes,
+											     true, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate*BUSTING);
+							}
+							else {
+								_layerColumns[column].Update(activeUnits,
+											     distalInputs.currentIndexes,
+											     true, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate);
+							}
+							
+							if ( parameters.learning.spikeTimeDependentSynapticPlasticity ) {
+								auto	lastActiveUnits = lateral.currentIndexes[column]; 
+								_layerColumns[column].Update(lastActiveUnits,
+									       		     distalInputs.currentIndexes,
+											     false, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate);
+							}						
+						}
+					}
+					else {
+						response = _layerColumns[column].getResponse(proximalInputs.sparseDistributedRepresentation);
+						
+						_layerColumns[column].homeostasis(false,
+										  parameters.learning.synapticHomeostasis,
+										  parameters.activationHomeostasis,
+										  PROXIMAL_SYNAPTIC_THRESHOLD);
+						
+						std::size_t	numberOfExcitedUnits = 0.1*std::accumulate(_populationsArrayDimensionality.begin(),
+										       			   _populationsArrayDimensionality.end(),
+										       			   1, std::multiplies<int>());	
+						activeUnits = _layerColumns[column].Activate(response,
+											     distalInputs.currentIndexes,
+						      					     numberOfExcitedUnits,
+											     parameters.sparsity);
+					}
+					#pragma omp critical
+					{
+						if ( activeUnits.size() == 1 ) {	// If there is just one active unit 
+							if ( activeUnits[0] == -1 ) {	// If this index offers no information
+								output.currentIndexes[column].resize(1);
+								output.currentIndexes[column][0] = -1;
+								output.synchronization[column] = true;
+								output.information[column] = false;
+							}
+							else {				// If this index offers information
+								output.currentIndexes[column] = activeUnits;
+								output.synchronization[column] = true;
+								output.information[column] = true;
+							}
+						}
+						else { // If there is more than one active unit, processes just the ones which offer information
+							for(auto& s: activeUnits)
+								if ( s != -1 ) // Stack only indexes that offers information
+									output.currentIndexes[column].push_back(s);
+
+							output.synchronization[column] = true;
+							output.information[column] = true;
+						}
+					}
+				}
+	
+
+jul 9 2017
+
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.sparsity = 0.99;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.activationHomeostasis = true;
+parameters_H1_L23.proximalInformationThreshold = 0.5;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 1.0;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.plasticity = 0.005;
+parameters_H1_L23.learning.spikeTimeDependentSynapticPlasticity = true;
+parameters_H1_L23.learning.synapticHomeostasis = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.proximalInformationThreshold = 0.15;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+jul 11 2017
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.sparsity = 0.99;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.activationHomeostasis = true;
+parameters_H1_L23.proximalInformationThreshold = 0.5;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 1.0;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.plasticity = 0.02;
+parameters_H1_L23.learning.spikeTimeDependentSynapticPlasticity = true;
+parameters_H1_L23.learning.synapticHomeostasis = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.proximalInformationThreshold = 0.15;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+				response = _layerColumns[column].learningRule(parameters.learning.proximalLearningRate,
+									      parameters.learning.proximalNeighborhood,
+									      parameters.learning.plasticity,
+									      proximalInputs.sparseDistributedRepresentation,
+									      PROXIMAL_SYNAPTIC_THRESHOLD,
+									      parameters.activationHomeostasis,
+									      true);
+
