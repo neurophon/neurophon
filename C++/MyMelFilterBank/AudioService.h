@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <fftw3.h>
 #include <string>
+#include <vector>
 
 struct audioVector				// This structure will contain a pointer to the audio vector X and the sample frequency Fs
 {
@@ -146,7 +147,7 @@ void	leakyIntegrator( melArray, double );
 void	filterAudioVector( int, double, double, int, double, bool, bool, bool, bool, bool, bool, double, std::string, std::string );
 
 // function to compute the convolution between two vectors
-void	convolve( const double, size_t, const double, size_t, double );
+void	convolve( const std::vector<double>, std::size_t, const std::vector<double>, std::size_t, std::vector<double>& );
 
 // function to apply kernel convolution to the Mel Filter-Bank.
 // Thought this function does not modify Array, it can free such structure depending on freeArray boolean variable.

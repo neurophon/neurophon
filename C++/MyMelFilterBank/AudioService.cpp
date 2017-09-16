@@ -85,7 +85,10 @@ void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWin
 
 	spectrumArray arrayS;
 
-	arrayS = extractSpectrum(array);
+	#pragma omp critical
+	{
+		arrayS = extractSpectrum(array);
+	}
 
 	////////////////////////////////////////// spectrum extracted from the different channels in array
 
@@ -219,9 +222,24 @@ void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWin
 	std::string	ImagKernelName = "Imag" + kernelName;
 	if ( kernelConvolution )
 	{
-		RealArray = applyKernelConvolution( MFCC, RealKernelName, false, false );
-		LeftImagArray = applyKernelConvolution( MFCC, ImagKernelName, false, false );
-		RightImagArray = applyKernelConvolution( MFCC, ImagKernelName, true, true );
+		#pragma omp parallel sections
+		{
+			#pragma omp section
+			{
+				RealArray = applyKernelConvolution( MFCC, RealKernelName, false, false );
+			}
+			#pragma omp section
+			{
+				LeftImagArray = applyKernelConvolution( MFCC, ImagKernelName, false, false );
+			}
+			#pragma omp section
+			{
+				RightImagArray = applyKernelConvolution( MFCC, ImagKernelName, false, true );
+			}
+		}
+		
+		for (int i = 0; i < MFCC.channels; i++)
+			free(MFCC.channel[i]);
 	}
 
 	////////////////////////////////////////// Kernel Convolution applied to the MFCC
@@ -232,9 +250,21 @@ void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWin
 
 	////////////////////////////////////////// saves the Mel Frequency baks from the different channels
 
-	saveMFCC(RealArray, ("Real" + fileName));
-	saveMFCC(LeftImagArray, ("LeftImag" + fileName));
-	saveMFCC(RightImagArray, ("RightImag" + fileName));
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+		{
+			saveMFCC(RealArray, ("Real" + fileName));
+		}
+		#pragma omp section
+		{
+			saveMFCC(LeftImagArray, ("LeftImag" + fileName));
+		}
+		#pragma omp section
+		{
+			saveMFCC(RightImagArray, ("RightImag" + fileName));
+		}
+	}
 
 	////////////////////////////////////////// Mel Frequency baks saved from the different channels
 
@@ -252,6 +282,18 @@ void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWin
 
 	////////////////////////////////////////// Deltas and Delta-Deltas of the MFCC saved in two files
 
+
+
+
+
+
+	////////////////////////////////////////// computes the norm
+	
+	//auto	output = computeNorm(RealArray, LeftImagArray);
+
+	////////////////////////////////////////// 
+
+	//return	output;
 } // end function filterAudioVector
 
 
@@ -1369,10 +1411,9 @@ void	leakyIntegrator( melArray Array, double coefficient )
 } // end function leakyIntegrator
 
 
-// function to compute the convolution between two vectors
-void	convolve(const double Signal[/* SignalLen */], size_t SignalLen,
-		 const double Kernel[/* KernelLen */], size_t KernelLen,
-		 double Result[/* SignalLen + KernelLen - 1 */])
+void	convolve(const std::vector<double> Signal/* SignalLen */, size_t SignalLen,
+		 const std::vector<double> Kernel/* KernelLen */, size_t KernelLen,
+		 std::vector<double>& Result/* SignalLen + KernelLen - 1 */)
 {
 	size_t n;
 
@@ -1394,14 +1435,14 @@ void	convolve(const double Signal[/* SignalLen */], size_t SignalLen,
 
 
 // function to apply kernel convolution to the Mel Filter-Bank.
-// Thought this function does not modify Array, it can free such structure depending on freeArray boolean variable.
+// Though this function does not modify Array, it can free such structure depending on freeArray boolean variable.
 melArray	applyKernelConvolution( melArray Array, std::string kernelName, bool freeArray, bool negativeKernel )
 {
 	int i, j, k;
 
-	double	signal[Array.filters];
-	double	kernel[Array.filters];
-	double	result[2*Array.filters - 1];
+	std::vector<double>	signal(Array.filters);
+	std::vector<double>	kernel(Array.filters);
+	std::vector<double>	result(2*Array.filters - 1);
 
 	std::vector<double>	AuxiliaryKernel;
 
@@ -1469,7 +1510,43 @@ melArray	applyKernelConvolution( melArray Array, std::string kernelName, bool fr
 } // end function applyKernelConvolution
 
 
+/*// computes norm of the components*/
+//twodvector<double>	computeNorm( const melArray& component1, const melArray& component2 )
+//{
+	//assert(component1.filters == component2.filters);
+	//assert(component1.channels == component2.channels);
+	//assert(component1.chunks == component2.chunks);
+	//assert(component1.fourierWindowLength == component2.fourierWindowLength);
+	//assert(component1.fourierWindowLength == component2.fourierWindowLength);
+	//assert(component1.sampleFrequency == component2.sampleFrequency);
+	//assert(component1.fourierSamplingPeriod == component2.fourierSamplingPeriod);
+	//assert(component1.fourierWindow == component2.fourierWindow);
+	//assert(component1.samplingPeriod == component2.samplingPeriod);
+	//std::vector<std::vector<double>>	output;
 
+	//output.resize(component1.channels);
+	//for (int i = 0; i < component1.channels; i++)
+	//{
+		//output[i].resize(component1.chunks*component1.filters);	// reserves space for the output channel
+		//#pragma omp parallel for default(none) shared(i, component1, component2, output)
+		//for (int j = 0; j < component1.chunks; j++)
+		//{
+			//for (int k = 0; k < component1.filters; k++) {
+				//auto	first = *((component1.channel[i] + j*component1.filters) + k);
+				//auto	second = *((component2.channel[i] + j*component2.filters) + k);
+				//auto	auxiliary = std::sqrt(std::pow(first,2)+std::pow(second,2));
+				
+				//#pragma omp critical
+				//{
+					//output[i][j*component1.filters + k] = auxiliary;
+				//}
+			//}
+
+		//}
+	//}
+
+	//return	output;
+//} // end function computeNorm
 
 
 
