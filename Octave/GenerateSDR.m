@@ -27,7 +27,7 @@ function GenerateSDR(numberOfSDRs, dimensionality, sparsity)
 			endfor
 		endwhile
 
-		inputVector{row,1} = SDR;
+		inputVector{row,1} = unique(SDR);
 	endfor
 
 	save Input.mat inputVector
