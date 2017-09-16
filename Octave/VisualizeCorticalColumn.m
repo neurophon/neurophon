@@ -24,7 +24,7 @@ function VisualizeCorticalColumn()
 	title("SDR_plot");
 	numberOfRows = rows(output);
 	numberOfUnits = prod(dimensions);
-	for row = 1:numberOfRows
+	for row = 1:1:numberOfRows
 		SDR = zeros(1,numberOfUnits);
 		for activeUnit = output{row,1}
 			SDR(1,activeUnit+1) = 1;
