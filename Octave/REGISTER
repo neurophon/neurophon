@@ -1329,3 +1329,663 @@ parameters_H1_L23.learning.limitsLearningRate = 0.1;
 									      parameters.activationHomeostasis,
 									      true);
 
+jul 12 2017
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.sparsity = 0.99;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.activationHomeostasis = true;
+parameters_H1_L23.proximalInformationThreshold = 0.5;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 1.0;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.plasticity = 0.01;
+parameters_H1_L23.learning.spikeTimeDependentSynapticPlasticity = true;
+parameters_H1_L23.learning.synapticHomeostasis = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.proximalInformationThreshold = 0.15;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.09;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {4,4};
+	double			lateralProximalPercentage = 0.09;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.09;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+
+
+jul 15 2017
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_23 object
+layerParameters	parameters_H1_L23;
+parameters_H1_L23.sparsity = 0.99;
+parameters_H1_L23.numberOfBestResponses = 10;
+parameters_H1_L23.enableLearning = true;
+parameters_H1_L23.distalSensitivity = false;
+parameters_H1_L23.activationHomeostasis = true;
+parameters_H1_L23.proximalInformationThreshold = 0.5;
+parameters_H1_L23.distalInformationThreshold = 0.5;
+parameters_H1_L23.activationRadius = 1.0;
+parameters_H1_L23.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L23.learning.enableProximalLearning = true;
+parameters_H1_L23.learning.enableDistalLearning = true;
+parameters_H1_L23.learning.plasticity = 0.01;
+parameters_H1_L23.learning.spikeTimeDependentSynapticPlasticity = true;
+parameters_H1_L23.learning.synapticHomeostasis = true;
+parameters_H1_L23.learning.proximalLearningRate = 0.9;
+parameters_H1_L23.learning.proximalNeighborhood = 5;
+parameters_H1_L23.learning.distalLearningRate = 1;
+parameters_H1_L23.learning.distalNeighborhood = 5;
+parameters_H1_L23.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L23.learning.proximalInformationThreshold = 0.15;
+parameters_H1_L23.learning.limitsLearningRate = 0.1;
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.05;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {4,4};
+	double			lateralProximalPercentage = 0.05;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.09;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 3;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+jul 20 2017
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.05;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.05;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.09;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+
+jul 22 2017
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.15;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.05;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.15;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+jul 25 2017
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.15;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {4,4};
+	double			lateralProximalPercentage = 0.15;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.15;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+jul 28 2017
+
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.15;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {4,4};
+	double			lateralProximalPercentage = 0.14;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.15;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+ago 2 2017
+
+In computeResponse function
+
+		if ( synchronizations ) { // If there is proximal OR distal synchronization
+			if ( information ) { // If there is enough proximal OR distal information
+				if ( _binaryProcessing ) {
+					if( proximalInputs.coordinates.size() != 0 ) throw std::domain_error(
+						"Layer::computeResponse inconsistence.\n"
+						"proximalInputs.coordinates.size() != 0\n" ) ;
+
+					std::vector<int>	activeUnits;
+					responseInfo		response;
+					if ( parameters.enableLearning ) {
+						if ( parameters.learning.enableProximalLearning ) {
+							response = _layerColumns[column].learningRule(parameters.learning.proximalLearningRate,
+												      parameters.learning.proximalNeighborhood,
+												      parameters.learning.plasticity,
+												      proximalInputs.sparseDistributedRepresentation,
+												      PROXIMAL_SYNAPTIC_THRESHOLD,
+												      parameters.activationHomeostasis);
+							
+							_layerColumns[column].homeostasis(true,
+											  parameters.learning.synapticHomeostasis,
+											  parameters.activationHomeostasis,
+											  PROXIMAL_SYNAPTIC_THRESHOLD);
+						}
+	
+
+
+
+
+Increment in the busting in activationHomeostasis
+
+// applies homeostasis to the object
+void	StaticUnits::homeostasis( const bool learning, const bool synapticHomeostasis,
+				  const bool activationHomeostasis, const double synapticThreshold )
+{
+	if (activationHomeostasis && (positiveMod(_updateStep,5) == 0)) {
+		StaticUnits::activationHomeostasis(10*BUSTING);
+	}
+
+	if ( _updateStep > UPDATE_PERIOD ) {
+		if ( learning ) {
+			if (synapticHomeostasis) {
+				StaticUnits::synapticHomeostasis(synapticThreshold);	
+			}
+			else {
+				StaticUnits::synapticGrowthLimitation(synapticThreshold);
+			}
+		}
+
+		auto	result = std::min_element(_unitsActivity.begin(), _unitsActivity.end());
+		int	minimum = _unitsActivity[std::distance(_unitsActivity.begin(), result)];
+		minimum = minimum-1;
+		transform(_unitsActivity.begin(), _unitsActivity.end(), _unitsActivity.begin(),
+			  bind2nd(std::minus<int>(), minimum));
+
+		//omp_set_num_threads(NUM_THREADS);
+		//#pragma omp parallel for default(none)
+		for ( int row = 0; row < _unitsDimensionality; row++ )
+			_weightsSparsity[row] = (get_rectangular_sparsity(_weights[row]) > SPARSITY_THRESHOLD);
+
+		_updateStep = 0;
+	}
+	_updateStep++;
+} // end function homeostasis
+
+
+
+ago 6 2017
+
+
+In computeResponse in Layer.cpp
+
+		if ( synchronizations ) { // If there is proximal OR distal synchronization
+			if ( information ) { // If there is enough proximal OR distal information
+				if ( _binaryProcessing ) {
+					if( proximalInputs.coordinates.size() != 0 ) throw std::domain_error(
+						"Layer::computeResponse inconsistence.\n"
+						"proximalInputs.coordinates.size() != 0\n" ) ;
+
+					std::vector<int>	activeUnits;
+					responseInfo		response;
+					if ( parameters.enableLearning ) {
+						if ( parameters.learning.enableProximalLearning ) {
+							response = _layerColumns[column].learningRule(parameters.learning.proximalLearningRate,
+												      parameters.learning.proximalNeighborhood,
+												      parameters.learning.plasticity,
+												      proximalInputs.sparseDistributedRepresentation,
+												      PROXIMAL_SYNAPTIC_THRESHOLD,
+												      parameters.activationHomeostasis,
+												      true);
+In StaticUnits.cpp 
+
+void	StaticUnits::homeostasis( const bool learning, const bool synapticHomeostasis,
+				  const bool activationHomeostasis, const double synapticThreshold )
+{
+	if (activationHomeostasis && (positiveMod(_updateStep,5) == 0)) {
+		StaticUnits::activationHomeostasis(10*BUSTING);
+	}
+
+	if ( _updateStep > UPDATE_PERIOD ) {
+
+
+ago 7 2017
+
+
+Training of the encoder (H1_L4) in order to test the new sort_indexes template.	
+
+// Sort vector indexes based on vector values (ascending orfder)
+// when the vector values are equal, the order aplied is random
+template <typename T>
+std::vector<int> sort_indexes(const std::vector<T> &v) {
+
+	// initialize original index locations
+	std::vector<int> idx(v.size());
+	iota(idx.begin(), idx.end(), 0);
+	std::random_shuffle(idx.begin(),idx.end());
+	// sort indexes based on comparing values in v
+	sort(idx.begin(), idx.end(),
+	[&v](int i1, int i2)
+	{return v[i1] < v[i2];});
+		
+	return idx;
+} // end template sort_indexes
+
+
+This is the layer parameters and structure:
+
+// general layer parameters initialization
+// for Hierarchy_1_Layer_4 object
+layerParameters	parameters_H1_L4;
+parameters_H1_L4.sparsity = 0.99;
+parameters_H1_L4.numberOfBestResponses = 10;
+parameters_H1_L4.enableLearning = true;
+parameters_H1_L4.distalSensitivity = false;
+parameters_H1_L4.activationHomeostasis = false;
+parameters_H1_L4.proximalInformationThreshold = 0.1;
+parameters_H1_L4.distalInformationThreshold = 0.5;
+parameters_H1_L4.activationRadius = 0.8;
+parameters_H1_L4.selectionCriteria = "BMUsRanking";
+// learning parameters
+parameters_H1_L4.learning.enableProximalLearning = true;
+parameters_H1_L4.learning.enableDistalLearning = true;
+parameters_H1_L4.learning.plasticity = 0.01;
+parameters_H1_L4.learning.spikeTimeDependentSynapticPlasticity = true;
+parameters_H1_L4.learning.synapticHomeostasis = false;
+parameters_H1_L4.learning.proximalLearningRate = 0.9;
+parameters_H1_L4.learning.proximalNeighborhood = 5;
+parameters_H1_L4.learning.distalLearningRate = 1;
+parameters_H1_L4.learning.distalNeighborhood = 5;
+parameters_H1_L4.learning.distalNeighborhoodFunction = "mex";
+parameters_H1_L4.learning.proximalInformationThreshold = 0.2;
+parameters_H1_L4.learning.limitsLearningRate = 0.1;
+
+std::size_t	startLearningAt = 1, finishLearningAt = 1;
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 4
+
+	size_t	iterations = 2;
+
+	std::vector<int>	afferentArrayDimensionality = {5,128};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+	std::vector<int>	columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {2,63};
+	double			afferentPercentage = 0.03;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.09;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.09;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {1};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = false;
+	std::string	name = "Hierarchy_1_Layer_4";
+
+
+
+ago 10 2017
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.15;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {4,4};
+	double			lateralProximalPercentage = 0.14;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.15;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+
+				if ( _binaryProcessing ) {
+					if( proximalInputs.coordinates.size() != 0 ) throw std::domain_error(
+						"Layer::computeResponse inconsistence.\n"
+						"proximalInputs.coordinates.size() != 0\n" ) ;
+
+					std::vector<int>	activeUnits;
+					responseInfo		response;
+					if ( parameters.enableLearning ) {
+						if ( parameters.learning.enableProximalLearning ) {
+							response = _layerColumns[column].learningRule(parameters.learning.proximalLearningRate,
+												      parameters.learning.proximalNeighborhood,
+												      parameters.learning.plasticity,
+												      proximalInputs.sparseDistributedRepresentation,
+												      PROXIMAL_SYNAPTIC_THRESHOLD,
+												      parameters.activationHomeostasis,
+												      true);
+							
+							_layerColumns[column].homeostasis(true,
+											  parameters.learning.synapticHomeostasis,
+											  parameters.activationHomeostasis,
+											  PROXIMAL_SYNAPTIC_THRESHOLD);
+						}
+						else {
+							response = _layerColumns[column].getResponse(proximalInputs.sparseDistributedRepresentation);
+
+							_layerColumns[column].homeostasis(false,
+											  parameters.learning.synapticHomeostasis,
+											  parameters.activationHomeostasis,
+											  PROXIMAL_SYNAPTIC_THRESHOLD);
+						}
+						std::size_t	numberOfExcitedUnits = 0.1*std::accumulate(_populationsArrayDimensionality.begin(),
+										       			   _populationsArrayDimensionality.end(),
+										       			   1, std::multiplies<int>());	
+						activeUnits = _layerColumns[column].Activate(response,
+											     distalInputs.currentIndexes,
+						      					     numberOfExcitedUnits,
+											     parameters.sparsity,
+											     true);
+
+						if ( parameters.learning.enableDistalLearning ) {
+							if ( activeUnits.size() > PREDICTION_FAULT_THRESHOLD ) {
+								_layerColumns[column].Update(activeUnits,
+											     distalInputs.currentIndexes,
+											     true, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate*BUSTING);
+							}
+							else {
+								_layerColumns[column].Update(activeUnits,
+											     distalInputs.currentIndexes,
+											     true, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate);
+							}
+							
+							if ( parameters.learning.spikeTimeDependentSynapticPlasticity ) {
+								auto	lastActiveUnits = lateral.currentIndexes[column]; 
+								_layerColumns[column].Update(lastActiveUnits,
+									       		     distalInputs.currentIndexes,
+											     false, DISTAL_SYNAPTIC_THRESHOLD,
+											     parameters.learning.distalLearningRate);
+							}						
+						}
+					}
+					else {
+						response = _layerColumns[column].getResponse(proximalInputs.sparseDistributedRepresentation);
+						
+						_layerColumns[column].homeostasis(false,
+										  parameters.learning.synapticHomeostasis,
+										  parameters.activationHomeostasis,
+										  PROXIMAL_SYNAPTIC_THRESHOLD);
+						
+						std::size_t	numberOfExcitedUnits = 0.1*std::accumulate(_populationsArrayDimensionality.begin(),
+										       			   _populationsArrayDimensionality.end(),
+										       			   1, std::multiplies<int>());	
+						activeUnits = _layerColumns[column].Activate(response,
+											     distalInputs.currentIndexes,
+						      					     numberOfExcitedUnits,
+											     parameters.sparsity);
+					}
+	
+
+
+ago 12 2017
+
+
+	// This is Hierarchical Layer 1
+	// Cortical Layer 23
+	std::vector<int>	afferentArrayDimensionality = {9,9};
+	std::vector<int>	apicalArrayDimensionality = {1,1};
+				columnsArrayDimensionality = {9,9};
+
+	std::vector<int>	afferentReceptiveField = {4,4};
+	double			afferentPercentage = 0.3;
+	bool			afferentWrapAround = true;
+
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.14;
+	bool			lateralProximalWrapAround = true;
+
+	std::vector<int>	lateralDistalReceptiveField = {4,4};
+	double			lateralDistalPercentage = 0.15;
+	bool			lateralDistalWrapAround = true;
+
+	std::vector<int>	apicalReceptiveField = {-1,-1};
+	double			apicalPercentage = 0.5;
+	bool			apicalWrapAround = false;
+
+	int			iterationNum = 0;
+
+	std::vector<int>	populationsArrayDimensionality;
+	populationsArrayDimensionality = {15,15};
+
+	std::vector<int>	afferentPopulationsArrayDimensionality;
+	afferentPopulationsArrayDimensionality = {15,15};
+
+	std::vector<int>	apicalPopulationsArrayDimensionality;
+	apicalPopulationsArrayDimensionality = {1};
+
+	int	temporalGatheringAfferentValue = 1;
+	bool	binaryProcessing = true;
+	name = "Hierarchy_1_Layer_23";
+
+
