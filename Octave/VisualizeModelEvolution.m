@@ -22,24 +22,24 @@ load inputs.mat
 ##{
 if ( finishProcessingAt >= 1 )
 	# Load OutputLayer_H1_L4.mat.
-	load outputLayer_H1_L4.mat
+	load EncoderLayerOutput.mat
 	columnsArrayDimensionality_H1_L4 = columnsArrayDimensionality;
 	populationsArrayDimensionality_H1_L4 = populationsArrayDimensionality;
-	layerOutput_H1_L4 = layerOutput;
+	layerOutput_H1_L4 = encoderLayerOutput;
 endif
 if ( finishProcessingAt >= 2 )
 	# Load OutputLayer_H1_L23.mat.
-	load outputLayer_H1_L23.mat
+	load RegularLayerOutput_0.mat
 	columnsArrayDimensionality_H1_L23 = columnsArrayDimensionality;
 	populationsArrayDimensionality_H1_L23 = populationsArrayDimensionality;
-	layerOutput_H1_L23 = layerOutput;
+	layerOutput_H1_L23 = regularLayerOutput;
 endif
 if ( finishProcessingAt >= 3 )
 	# Load OutputLayer_H2_L4.mat.
-	load outputLayer_H2_L4.mat
+	load RegularLayerOutput_1.mat
 	columnsArrayDimensionality_H2_L4 = columnsArrayDimensionality;
 	populationsArrayDimensionality_H2_L4 = populationsArrayDimensionality;
-	layerOutput_H2_L4 = layerOutput;
+	layerOutput_H2_L4 = regularLayerOutput;
 endif
 #}
 
