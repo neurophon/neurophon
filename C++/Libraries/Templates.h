@@ -66,17 +66,19 @@ void	sample_vector( std::vector<T> vec, std::vector<T>& sample, size_t sampleSiz
 
 
 // Sort vector indexes based on vector values (ascending orfder)
+// when the vector values are equal, the order aplied is random
 template <typename T>
 std::vector<int> sort_indexes(const std::vector<T> &v) {
 
 	// initialize original index locations
 	std::vector<int> idx(v.size());
 	iota(idx.begin(), idx.end(), 0);
-
+	std::random_shuffle(idx.begin(),idx.end());
 	// sort indexes based on comparing values in v
 	sort(idx.begin(), idx.end(),
-		[&v](int i1, int i2) {return v[i1] < v[i2];});
-
+	[&v](int i1, int i2)
+	{return v[i1] < v[i2];});
+		
 	return idx;
 } // end template sort_indexes
 
