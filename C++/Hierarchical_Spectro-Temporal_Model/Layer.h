@@ -32,6 +32,8 @@ class Layer
 {
 public:
 
+				Layer(); // Layer default constructor
+
 				Layer( const std::vector<int>&, const std::vector<int>&,
 					const std::vector<int>&,
 					const std::vector<int>&, const double, const bool,

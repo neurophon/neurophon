@@ -31,6 +31,9 @@
 using namespace std;
 
 
+// default constructor
+Layer::Layer() {};
+
 // constructor that initializes ...
 Layer::Layer( const std::vector<int>& afferentArrayDimensionality, const std::vector<int>& apicalArrayDimensionality,
 	      const std::vector<int>& columnsArrayDimensionality,
@@ -698,7 +701,8 @@ layerResponse	Layer::computeResponse( const layerResponse& afferent, const layer
 						activeUnits = _layerColumns[column].Activate(response,
 											     distalInputs.currentIndexes,
 						      					     numberOfExcitedUnits,
-											     parameters.sparsity);
+											     parameters.sparsity,
+											     true);
 
 						if ( parameters.learning.enableDistalLearning ) {
 							if ( activeUnits.size() > PREDICTION_FAULT_THRESHOLD ) {
@@ -1175,7 +1179,7 @@ layerResponse	Layer::gatherProximalInputs( const int column, const layerResponse
 						// If there is just one index and it doesn't bring information
 						if ( numberOfIndexes == 1 && afferent.temporallyGatheredIndexes[timeStep][connection][0] == -1 ) {
 							assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
-							assert(afferent.synchronization[connection] == true);
+							//assert(afferent.synchronization[connection] == true);
 							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
 							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
 						}
@@ -1184,7 +1188,7 @@ layerResponse	Layer::gatherProximalInputs( const int column, const layerResponse
 									afferent.temporallyGatheredIndexes[timeStep][connection].end(), [](int i){return i == -1;}) ) {
 							assert(numberOfIndexes > 1);
 							assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
-							assert(afferent.synchronization[connection] == true);
+							//assert(afferent.synchronization[connection] == true);
 							proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
 							proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
 						}
