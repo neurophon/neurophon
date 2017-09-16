@@ -37,10 +37,10 @@ cd ..
 
 if ( finishProcessingAt >= 1 )
 	# Loads the output form hierarchy 1 layer 4 of the model
-	load outputLayer_H1_L4.mat
+	load EncoderLayerOutput.mat
 	columnsArrayDimensionality_H1_L4 = columnsArrayDimensionality;
 	populationsArrayDimensionality_H1_L4 = populationsArrayDimensionality;
-	layerOutput_H1_L4 = layerOutput;
+	layerOutput_H1_L4 = encoderLayerOutput;
 	load outputs_H1_L4_scale_parameters_libsvm.mat
 	outputs_H1_L4_slopes = slopes;
 	outputs_H1_L4_intercept = intercept;
@@ -48,10 +48,10 @@ endif
 
 if ( finishProcessingAt >= 2 )
 	# Loads the output form hierarchy 1 layer 23 of the model
-	load outputLayer_H1_L23.mat
+	load RegularLayerOutput_0.mat
 	columnsArrayDimensionality_H1_L23 = columnsArrayDimensionality;
 	populationsArrayDimensionality_H1_L23 = populationsArrayDimensionality;
-	layerOutput_H1_L23 = layerOutput;
+	layerOutput_H1_L23 = regularLayerOutput;
 	load outputs_H1_L23_scale_parameters_libsvm.mat
 	outputs_H1_L23_slopes = slopes;
 	outputs_H1_L23_intercept = intercept;
@@ -59,10 +59,10 @@ endif
 
 if ( finishProcessingAt >= 3 )
 	# Loads the output form hierarchy 2 layer 4 of the model
-	load outputLayer_H2_L4.mat
+	load RegularLayerOutput_1.mat
 	columnsArrayDimensionality_H2_L4 = columnsArrayDimensionality;
 	populationsArrayDimensionality_H2_L4 = populationsArrayDimensionality;
-	layerOutput_H2_L4 = layerOutput;
+	layerOutput_H2_L4 = regularLayerOutput;
 	load outputs_H2_L4_scale_parameters_libsvm.mat
 	outputs_H2_L4_slopes = slopes;
 	outputs_H2_L4_intercept = intercept;
