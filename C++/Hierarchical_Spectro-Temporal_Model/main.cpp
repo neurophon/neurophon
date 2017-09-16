@@ -97,7 +97,7 @@ parameters_H2_L4.learning.distalNeighborhoodFunction = "mex";
 parameters_H2_L4.learning.proximalInformationThreshold = 0.2;
 parameters_H2_L4.learning.limitsLearningRate = 0.1;
 
-//*
+/*
 
 std::size_t	startLearningAt = 2, finishLearningAt = 2;
 
@@ -374,15 +374,15 @@ if ( startLearningAt <= 2 ) {
 				columnsArrayDimensionality = {9,9};
 
 	std::vector<int>	afferentReceptiveField = {4,4};
-	double			afferentPercentage = 0.09;
+	double			afferentPercentage = 0.3;
 	bool			afferentWrapAround = true;
 
-	std::vector<int>	lateralProximalReceptiveField = {4,4};
-	double			lateralProximalPercentage = 0.09;
+	std::vector<int>	lateralProximalReceptiveField = {-1,-1};
+	double			lateralProximalPercentage = 0.14;
 	bool			lateralProximalWrapAround = true;
 
 	std::vector<int>	lateralDistalReceptiveField = {4,4};
-	double			lateralDistalPercentage = 0.09;
+	double			lateralDistalPercentage = 0.15;
 	bool			lateralDistalWrapAround = true;
 
 	std::vector<int>	apicalReceptiveField = {-1,-1};
@@ -462,6 +462,10 @@ if ( startLearningAt <= 2 ) {
 				lateral_H1_L4 = Hierarchy_1_Layer_4.computeResponse(input[timeStep], lateral_H1_L4, apical_H1_L4, parameters_H1_L4);
 				lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(lateral_H1_L4, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
 
+				//auto	input_H1_L23 = Hierarchy_1_Layer_23.temporalGatherer(lateral_H1_L4);
+				//lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(input_H1_L23, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
+
+
 				parameters_H1_L23.learning.proximalLearningRate = 0.9 *
 							std::pow((0.01/0.9),(timeStep+iteration*timeSteps)/(timeSteps*iterations));
 				parameters_H1_L23.learning.proximalNeighborhood = 5 *
@@ -491,6 +495,10 @@ if ( startLearningAt <= 2 ) {
 				lateral_H1_L4 = Hierarchy_1_Layer_4.computeResponse(input[timeStep], lateral_H1_L4, apical_H1_L4, parameters_H1_L4);
 				lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(lateral_H1_L4, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
 
+				//auto	input_H1_L23 = Hierarchy_1_Layer_23.temporalGatherer(lateral_H1_L4);
+				//lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(input_H1_L23, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
+
+
 				parameters_H1_L23.learning.proximalLearningRate = 0.1 *
 							std::pow((0.01/0.9),(timeStep+iteration*timeSteps)/(timeSteps*iterations));
 				parameters_H1_L23.learning.proximalNeighborhood = 0.5 *
@@ -517,6 +525,11 @@ if ( startLearningAt <= 2 ) {
 			for ( size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
 				lateral_H1_L4 = Hierarchy_1_Layer_4.computeResponse(input[timeStep], lateral_H1_L4, apical_H1_L4, parameters_H1_L4);
 				lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(lateral_H1_L4, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
+
+				//auto	input_H1_L23 = Hierarchy_1_Layer_23.temporalGatherer(lateral_H1_L4);
+				//lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(input_H1_L23, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
+
+
 			}
 		}
 	}
@@ -872,7 +885,7 @@ if ( startLearningAt <= 3 ) {
 
 
 
-/*
+//*
 // This is for the use of the previously created layers and its training
 
 std::size_t	finishProcessingAt = 2;
@@ -915,7 +928,7 @@ std::cout << "\n";
 std::cout << "Loading object layer 4 in hierarchy 2.";
 std::cout << "\n";
 name = "Hierarchy_2_Layer_4";
-Layer	Hierarchy_2_Layer_4(name);
+//Layer	Hierarchy_2_Layer_4(name);
 std::cout << "\n";
 std::cout << "Layer 4 in hierarchy 2 loaded.";
 std::cout << "\n";
@@ -1094,13 +1107,16 @@ for ( size_t iteration = 0; iteration < iterations; iteration++ ) {
 		}
 
 		if ( finishProcessingAt >= 2 ) { 
+			//auto	input_H1_L23 = Hierarchy_1_Layer_23.temporalGatherer(lateral_H1_L4);
+			//lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(input_H1_L23, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
+
 			lateral_H1_L23 = Hierarchy_1_Layer_23.computeResponse(lateral_H1_L4, lateral_H1_L23, apical_H1_L23, parameters_H1_L23);
 			layerOutput_H1_L23.push_back(lateral_H1_L23.currentIndexes);
 		}
 
 		if ( finishProcessingAt >= 3 ) { 
-			auto	input_H2_L4 = Hierarchy_2_Layer_4.temporalGatherer(lateral_H1_L23);
-			lateral_H2_L4 = Hierarchy_2_Layer_4.computeResponse(input_H2_L4, lateral_H2_L4, apical_H2_L4, parameters_H2_L4);
+			//auto	input_H2_L4 = Hierarchy_2_Layer_4.temporalGatherer(lateral_H1_L23);
+			//lateral_H2_L4 = Hierarchy_2_Layer_4.computeResponse(input_H2_L4, lateral_H2_L4, apical_H2_L4, parameters_H2_L4);
 			layerOutput_H2_L4.push_back(lateral_H2_L4.currentIndexes);
 		}
 	}
@@ -1222,7 +1238,7 @@ if ( !parameters_H1_L23.enableLearning && !parameters_H1_L4.enableLearning &&
 
 // Saves the hierarchy 1 layer 23 status
 if ( parameters_H2_L4.enableLearning )
-	Hierarchy_2_Layer_4.saveLayerStatus("Hierarchy_2_Layer_4");
+	//Hierarchy_2_Layer_4.saveLayerStatus("Hierarchy_2_Layer_4");
 
 if ( !parameters_H1_L4.enableLearning && !parameters_H1_L23.enableLearning &&
      !parameters_H2_L4.enableLearning && finishProcessingAt >= 3 ) {
