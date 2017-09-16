@@ -257,7 +257,7 @@ responseInfo	StaticUnits::learningRule( const double learningRate, const double 
 							if ( _weights[row][choise] < 0.0 )
 								_weights[row][choise] = 0.0;
 						}
-						assert(_weights[row][choise] >= 0.0);
+						//assert(_weights[row][choise] >= 0.0);
 					}
 				}
 			}
@@ -337,7 +337,7 @@ responseInfo	StaticUnits::getResponse( const std::vector<std::size_t>& inputInde
 	for ( int row = 0; row < _unitsDimensionality; row++ ) {					// the index row corresponds to the units
 		double	innerProduct = 0.0;
 		for (const auto& inputIndex : inputIndexes) {
-			assert((int)inputIndex < _inputDimensionality);
+			//assert((int)inputIndex < _inputDimensionality);
 			innerProduct += _weights[row][inputIndex];
 		}
 
@@ -354,7 +354,7 @@ void	StaticUnits::homeostasis( const bool learning, const bool synapticHomeostas
 				  const bool activationHomeostasis, const double synapticThreshold )
 {
 	if (activationHomeostasis && (positiveMod(_updateStep,5) == 0)) {
-		StaticUnits::activationHomeostasis(BUSTING);
+		StaticUnits::activationHomeostasis(10*BUSTING);
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
