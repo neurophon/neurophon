@@ -39,7 +39,7 @@ public:
 											// this function guaranties certain level of sparsity
 											// in the weights matrix
 
-		StaticProcessor( const std::string&,
+		StaticProcessor( std::stringstream&,
 				 const std::string& );					// constructor that initializes _weights with previous
 											// from file
 	void	validateObject();							// function that validates the object
@@ -76,10 +76,10 @@ public:
 	void	activationHomeostasis( const double );					// computes activation homeostasis over the units
 
 	void	saveStaticProcessorStatus( const std::string&,
-					   std::ofstream& );				// function that saves the Self Organizing Map's status in a file
+					   std::stringstream& );			// function that saves the Self Organizing Map's status in a file
 
 	void	loadStaticProcessorStatus( const std::string&,
-					   std::ifstream& );				// function to load the Self Organizing Map's status from a file
+					   std::stringstream& );			// function to load the Self Organizing Map's status from a file
 
 protected:
         std::vector<std::size_t>		_unitsArrayDimensionality;		// vector with the dimensions of the array of units

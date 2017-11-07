@@ -59,7 +59,7 @@ public:
 						      const std::vector<std::size_t>&,
 		       				      const double );// validates the encoder
 
-	void			validateComumnsInterconnectionsParameters( const std::vector<std::size_t>&,
+	bool			validateColumnsInterconnectionsParameters( const std::vector<std::size_t>&,
 									   const std::vector<std::size_t>&,
 									   const std::vector<std::size_t>&,
 									   const std::vector<std::size_t>&,
@@ -71,8 +71,9 @@ public:
 									   const std::vector<std::size_t>&,
 									   const double,
 									   const bool );// validates the parameters to configure the columns' interconnections
+											// returns true if there is some inconsistence
 
-	void			validatePopulationParameters( const std::vector<std::size_t>&,
+	bool			validatePopulationParameters( const std::vector<std::size_t>&,
 							      const std::vector<std::size_t>&,
 		       					      const double );// validates the parameters used to generate the columns' populations
 
@@ -160,6 +161,13 @@ public:
 	void	loadEncoderLayerStatus( const std::string& );			// function that loads the EncoderLayer's status from a file
 
 	void	checkEncoderLayerStructure( const encoderLayerStructure& );	// this function checks the coeherence of the encoder layer structure
+
+	void	mergeOutputs( regularLayerResponse& output );			// this function merges all the column outputs,
+										// this uses mpi inter-process-comunication
+										// once the function returns, every process count on a complete
+										// cortical layer output
+
+	void	gatherConnections();						// gathers all connections in rank 0
 
 private:
 	std::vector<ComplexSelfOrganizingMap>		_encoderColumns;

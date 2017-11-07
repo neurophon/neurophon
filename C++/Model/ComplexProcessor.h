@@ -43,7 +43,7 @@ public:
 											// Processor weights are initialized with random
 											// values between weight limits
 
-				ComplexProcessor( const std::string&,
+				ComplexProcessor( std::stringstream&,
 						  const std::string& );			// constructor that initializes ComplexProcessor
 											// _dynamicUnits are initialized from previous vectors
 
@@ -59,7 +59,7 @@ public:
 											// weighted randomness in the process of selection of the
 											// excited units
 	void	saveComplexProcessorStatus( const std::string&,
-					    std::ofstream& );				// function to save the ComplexProcessor' status in a file
+					    std::stringstream& );			// function to save the ComplexProcessor' status in a file
 
 
 }; // end class ComplexProcessor

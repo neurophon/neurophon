@@ -113,19 +113,14 @@ DynamicSelfOrganizingMap::DynamicSelfOrganizingMap( const std::vector<std::size_
 
 // constructor initializes populationDimensions and numberOfInputs with variables supplied as arguments.
 // This loads _dynamicUnits with previous vector supplied as argument too
-DynamicSelfOrganizingMap::DynamicSelfOrganizingMap( const std::string& fileName,
+DynamicSelfOrganizingMap::DynamicSelfOrganizingMap( std::stringstream& inputStream,
 						    const std::string& dynamicSelfOrganizingMapIdentification )
 	// explicitly call base-class constructor
-	: StaticSelfOrganizingMap(fileName, dynamicSelfOrganizingMapIdentification)
+	: StaticSelfOrganizingMap(inputStream, dynamicSelfOrganizingMapIdentification)
 {
-	// open a file in read mode.
-	ifstream infile;
-	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
-
-	DynamicSelfOrganizingMap::loadDynamicSelfOrganizingMapStatus(dynamicSelfOrganizingMapIdentification, infile);
-
-	// close the opened file.
-	infile.close();
+	inputStream.clear();
+	inputStream.str(inputStream.str());
+	DynamicSelfOrganizingMap::loadDynamicSelfOrganizingMapStatus(dynamicSelfOrganizingMapIdentification, inputStream);
 } // end DynamicSelfOrganizingMap constructor
 
 
@@ -252,7 +247,7 @@ somResponseInfo	DynamicSelfOrganizingMap::getDynamicResponse( const somResponseI
 
 // function to save the DynamicSelfOrganizingMap' status in a file
 void	DynamicSelfOrganizingMap::saveDynamicSelfOrganizingMapStatus( const std::string& dynamicSelfOrganizingMapIdentification,
-								      ofstream& outfile )
+								      std::stringstream& outStream )
 {
 	std::string	str = "DynamicSelfOrganizingMap_";
 	std::string	STR;
@@ -261,35 +256,35 @@ void	DynamicSelfOrganizingMap::saveDynamicSelfOrganizingMapStatus( const std::st
 	for ( std::size_t link = 0; link < _dynamicUnits.size(); link++ ) {
 		// saves _dynamicUnits
 		STR = "dynamicUnits_" + std::to_string(link);
-		save_vector_of_vectors_conditionally_as_sparse_matrix(str+STR,_dynamicUnits[link],SPARSITY_THRESHOLD,outfile);
+		save_vector_of_vectors_conditionally_as_sparse_matrix(str+STR,_dynamicUnits[link],SPARSITY_THRESHOLD,outStream);
 		STR.clear();
 	}
 
 	for ( std::size_t link = 0; link < _potentialConnections.size(); link++ ) {
 		// saves _potentialConnections
 		STR = "potentialConnections_" + std::to_string(link);
-		save_vector_of_vectors_as_matrix(str+STR,_potentialConnections[link],outfile);
+		save_vector_of_vectors_as_matrix(str+STR,_potentialConnections[link],outStream);
 		STR.clear();
 	}
 
         // saves _numberOfLinks
-	save_as_scalar(str + "numberOfLinks", _numberOfLinks, outfile);
+	save_as_scalar(str + "numberOfLinks", _numberOfLinks, outStream);
 
         // saves _potentialDimensionality
-	save_vector_as_matrix(str + "potentialDimensionality", _potentialDimensionality, outfile);
+	save_vector_as_matrix(str + "potentialDimensionality", _potentialDimensionality, outStream);
 
         // saves _potentialPercentage
-	save_as_scalar(str + "potentialPercentage", _potentialPercentage, outfile);
+	save_as_scalar(str + "potentialPercentage", _potentialPercentage, outStream);
 
         // saves _updateStep
-	save_as_scalar(str + "updateStep", _updateStep, outfile);
+	save_as_scalar(str + "updateStep", _updateStep, outStream);
 
 } // end functiom saveDynamicSelfOrganizingMapStatus
 
 
 // function to load the DynamicSelfOrganizingMap' status from a file
 void	DynamicSelfOrganizingMap::loadDynamicSelfOrganizingMapStatus( const std::string& dynamicSelfOrganizingMapIdentification,
-								      ifstream& infile )
+								      std::stringstream& infile )
 {
 	std::string	str;
 	std::string	STR = "DynamicSelfOrganizingMap_";

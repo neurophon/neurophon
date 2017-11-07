@@ -39,7 +39,7 @@ public:
 				   	 const std::array<double,2>& );			// constructor that initializes object of class StaticSelfOrganizingMap
 											// _weights is initialized with random numbers between limits
 											// passed to the function as arguments 
-		StaticSelfOrganizingMap( const std::string&,
+		StaticSelfOrganizingMap( std::stringstream&,
 			       		 const std::string& );				// constructor that initializes object of class StaticSelfOrganizingMap
 											// from file
 	void	validateObject();							// function that validates the object
@@ -62,10 +62,10 @@ public:
 											// between the input and every unit in the class and a
 											// vector with the indexes of such units in ascending distance order
 	void	saveStaticSelfOrganizingMapStatus( const std::string&,
-		       				   std::ofstream& );			// function that saves the Self Organizing Map's status in a file
+		       				   std::stringstream& );			// function that saves the Self Organizing Map's status in a file
 
 	void	loadStaticSelfOrganizingMapStatus( const std::string&,
-		       				   std::ifstream& );			// function to load the Self Organizing Map's status from a file
+		       				   std::stringstream& );			// function to load the Self Organizing Map's status from a file
 
 protected:
         std::vector<std::size_t>		_unitsArrayDimensionality;		// vector with the dimensions of the array of units

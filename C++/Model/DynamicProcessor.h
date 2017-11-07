@@ -50,7 +50,7 @@ public:
 										// The StaticProcessor weights willbe initialized with random numbers
 										// between weightLimits
 
-		DynamicProcessor( const std::string&,
+		DynamicProcessor( std::stringstream&,
 				  const std::string& );				// constructor that initializes _dynamicUnits by means of previous
 										// values from file
 
@@ -66,10 +66,10 @@ public:
 										// a vector with distances and an vector with indexes sorthed in ascending order
 										// corresponding to the vector of distances
 	void	saveDynamicProcessorStatus( const std::string,
-					    std::ofstream& );			// function that saves the DynamicProcessor' status in a file
+					    std::stringstream& );		// function that saves the DynamicProcessor' status in a file
 
 	void	loadDynamicProcessorStatus( const std::string,
-					    std::ifstream& );			// function to save the DynamicProcessor' status from a file
+					    std::stringstream& );		// function to load the DynamicProcessor' status from a file
 
 protected:
 	threedvector<double>			_dynamicUnits;				// matrixes with dynamic units stats

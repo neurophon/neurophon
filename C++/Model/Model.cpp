@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
+#include <mpi.h>
 
 #include "../Libraries/Model/OctaveInterface.h"
 #include "Model.h"
@@ -37,10 +38,14 @@ Model::Model( std::string& folderName )
 // run the model
 void	Model::run( const std::string& folderName )
 {
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
 	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
 	std::vector<regularLayerResponse>		regularLayerOutputs;	// outputs from the regular layers
 	regularLayerOutputs.resize(_modelStructure.numberOfLayers);
 
+	//MPI_Barrier(MPI::COMM_WORLD);
 	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
 
 		// Holds output information that comes from
@@ -49,15 +54,27 @@ void	Model::run( const std::string& folderName )
 		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
 		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
 
-		std::cout << "\nIn this model we have encoder layer.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have encoder layer.\n";
+
 		// then, loads the input information to feed the encoder layer
-		std::cout << "\nLoading Encoder Layer Input data.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Encoder Layer Input data.\n";
+
 		auto	encoderLayerInput = Model::loadEncoderInputs("inputs");	
-		std::cout << "\nEncoder Layer Input data loaded.\n";
+
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder Layer Input data loaded.\n";
+
+		//MPI_Barrier(MPI::COMM_WORLD);
+
 		auto	timeSteps = encoderLayerInput.size();
 
-		std::cout << "\nProcessing the Input data.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+
 		// starts to process the input data one time step at a time
+		//MPI_Barrier(MPI::COMM_WORLD);
 		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
 
 			// the data is processed by the encoder layer
@@ -80,6 +97,7 @@ void	Model::run( const std::string& folderName )
 
 			}
 
+			//MPI_Barrier(MPI::COMM_WORLD);
 			// regular layers processes the data in turns
 			// one regular layer at a time
 			for ( std::size_t layer = 0;
@@ -138,11 +156,14 @@ void	Model::run( const std::string& folderName )
 						}
 					}
 				}
+				//MPI_Barrier(MPI::COMM_WORLD);
 			}
-
+			// accumulates the encoder and regular layer outputs
 			cumulativeEncoderLayerOutput.push_back(encoderLayerOutput.currentIndexes);
 			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
 				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+
+			//MPI_Barrier(MPI::COMM_WORLD);
 		}
 		cumulativeEncoderLayerOutput.shrink_to_fit();
 		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
@@ -150,26 +171,47 @@ void	Model::run( const std::string& folderName )
 
 		Model::saveCumulativeEncoderLayerOutput(folderName, cumulativeEncoderLayerOutput);
 		Model::saveCumulativeRegularLayerOutput(folderName, cumulativeRegularLayerOutputs);
+
+		//MPI_Barrier(MPI::COMM_WORLD);
 	}
 	else {	// if there is no encoder layer
 		// there must be at least one regular layer
-		assert(_modelStructure.numberOfLayers > 0);
-		std::cout << "\nIn this model we have "
-			  << _modelStructure.numberOfLayers
-			  << " number of regular layers.\n";
+		if ( !(_modelStructure.numberOfLayers > 0) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn class Model, in function run:" << endl;
+				std::cout << "_modelStructure.numberOfLayers > 0 was not satisfied." << endl;
+			}
+			//MPI_Barrier(MPI::COMM_WORLD);
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have "
+				  << _modelStructure.numberOfLayers
+				  << " number of regular layers.\n";
 
 		// loads the information to feed the first regular layer in the model
-		std::cout << "\nLoading Regular Layer Input data.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Regular Layer Input data.\n";
+
 		auto	regularLayerInput = Model::loadRegularInputs("inputs");	
-		std::cout << "\nRegular Layer Input data loaded.\n";
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular Layer Input data loaded.\n";
+
 		auto	timeSteps = regularLayerInput.size();
+
+		//MPI_Barrier(MPI::COMM_WORLD);
 
 		// Holds output information that comes from
 		// the regular layers
 		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
 		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
 
-		std::cout << "\nProcessing the Input data.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+		
+		//MPI_Barrier(MPI::COMM_WORLD);
 		// starts to process the input data one time step at a time
 		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
 
@@ -229,14 +271,25 @@ void	Model::run( const std::string& folderName )
 						}
 					}
 				}
+
+				//MPI_Barrier(MPI::COMM_WORLD);
 			}
 			// accumulates the regular layer outputs
-			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
-				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+			if ( world_rank == 0 ) {
+				for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+					cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+			}
+			//MPI_Barrier(MPI::COMM_WORLD);
 		}
-		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
-			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+		if ( world_rank == 0 ) {
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+
+			Model::saveCumulativeRegularLayerOutput(folderName, cumulativeRegularLayerOutputs);
+		}
+		//MPI_Barrier(MPI::COMM_WORLD);
 	}
+	//MPI_Barrier(MPI::COMM_WORLD);
 } // end function run 
 
 
@@ -245,22 +298,42 @@ void	Model::train( const std::string& folderName,
 		      const std::size_t iterations,
 		      const std::size_t stages )
 {
-	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+  	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
 	std::vector<regularLayerResponse>		regularLayerOutputs;	// outputs from the regular layers
 	regularLayerOutputs.resize(_modelStructure.numberOfLayers);
 
+	//MPI_Barrier(MPI::COMM_WORLD);
 	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
 		// then, loads the input information to feed the encoder layer
-		std::cout << "\nLoading Encoder Layer Input data.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Encoder Layer Input data.\n";
+
 		auto	encoderLayerInput = Model::loadEncoderInputs("inputs");	
-		std::cout << "\nEncoder Layer Input data loaded.\n";
+
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder Layer Input data loaded.\n";
+
 		auto	timeSteps = encoderLayerInput.size();
 
+		//MPI_Barrier(MPI::COMM_WORLD);
 		// ask if the encoder layer is new
 		if ( _modelStructure.newEncoder ) {
 			// if the encoder is new, newLayerAt must be 0
-			assert(_modelStructure.newLayerAt == 0);
-			std::cout << "\nTraining process for the encoder layer.\n";
+			if ( !(_modelStructure.newLayerAt == 0) ) {
+				if ( world_rank == 0 ) {
+					std::cout << "\nIn Model class, in train function:" << endl;
+					std::cout << "_modelStructure.newLayerAt == 0 is not satisfied" << endl;
+				}
+
+				//MPI_Barrier(MPI::COMM_WORLD);
+				MPI_Abort(MPI::COMM_WORLD,1);
+			}
+
+			if ( world_rank == 0 )
+				std::cout << "\nTraining process for the encoder layer.\n";
+
 			// initializes auxiliary encoder layer parameters from the encoder layer parameters
 			auto	auxiliaryEncoderParameters = _encoderLayerParameters;
 			// enable proximal and distal learning mechanisms in the encoder layer
@@ -271,9 +344,13 @@ void	Model::train( const std::string& folderName,
 			double	encoderInitialProximalLearningRate = 0.9;
 			double	encoderInitialProximalNeighborhood = 5.0;
 			double	encoderInitialDistalLearningRate = 1.0;
+
+			//MPI_Barrier(MPI::COMM_WORLD);
 			// these are the different stages in the training process for a new encoder layer
 			for ( std::size_t stage = 0; stage <= stages+1; stage++ ) {
-				std::cout << "\nEncoder Layer training stage number " << stage << ".\n";
+				if ( world_rank == 0 )
+					std::cout << "\nEncoder Layer training stage number " << stage << ".\n";
+
 				for ( std::size_t iteration = 0; iteration < iterations; iteration++ ) {
 					for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
 
@@ -302,6 +379,7 @@ void	Model::train( const std::string& folderName,
 								       					   encoderLayerOutput, 		// lateral
 													   auxiliaryEncoderParameters);
 
+						//MPI_Barrier(MPI::COMM_WORLD);
 					}
 				}
 				encoderInitialProximalLearningRate = encoderInitialProximalLearningRate*0.2;
@@ -309,31 +387,39 @@ void	Model::train( const std::string& folderName,
 				encoderInitialDistalLearningRate = encoderInitialDistalLearningRate*0.2;
 			}
 
-			std::cout << "\nEncoder Layer training process complete.\n";
+			if ( world_rank == 0 )
+				std::cout << "\nEncoder Layer training process complete.\n";
+
 			// this is the end of the initial encoder layer training procedure
+			//MPI_Barrier(MPI::COMM_WORLD);
 		}
 
+		//MPI_Barrier(MPI::COMM_WORLD);
 		// If there are regular layers in the model, they have to be trained
 		// only if newLayerAt is smaller than numberOfLayers
 		// Asks if there is -at least- one regular layer in the model
 		// and if newLayerAt < numberOfLayers
 		if ( _modelStructure.numberOfLayers > 0 &&
 		     _modelStructure.newLayerAt < _modelStructure.numberOfLayers ) {
-			std::cout << "\nIn this model we have "
-				  << _modelStructure.numberOfLayers
-				  << " regular layers.\n";
+			if ( world_rank == 0 )
+				std::cout << "\nIn this model we have "
+					  << _modelStructure.numberOfLayers
+					  << " regular layers.\n";
 
-			std::cout << "\nWe have to train from regular layer number "
-				  << _modelStructure.newLayerAt
-				  << " to regular layer number "
-				  << _modelStructure.numberOfLayers-1
-				  << ".\n";
+			if ( world_rank == 0 )
+				std::cout << "\nWe have to train from regular layer number "
+					  << _modelStructure.newLayerAt
+					  << " to regular layer number "
+					  << _modelStructure.numberOfLayers-1
+					  << ".\n";
 
+			//MPI_Barrier(MPI::COMM_WORLD);
 			// trainingLayer is the layer which is new and which is trained in this iteration
 			for ( std::size_t trainingLayer = _modelStructure.newLayerAt;
 					  trainingLayer < _modelStructure.numberOfLayers;
 					  trainingLayer++ ) {
-				std::cout << "\nTraining regular layer number " << trainingLayer << ".\n";
+				if ( world_rank == 0 )
+					std::cout << "\nTraining regular layer number " << trainingLayer << ".\n";
 
 				// initializes auxiliary encoder layer parameters from encoder layer parameters
 				auto	auxiliaryEncoderParameters = _encoderLayerParameters;
@@ -346,7 +432,16 @@ void	Model::train( const std::string& folderName,
 				auxiliaryEncoderParameters.learning.enableDistalLearning = true;
 
 				// there must be one regular layer parameter set for every regular layer
-				assert(_regularLayerParameters.size() == _modelStructure.numberOfLayers);
+				if ( !(_regularLayerParameters.size() == _modelStructure.numberOfLayers) ) {
+					if ( world_rank == 0 ) {
+						std::cout << "\nIn Model class, in function train:" << endl;
+						std::cout << "the condition _regularLayerParameters.size() ";
+						std::cout << "== _modelStructure.numberOfLayers is not satisfied" << endl;
+					}
+
+					//MPI_Barrier(MPI::COMM_WORLD);
+					MPI_Abort(MPI::COMM_WORLD,1);
+				}
 				// initializes auxiliary regular layer parameters from regular layer parameters
 				std::vector<regularLayerParameters>	auxiliaryRegularParameters;
 				for (const auto& parameters : _regularLayerParameters)
@@ -368,8 +463,12 @@ void	Model::train( const std::string& folderName,
 				double	regularInitialProximalLearningRate = 0.9;
 				double	regularInitialProximalNeighborhood = 5.0;
 				double	regularInitialDistalLearningRate = 1.0;
+
+				//MPI_Barrier(MPI::COMM_WORLD);
 				for ( std::size_t stage = 0; stage <= stages+1; stage++ ) {
-					std::cout << "\nRegular Layer training stage number " << stage << ".\n";
+					if ( world_rank == 0 )
+						std::cout << "\nRegular Layer training stage number " << stage << ".\n";
+
 					for ( std::size_t iteration = 0; iteration < iterations; iteration++ ) {
 						for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
 
@@ -403,6 +502,7 @@ void	Model::train( const std::string& folderName,
 								_regularLayerParameters[trainingLayer].learning.distalLearningRate;
 							}
 
+							//MPI_Barrier(MPI::COMM_WORLD);
 							// regular layers processes the data in turns
 							// until the training layer is reached
 							for ( std::size_t layer = 0;
@@ -463,52 +563,94 @@ void	Model::train( const std::string& folderName,
 										}
 									}
 								}
+								//MPI_Barrier(MPI::COMM_WORLD);
 							}
+							//MPI_Barrier(MPI::COMM_WORLD);
 						}
 					}
 					regularInitialProximalLearningRate = regularInitialProximalLearningRate*0.2;
 					regularInitialProximalNeighborhood = regularInitialProximalNeighborhood*0.2;
 					regularInitialDistalLearningRate = regularInitialDistalLearningRate*0.2;
 				}
+				if ( world_rank == 0 )
+					std::cout << "\nRegular Layer training process complete.\n";
 
-				std::cout << "\nRegular Layer training process complete.\n";
+				//MPI_Barrier(MPI::COMM_WORLD);
 			}
+			//MPI_Barrier(MPI::COMM_WORLD);
 		}
+		//MPI_Barrier(MPI::COMM_WORLD);
 	}
 	else {	// if there is no encoder
 		// there must be at least one regular layer
-		assert(_modelStructure.numberOfLayers > 0);
+		if ( !(_modelStructure.numberOfLayers > 0) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn Model class, in function train:" << endl;
+				std::cout << "Condition _modelStructure.numberOfLayers > 0 was not satisfied" << endl;
+			}
+
+			//MPI_Barrier(MPI::COMM_WORLD);
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
 		// for this function to have sense
 		// newLayerAt has to be smaller than
 		// numbeOfLayers
-		assert(_modelStructure.newLayerAt <
-		       _modelStructure.numberOfLayers);
+		if ( !(_modelStructure.newLayerAt <
+		       _modelStructure.numberOfLayers) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn Model class, in function train:" << endl;
+				std::cout << "Condition _modelStructure.newLayerAt <";
+		       		std::cout << " _modelStructure.numberOfLayers was not satisfied" << endl;
+			}
+
+			//MPI_Barrier(MPI::COMM_WORLD);
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
 
 		// loads the information to feed the first regular layer in the model
-		std::cout << "\nLoading Regular Layer Input data.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Regular Layer Input data.\n";
+
 		auto	regularLayerInput = Model::loadRegularInputs("inputs");	
-		std::cout << "\nRegular Layer Input data loaded.\n";
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular Layer Input data loaded.\n";
+
 		auto	timeSteps = regularLayerInput.size();
 
 		// Regular Layers in the model have to be trained
-		std::cout << "\nIn this model we have "
-			  << _modelStructure.numberOfLayers
-			  << " number of regular layers.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have "
+				  << _modelStructure.numberOfLayers
+				  << " number of regular layers.\n";
 
-		std::cout << "\nWe have to train from regular layer number "
-			  << _modelStructure.newLayerAt
-			  << " to regular layer "
-			  << _modelStructure.numberOfLayers-1
-			  << ".\n";
+		if ( world_rank == 0 )
+			std::cout << "\nWe have to train from regular layer number "
+				  << _modelStructure.newLayerAt
+				  << " to regular layer "
+				  << _modelStructure.numberOfLayers-1
+				  << ".\n";
 
+		//MPI_Barrier(MPI::COMM_WORLD);
 		// trainingLayer is the layer which is new and which is trained in this iteration
 		for ( std::size_t trainingLayer = _modelStructure.newLayerAt;
 				  trainingLayer < _modelStructure.numberOfLayers;
 				  trainingLayer++ ) {
-			std::cout << "\nTraining regular layer number " << trainingLayer << ".\n";
+			if ( world_rank == 0 )
+				std::cout << "\nTraining regular layer number " << trainingLayer << ".\n";
 
 			// there must be one regular layer parameter set for every regular layer
-			assert(_regularLayerParameters.size() == _modelStructure.numberOfLayers);
+			if ( !(_regularLayerParameters.size() == _modelStructure.numberOfLayers) ) {
+				if ( world_rank == 0 ) {
+					std::cout << "\nIn Model class, in function train:" << endl;
+					std::cout << "Condition _regularLayerParameters.size() == _modelStructure.numberOfLayers";
+				        std::cout << " was not satisfied" << endl;
+				}
+
+				//MPI_Barrier(MPI::COMM_WORLD);
+				MPI_Abort(MPI::COMM_WORLD,1);
+			}
+
 			// initializes auxiliary regular layer parameters from regular layer parameters
 			std::vector<regularLayerParameters>	auxiliaryRegularParameters;
 			for (const auto& parameters : _regularLayerParameters)
@@ -530,8 +672,12 @@ void	Model::train( const std::string& folderName,
 			double	regularInitialProximalLearningRate = 0.9;
 			double	regularInitialProximalNeighborhood = 5.0;
 			double	regularInitialDistalLearningRate = 1.0;
+
+			//MPI_Barrier(MPI::COMM_WORLD);
 			for ( std::size_t stage = 0; stage <= stages+1; stage++ ) {
-				std::cout << "\nRegular Layer training stage number " << stage << ".\n";
+				if ( world_rank == 0 )
+					std::cout << "\nRegular Layer training stage number " << stage << ".\n";
+
 				for ( std::size_t iteration = 0; iteration < iterations; iteration++ ) {
 					for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
 
@@ -615,43 +761,71 @@ void	Model::train( const std::string& folderName,
 									}
 								}
 							}
+							//MPI_Barrier(MPI::COMM_WORLD);
 						}
+						//MPI_Barrier(MPI::COMM_WORLD);
 					}
 				}
 				regularInitialProximalLearningRate = regularInitialProximalLearningRate*0.2;
 				regularInitialProximalNeighborhood = regularInitialProximalNeighborhood*0.2;
 				regularInitialDistalLearningRate = regularInitialDistalLearningRate*0.2;
 			}
+			if ( world_rank == 0 )
+				std::cout << "\nRegular Layer training process complete.\n";
 
-			std::cout << "\nRegular Layer training process complete.\n";
+			//MPI_Barrier(MPI::COMM_WORLD);
 		}
 	}
 
+	//MPI_Barrier(MPI::COMM_WORLD);
 	Model::saveModelStatus(folderName);
+	//MPI_Barrier(MPI::COMM_WORLD);
 } // end function train 
 
 
 // loads input information
 std::vector<encoderLayerInput>	Model::loadEncoderInputs( const std::string& fileName )
 {
+	std::stringstream	inputStream;
+
+       // open a file in read mode.
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + fileName + ".mat").c_str(),
+					   MPI::MODE_RDONLY,
+					   MPI::INFO_NULL);
+
+	// gets the file size
+	MPI::Offset filesize = infile.Get_size(); // in bytes
+	int	bufsize = filesize / sizeof(char); /* in number of char */
+	std::string	aux;
+	aux.resize(bufsize);
+
+	infile.Set_view(0 * bufsize * sizeof(char),
+			MPI_UNSIGNED_CHAR,
+			MPI_UNSIGNED_CHAR,
+			"native", MPI::INFO_NULL);
+
+	// read the complete file
+	infile.Read(&aux[0], bufsize,
+		    MPI_UNSIGNED_CHAR);
+
+	inputStream.str(aux);
+
+	// close the opened file.
+	infile.Close();
+
 	bool	check_inputs = false;
 
 	std::string	str;
 	std::string	STR;
 	twodvector<double>	input;
-	// open a file in read mode.
-	ifstream infile;
-	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
 
-	while ( std::getline(infile, str) ) {
+	while ( std::getline(inputStream, str) ) {
 		STR = "# name: inputs";
 		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector_of_vectors(input, infile);
+			load_matrix_to_vector_of_vectors(input, inputStream);
 			check_inputs = true;
 		}
 	}
-	// close the opened file.
-	infile.close();
 
 	assert(check_inputs == true);
 	assert(is_rectangular(input));
@@ -680,25 +854,46 @@ std::vector<encoderLayerInput>	Model::loadEncoderInputs( const std::string& file
 // loads input information
 std::vector<regularLayerResponse>	Model::loadRegularInputs( const std::string& fileName )
 {
+	std::stringstream	inputStream;
+
+       // open a file in read mode.
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + fileName + ".mat").c_str(),
+					   MPI::MODE_RDONLY,
+					   MPI::INFO_NULL);
+
+	// gets the file size
+	MPI::Offset filesize = infile.Get_size(); // in bytes
+	int	bufsize = filesize / sizeof(char); /* in number of char */
+	std::string	aux;
+	aux.resize(bufsize);
+
+	infile.Set_view(0 * bufsize * sizeof(char),
+			MPI_UNSIGNED_CHAR,
+			MPI_UNSIGNED_CHAR,
+			"native", MPI::INFO_NULL);
+
+	// read the complete file
+	infile.Read(&aux[0], bufsize,
+		    MPI_UNSIGNED_CHAR);
+
+	inputStream.str(aux);
+
+	// close the opened file.
+	infile.Close();
+
 	bool	check_inputs = false;
 
 	std::string	str;
 	std::string	STR;
 	threedvector<int>	input;
-	// open a file in read mode.
-	ifstream infile;
-	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
 
-	while ( std::getline(infile, str) ) {
+	while ( std::getline(inputStream, str) ) {
 		STR = "# name: inputs";
 		if ( str.compare(STR) == 0 ) {
-			load_cell_to_multidimensional_vector(input, infile);
+			load_cell_to_multidimensional_vector(input, inputStream);
 			check_inputs = true;
 		}
 	}
-	// close the opened file.
-	infile.close();
-
 	assert(check_inputs == true);
 
 	auto	timeSteps = input.size();
@@ -738,136 +933,215 @@ std::vector<regularLayerResponse>	Model::loadRegularInputs( const std::string& f
 // function that saves the Model's status in a file
 void	Model::saveModelStatus( const std::string& folderName )
 {
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
 	// if there is encoder layer and there is at least
 	// one regular layer, then save them
 	if ( _modelStructure.encoderIncorporation &&
 	     (_modelStructure.numberOfLayers > 0) ) {
-		std::cout << "\nSaving encoder layer and regular layer number 0\n";
-		std::cout << "to regular layer number " << _modelStructure.numberOfLayers-1 << ".\n";
-		#pragma omp parallel sections
-		{
-			#pragma omp section
-			{
-				_encoderLayer.saveEncoderLayerStatus(folderName);
-			}
-			#pragma omp section
-			{
-				#pragma omp parallel for default(none) shared(folderName)
-				for ( std::size_t layerNumber = 0;
-						  layerNumber < _modelStructure.numberOfLayers;
-						  layerNumber++ )
-					_regularLayers[layerNumber].saveRegularLayerStatus(folderName, layerNumber);
 
-			}
-		}
-		std::cout << "\nEncoder layer and regular layers saved.\n";
-	}
-	else if ( _modelStructure.encoderIncorporation ) {
-		std::cout << "\nSaving encoder layer.\n";
+		MPI_Barrier(MPI::COMM_WORLD);
+
+		if ( world_rank == 0 )
+			std::cout << "\nSaving encoder layer\n";
+
 		_encoderLayer.saveEncoderLayerStatus(folderName);
-		std::cout << "\nEncoder layer saved.\n";
-	}
-	else {
-		assert(_modelStructure.numberOfLayers > 0);
-		std::cout << "\nSaving regular layer number 0\n";
-		std::cout << "to regular layer number " << _modelStructure.numberOfLayers-1 << ".\n";
-		#pragma omp parallel for default(none) shared(folderName)
+		
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder layer saved.\n";
+
+		MPI_Barrier(MPI::COMM_WORLD);
+
+		if ( world_rank == 0 ) {
+			std::cout << "\nSaving regular layer number 0\n";
+			std::cout << "to regular layer number " << _modelStructure.numberOfLayers-1 << ".\n";
+		}
+
+		//#pragma omp parallel for default(none) shared(folderName)
 		for ( std::size_t layerNumber = 0;
 				  layerNumber < _modelStructure.numberOfLayers;
 				  layerNumber++ )
 			_regularLayers[layerNumber].saveRegularLayerStatus(folderName, layerNumber);
 
-		std::cout << "\nRegular layers saved.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nRegular layers saved.\n";
+
+		MPI_Barrier(MPI::COMM_WORLD);
 	}
+	else if ( _modelStructure.encoderIncorporation ) {
+		if ( world_rank == 0 )
+			std::cout << "\nSaving encoder layer.\n";
+
+		_encoderLayer.saveEncoderLayerStatus(folderName);
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder layer saved.\n";
+
+	}
+	else {
+		assert(_modelStructure.numberOfLayers > 0);
+
+		MPI_Barrier(MPI::COMM_WORLD);
+
+		if ( world_rank == 0 ) {
+			std::cout << "\nSaving regular layer number 0\n";
+			std::cout << "to regular layer number " << _modelStructure.numberOfLayers-1 << ".\n";
+		}
+		//#pragma omp parallel for default(none) shared(folderName)
+		for ( std::size_t layerNumber = 0;
+				  layerNumber < _modelStructure.numberOfLayers;
+				  layerNumber++ )
+			_regularLayers[layerNumber].saveRegularLayerStatus(folderName, layerNumber);
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular layers saved.\n";
+
+		MPI_Barrier(MPI::COMM_WORLD);
+	}
+
+	//MPI_Barrier(MPI::COMM_WORLD);
 } // end function saveModelStatus
 
 
 // function that loads the Model's status from a file
 void	Model::loadModelStatus( const std::string& folderName )
 {
-	std::cout << "\nLoading model structure.\n";
-	Model::loadModelStructure(folderName);
-	std::cout << "\nmodel structure loaded.\n";
-	Model::validateModelStructure();
-	std::cout << "\nmodel structure validated.\n";
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
 
+	//MPI_Barrier(MPI::COMM_WORLD);
+	if ( world_rank == 0 )
+		std::cout << "\nLoading model structure.\n";
+
+	Model::loadModelStructure(folderName);
+	if ( world_rank == 0 )
+		std::cout << "\nmodel structure loaded.\n";
+
+	//MPI_Barrier(MPI::COMM_WORLD);
+	Model::validateModelStructure();
+	if ( world_rank == 0 )
+		std::cout << "\nmodel structure validated.\n";
+
+	//MPI_Barrier(MPI::COMM_WORLD);
 	_regularLayers.resize(_modelStructure.numberOfLayers);
 	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
-		std::cout << "\nThis model has encoder layer.\n";
-		if ( _modelStructure.newEncoder ) {	// if the encoder is new
-			std::cout << "\nThe encoder layer in this model is new.\n";
-			assert(_modelStructure.newLayerAt == 0);
-			Model::loadEncoderLayerStructure(folderName);
-			std::cout << "\nCreating new encoder layer.\n";
-			_encoderLayer.encoderInitializer(_encoderLayerStructure);
-			std::cout << "\nNew Encoder layer created.\n";
+		if ( world_rank == 0 )
+			std::cout << "\nThis model has encoder layer.\n";
 
-			std::cout << "\nFor this model we have "
-				  << _modelStructure.numberOfLayers << " regular layers.\n";
+		//MPI_Barrier(MPI::COMM_WORLD);
+		if ( _modelStructure.newEncoder ) {	// if the encoder is new
+			if ( world_rank == 0 )
+				std::cout << "\nThe encoder layer in this model is new.\n";
+			
+			if (_modelStructure.newLayerAt != 0) {
+				if ( world_rank == 0 ) {
+					std::cout << "\nIn class Model. In function loadModelStatus.\n";
+					std::cout << "\n_modelStructure.newLayerAt != 0\n";
+				}
+				//MPI_Barrier(MPI::COMM_WORLD);
+				MPI_Abort(MPI::COMM_WORLD,1);
+			}
+
+			//MPI_Barrier(MPI::COMM_WORLD);
+			Model::loadEncoderLayerStructure(folderName);
+			if ( world_rank == 0 )
+				std::cout << "\nCreating new encoder layer.\n";
+
+			//MPI_Barrier(MPI::COMM_WORLD);
+			_encoderLayer.encoderInitializer(_encoderLayerStructure);
+			if ( world_rank == 0 ) {
+				std::cout << "\nNew Encoder layer created.\n";
+				std::cout << "\nFor this model we have "
+					  << _modelStructure.numberOfLayers << " regular layers.\n";
+			}
+
+			//MPI_Barrier(MPI::COMM_WORLD);
 			if ( _modelStructure.numberOfLayers > 0 ) {
 				Model::loadRegularLayerStructures(folderName);
-				std::cout << "\nCreating new regular layers.\n";
+				if ( world_rank == 0 )
+					std::cout << "\nCreating new regular layers.\n";
+
 				#pragma omp parallel for default(none)
 				for ( std::size_t layerNumber = 0;
 						  layerNumber < _modelStructure.numberOfLayers;
 						  layerNumber++ )
 					_regularLayers[layerNumber].layerInitializer(_regularLayerStructures[layerNumber]);
 				
-				std::cout << "\nNew regular layers created.\n";
+				if ( world_rank == 0 )
+					std::cout << "\nNew regular layers created.\n";
 			}
+			//MPI_Barrier(MPI::COMM_WORLD);
 		}
 		else {					// if the encoder is not new
-			std::cout << "\nThe encoder layer in this model is not new.\n";
-			std::cout << "\nFor this model we have "
-				  << _modelStructure.numberOfLayers << " regular layers.\n";
-			std::cout << "\nLoading encoder layer.\n";
+			if ( world_rank == 0 ) {
+				std::cout << "\nThe encoder layer in this model is not new.\n";
+				std::cout << "\nFor this model we have "
+					  << _modelStructure.numberOfLayers << " regular layers.\n";
+			}
+
+			//MPI_Barrier(MPI::COMM_WORLD);
 			if ( _modelStructure.newLayerAt > 0 &&
 			     _modelStructure.numberOfLayers > 0 ) {
-				std::cout << "\nLoading regular layers from 0 to "
-					  << _modelStructure.newLayerAt-1 << ".\n";
 
-				#pragma omp parallel sections
-				{
-					#pragma omp section
-					{
-						_encoderLayer.loadEncoderLayerStatus(folderName);
-					}
-					#pragma omp section
-					{
-						#pragma omp parallel for default(none) shared(folderName)
-						for ( std::size_t layerNumber = 0;
-								  layerNumber < std::min(_modelStructure.numberOfLayers,
-											 _modelStructure.newLayerAt);
-								  layerNumber++ )
-							_regularLayers[layerNumber].loadRegularLayerStatus(folderName, layerNumber);
+				if ( world_rank == 0 )
+					std::cout << "\nLoading encoder layer.\n";
 
-					}
+				_encoderLayer.loadEncoderLayerStatus(folderName);
 
-				}
-				std::cout << "\nEncoder layer loaded.\n";
-				std::cout << "\nRegular layers loaded.\n";
+				if ( world_rank == 0 )
+					std::cout << "\nEncoder layer loaded.\n";
+				
+				MPI_Barrier(MPI::COMM_WORLD);
+
+				if ( world_rank == 0 )
+					std::cout << "\nLoading regular layers from 0 to "
+						  << _modelStructure.newLayerAt-1 << ".\n";
+
+				//#pragma omp parallel for default(none) shared(folderName)
+				for ( std::size_t layerNumber = 0;
+						  layerNumber < std::min(_modelStructure.numberOfLayers,
+									 _modelStructure.newLayerAt);
+						  layerNumber++ )
+					_regularLayers[layerNumber].loadRegularLayerStatus(folderName, layerNumber);
+
+
+				if ( world_rank == 0 )
+					std::cout << "\nRegular layers loaded.\n";
+
+				MPI_Barrier(MPI::COMM_WORLD);
 			}
 			else {
+				if ( world_rank == 0 )
+					std::cout << "\nLoading encoder layer.\n";
+
 				_encoderLayer.loadEncoderLayerStatus(folderName);
-				std::cout << "\nEncoder layer loaded.\n";
+
+				if ( world_rank == 0 )
+					std::cout << "\nEncoder layer loaded.\n";
 			}
+			//MPI_Barrier(MPI::COMM_WORLD);
 
 			if ( _modelStructure.newLayerAt < _modelStructure.numberOfLayers ) {
 				Model::loadRegularLayerStructures(folderName);
-				std::cout << "\nCreating new regular layers from "
-					  << _modelStructure.newLayerAt
-					  << " to " << _modelStructure.numberOfLayers-1 << ".\n";
+				if ( world_rank == 0 ) {
+					std::cout << "\nCreating new regular layers from "
+						  << _modelStructure.newLayerAt
+						  << " to " << _modelStructure.numberOfLayers-1 << ".\n";
+				}
 				#pragma omp parallel for default(none)
 				for ( std::size_t layerNumber = _modelStructure.newLayerAt;
 						  layerNumber < _modelStructure.numberOfLayers;
 						  layerNumber++ )
 					_regularLayers[layerNumber].layerInitializer(_regularLayerStructures[layerNumber]);
 
-				std::cout << "\nNew regular layers created.\n";
+				if ( world_rank == 0 )
+					std::cout << "\nNew regular layers created.\n";
 			}
+			//MPI_Barrier(MPI::COMM_WORLD);
 
 			Model::loadEncoderLayerStructure(folderName);
-			if ( _modelStructure.numberOfLayers > 0 )
+			if ( _modelStructure.numberOfLayers > 0 &&
+			     !(_modelStructure.newLayerAt < _modelStructure.numberOfLayers) )
 				Model::loadRegularLayerStructures(folderName);
 		}
 		Model::loadEncoderLayerParameters(folderName);
@@ -875,27 +1149,43 @@ void	Model::loadModelStatus( const std::string& folderName )
 		_encoderLayer.checkEncoderLayerStructure(_encoderLayerStructure);
 	}
 	else {						// if there is no encoder
-		assert(_modelStructure.numberOfLayers > 0);
-		std::cout << "\nThis model does not have encoder layer.\n";
+		if ( _modelStructure.numberOfLayers == 0 )
+			MPI_Abort(MPI::COMM_WORLD,1);
+
+		if ( world_rank == 0 )
+			std::cout << "\nThis model does not have encoder layer.\n";
+
+		//MPI_Barrier(MPI::COMM_WORLD);
 		if ( _modelStructure.newLayerAt > 0 ) {
-			std::cout << "\nLoading regular layers from 0 to "
-				  << _modelStructure.newLayerAt-1 << ".\n";
-			#pragma omp parallel for default(none) shared(folderName)
+
+			MPI_Barrier(MPI::COMM_WORLD);
+
+			if ( world_rank == 0 )
+				std::cout << "\nLoading regular layers from 0 to "
+					  << _modelStructure.newLayerAt-1 << ".\n";
+
+			//#pragma omp parallel for default(none) shared(folderName)
 			for ( std::size_t layerNumber = 0;
 					  layerNumber < std::min(_modelStructure.numberOfLayers,
 								 _modelStructure.newLayerAt);
 					  layerNumber++ )
 				_regularLayers[layerNumber].loadRegularLayerStatus(folderName, layerNumber);
 
-			std::cout << "\nRegular layers loaded.\n";
+			if ( world_rank == 0 )
+				std::cout << "\nRegular layers loaded.\n";
+
+			MPI_Barrier(MPI::COMM_WORLD);
 		}
+		//MPI_Barrier(MPI::COMM_WORLD);
 
 		Model::loadRegularLayerStructures(folderName);
 
+		//MPI_Barrier(MPI::COMM_WORLD);
 		if ( _modelStructure.newLayerAt < _modelStructure.numberOfLayers ) {
-			std::cout << "\nCreating regular layers from "
-				  << _modelStructure.newLayerAt << " to "
-				  << _modelStructure.numberOfLayers-1 << ".\n";
+			if ( world_rank == 0 )
+				std::cout << "\nCreating regular layers from "
+					  << _modelStructure.newLayerAt << " to "
+					  << _modelStructure.numberOfLayers-1 << ".\n";
 
 			#pragma omp parallel for default(none)
 			for ( std::size_t layerNumber = _modelStructure.newLayerAt;
@@ -903,9 +1193,12 @@ void	Model::loadModelStatus( const std::string& folderName )
 					  layerNumber++ )
 				_regularLayers[layerNumber].layerInitializer(_regularLayerStructures[layerNumber]);
 
-			std::cout << "\nRegular layers created.\n";
+			if ( world_rank == 0 )
+				std::cout << "\nRegular layers created.\n";
 		}
+		//MPI_Barrier(MPI::COMM_WORLD);
 	}
+	//MPI_Barrier(MPI::COMM_WORLD);
 	if ( _modelStructure.numberOfLayers > 0 )
 		Model::loadRegularLayerParameters(folderName);
 
@@ -913,6 +1206,7 @@ void	Model::loadModelStatus( const std::string& folderName )
 		_regularLayers[layer].checkRegularLayerStructure(_regularLayerStructures[layer]);
 
 	Model::validateLayersInterconnection();
+	//MPI_Barrier(MPI::COMM_WORLD);
 } // end function loadModelStatus
 
 
@@ -975,7 +1269,8 @@ void	Model::validateModelStructure()
 	if ( _modelStructure.encoderIncorporation &&
 	     _modelStructure.newEncoder && 
 	     _modelStructure.numberOfLayers > 0 ) {
-		assert(_modelStructure.newLayerAt == 0);
+		if ( _modelStructure.newLayerAt != 0 )
+			MPI_Abort(MPI::COMM_WORLD,1);
 	}
 } // end function validateModelStructure
 
@@ -1725,6 +2020,9 @@ void	Model::loadRegularLayerParameters( const std::string& folderName )
 void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 						 const threedvector<std::size_t>& outputFromEncoderLayer )
 {
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
 	// first of all, suits the output data in order to save it for Octave
 	threedvector<int>	output;
 	output.resize(outputFromEncoderLayer.size());
@@ -1743,17 +2041,16 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 			}
 		}
 	}
-	// open a file in write mode.
-	std::string	outputFileName = "EncoderLayerOutput";
-	ofstream outfile;
-	outfile.open("../../Octave/" + outputFileName + ".mat", ios::out | ios::trunc);
+
+	// stringstream has to be filled with the file contents before written it into the file itself
+	std::stringstream	outputStream;
 
 	// file preamble.
-	outfile << "# This is a file created by saveCumulativeEncoderLayerOutput function from," << endl;
-	outfile << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-	outfile << "# Author: Dematties Dario Jesus." << endl;
+	outputStream << "# This is a file created by saveCumulativeEncoderLayerOutput function from," << endl;
+	outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+	outputStream << "# Author: Dematties Dario Jesus." << endl;
 
-	outfile << "\n\n" << endl;
+	outputStream << "\n\n" << endl;
 
 	std::string	str;
 	std::string	STR;
@@ -1778,18 +2075,67 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 	infile.close();
 
 	// saves columnsArrayDimensionality
-	save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outfile);
+	save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
 
 	// saves populationsArrayDimensionality
-	save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outfile);
+	save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
 
 	// saves outputFromEncoderLayer
-	std::cout << "\nsaving cumulative output from Encoder Layer\n";
-	save_multidimensional_vector_as_cell("encoderLayerOutput", output, outfile);
-	std::cout << "\ncumulative output from Encoder Layer saved\n";
+	if ( world_rank == 0 )
+		std::cout << "\nsaving cumulative output from Encoder Layer\n";
+
+	save_multidimensional_vector_as_cell("encoderLayerOutput", output, outputStream);
+
+	if ( world_rank == 0 )
+		std::cout << "\ncumulative output from Encoder Layer saved\n";
+
+	// File view comunication among ranks
+	std::size_t	fileView = 0, fileViewNew;
+	std::size_t	lengthToBeSent = outputStream.str().size()/world_size; // sets the amount of characters to be send by this rank
+	if ( world_size > 1 && world_rank == world_size-1 )
+		lengthToBeSent += outputStream.str().size()%world_size; // accumulates the rest of the characters in the last rank
+
+	if ( world_rank == 0 ) {
+		fileViewNew = fileView+lengthToBeSent;
+		if ( world_size > 1 )
+			MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+				 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+	}
+	else if ( world_rank == world_size-1 ) {
+		MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+			 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+			 MPI_STATUS_IGNORE);
+	}
+	else {
+		MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+			 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+			 MPI_STATUS_IGNORE);
+		
+		fileViewNew = fileView+lengthToBeSent;
+		MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+			 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+	}
+
+	//MPI_Barrier(MPI::COMM_WORLD);
+
+	// open a file in write mode
+	std::string	outputFileName = "EncoderLayerOutput";
+	MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + outputFileName + ".mat").c_str(),
+						  MPI::MODE_CREATE | MPI::MODE_WRONLY,
+						  MPI::INFO_NULL);
+
+	// sets the file view for this rank
+	outfile.Set_view(fileView*sizeof(char),
+			 MPI_UNSIGNED_CHAR, MPI_UNSIGNED_CHAR,
+			 "native", MPI::INFO_NULL);
+
+	// write stream in file
+	outfile.Write(&outputStream.str()[fileView],
+		     lengthToBeSent,
+		     MPI_UNSIGNED_CHAR);
 
 	// close the opened file.
-	outfile.close();
+	outfile.Close();
 } // end function saveCumulativeEncoderLayerOutput
 
 
@@ -1797,6 +2143,9 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 						 const fourdvector<std::size_t>& outputFromRegularLayers )
 {
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
 	fourdvector<int>	output;
 	assert(outputFromRegularLayers.size() == _modelStructure.numberOfLayers);
 	output.resize(_modelStructure.numberOfLayers);
@@ -1818,17 +2167,16 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 				}
 			}
 		}
-		// open a file in write mode.
-		std::string	outputFileName = "RegularLayerOutput_";
-		ofstream outfile;
-		outfile.open("../../Octave/" + outputFileName + std::to_string(layer) + ".mat", ios::out | ios::trunc);
+
+		// stringstream has to be filled with the file contents before written it into the file itself
+		std::stringstream	outputStream;
 
 		// file preamble.
-		outfile << "# This is a file created by saveCumulativeRegularLayerOutput function from," << endl;
-		outfile << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-		outfile << "# Author: Dematties Dario Jesus." << endl;
+		outputStream << "# This is a file created by saveCumulativeRegularLayerOutput function from," << endl;
+		outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+		outputStream << "# Author: Dematties Dario Jesus." << endl;
 
-		outfile << "\n\n" << endl;
+		outputStream << "\n\n" << endl;
 
 		std::string	str;
 		std::string	STR;
@@ -1853,19 +2201,68 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 		infile.close();
 
 		// saves columnsArrayDimensionality
-		save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outfile);
+		save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
 
 		// saves populationsArrayDimensionality
-		save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outfile);
+		save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
 
 
 		// saves outputFromRegularLayers
-		std::cout << "\nsaving cumulative output from Regular Layer number " << layer << "\n";
-		save_multidimensional_vector_as_cell("regularLayerOutput", output[layer], outfile);
-		std::cout << "\ncumulative output from Regular Layer " << layer << " saved\n";
+		if ( world_rank == 0 )
+			std::cout << "\nsaving cumulative output from Regular Layer number " << layer << "\n";
+
+		save_multidimensional_vector_as_cell("regularLayerOutput", output[layer], outputStream);
+
+		if ( world_rank == 0 )
+			std::cout << "\ncumulative output from Regular Layer " << layer << " saved\n";
+
+		// File view comunication among ranks
+		std::size_t	fileView = 0, fileViewNew;
+		std::size_t	lengthToBeSent = outputStream.str().size()/world_size; // sets the amount of characters to be send by this rank
+		if ( world_size > 1 && world_rank == world_size-1 )
+			lengthToBeSent += outputStream.str().size()%world_size; // accumulates the rest of the characters in the last rank
+
+		if ( world_rank == 0 ) {
+			fileViewNew = fileView+lengthToBeSent;
+			if ( world_size > 1 )
+				MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+					 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+		}
+		else if ( world_rank == world_size-1 ) {
+			MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+				 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+				 MPI_STATUS_IGNORE);
+		}
+		else {
+			MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+				 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+				 MPI_STATUS_IGNORE);
+			
+			fileViewNew = fileView+lengthToBeSent;
+			MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+				 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+		}
+
+		//MPI_Barrier(MPI::COMM_WORLD);
+
+		// open a file in write mode
+		std::string	outputFileName = "RegularLayerOutput_";
+		MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + outputFileName + std::to_string(layer) + ".mat").c_str(),
+							  MPI::MODE_CREATE | MPI::MODE_WRONLY,
+							  MPI::INFO_NULL);
+
+		// sets the file view for this rank
+		outfile.Set_view(fileView*sizeof(char),
+				 MPI_UNSIGNED_CHAR, MPI_UNSIGNED_CHAR,
+				 "native", MPI::INFO_NULL);
+
+		// write stream in file
+		outfile.Write(&outputStream.str()[fileView],
+			     lengthToBeSent,
+			     MPI_UNSIGNED_CHAR);
 
 		// close the opened file.
-		outfile.close();
+		outfile.Close();
 	}
 } // end function saveCumulativeRegularLayerOutput
 

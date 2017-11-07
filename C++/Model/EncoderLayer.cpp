@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <random>
 #include <omp.h>
+#include <mpi.h>
 
 #include "../Libraries/Model/Random.h"
 #include "../Libraries/Model/Topology.h"
@@ -51,22 +52,43 @@ EncoderLayer::EncoderLayer( const std::string& folderName )
 // this function initializes an object instantiation of this class
 void	EncoderLayer::encoderInitializer( const encoderLayerStructure& structure )
 {
-	EncoderLayer::validateEncoderLayer(structure.afferentArrayDimensionality,
-					   structure.apicalArrayDimensionality,
-					   structure.columnsArrayDimensionality,
-					   structure.afferentReceptiveField,
-					   structure.afferentPercentage,
-					   structure.afferentWrapAround,
-					   structure.lateralDistalReceptiveField,
-					   structure.lateralDistalPercentage,
-					   structure.lateralDistalWrapAround,
-					   structure.apicalReceptiveField,
-					   structure.apicalPercentage,
-					   structure.apicalWrapAround,
-					   structure.iterationNum,
-		     			   structure.populationsArrayDimensionality,
-					   structure.apicalPopulationsArrayDimensionality,
-					   structure.potentialPercentage);
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	// There must be -at least- as many encoder columns as processes
+	std::size_t	numberOfColumns = std::accumulate(structure.columnsArrayDimensionality.begin(),
+							  structure.columnsArrayDimensionality.end(),
+							  1, std::multiplies<std::size_t>());
+
+	if (numberOfColumns < world_size) {
+		if (world_rank == 0)
+			std::cout << "\nEncoderLayer inconsistence: numberOfColumns < world_size\n";
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
+	if ( world_rank == 0 )
+		EncoderLayer::validateEncoderLayer(structure.afferentArrayDimensionality,
+						   structure.apicalArrayDimensionality,
+						   structure.columnsArrayDimensionality,
+						   structure.afferentReceptiveField,
+						   structure.afferentPercentage,
+						   structure.afferentWrapAround,
+						   structure.lateralDistalReceptiveField,
+						   structure.lateralDistalPercentage,
+						   structure.lateralDistalWrapAround,
+						   structure.apicalReceptiveField,
+						   structure.apicalPercentage,
+						   structure.apicalWrapAround,
+						   structure.iterationNum,
+						   structure.populationsArrayDimensionality,
+						   structure.apicalPopulationsArrayDimensionality,
+						   structure.potentialPercentage);
+
+	//MPI_Barrier(MPI_COMM_WORLD);
 
 	EncoderLayer::interconnectEncoderLayerColumns(structure.afferentArrayDimensionality,
 						      structure.apicalArrayDimensionality,
@@ -81,9 +103,13 @@ void	EncoderLayer::encoderInitializer( const encoderLayerStructure& structure )
 						      structure.apicalPercentage,
 						      structure.apicalWrapAround);
 
+	//MPI_Barrier(MPI_COMM_WORLD);
+
 	EncoderLayer::generateColumns(structure.populationsArrayDimensionality,
 				      structure.apicalPopulationsArrayDimensionality,
 				      structure.potentialPercentage);
+
+	//MPI_Barrier(MPI_COMM_WORLD);
 
 	_afferentUpdateStep = 0;
 
@@ -95,8 +121,17 @@ void	EncoderLayer::encoderInitializer( const encoderLayerStructure& structure )
 //this function initializes wired variables
 void	EncoderLayer::initializeWiredVariables()
 {
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
 
-	assert(_columnsDimensionality > 0);
+	if (_columnsDimensionality == 0) {
+		if (world_rank == 0)
+			std::cout << "\ninitializeWiredVariables inconsistence: _columnsDimensionality == 0\n";
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
 	_lateral.currentIndexes.resize(_columnsDimensionality);
 	_lateral.synchronization.resize(_columnsDimensionality);
 	_lateral.information.resize(_columnsDimensionality);
@@ -105,7 +140,14 @@ void	EncoderLayer::initializeWiredVariables()
 		_lateral.information[column] = false;
 	}
 
-	assert(_apicalDimensionality > 0);
+	if (_apicalDimensionality == 0) {
+		if (world_rank == 0)
+			std::cout << "\ninitializeWiredVariables inconsistence: _apicalDimensionality == 0\n";
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
 	_apical.currentIndexes.resize(_apicalDimensionality);
 	_apical.synchronization.resize(_apicalDimensionality);
 	_apical.information.resize(_apicalDimensionality);
@@ -135,28 +177,34 @@ void	EncoderLayer::validateEncoderLayer( const std::vector<std::size_t>& afferen
 					    const std::vector<std::size_t>& apicalPopulationsArrayDimensionality,
 	       				    const double potentialPercentage )
 {
-	EncoderLayer::validateComumnsInterconnectionsParameters(afferentArrayDimensionality,
-								apicalArrayDimensionality,
-								columnsArrayDimensionality,
-								afferentReceptiveField,
-							       	afferentPercentage,
-								afferentWrapAround,
-								lateralDistalReceptiveField,
-							       	lateralDistalPercentage,
-								lateralDistalWrapAround,
-								apicalReceptiveField,
-							       	apicalPercentage,
-								apicalWrapAround);
+	bool	error_flag = false;
 
-	EncoderLayer::validatePopulationParameters(populationsArrayDimensionality,
-						   apicalPopulationsArrayDimensionality,
-						   potentialPercentage);
+	error_flag &= EncoderLayer::validateColumnsInterconnectionsParameters(afferentArrayDimensionality,
+									      apicalArrayDimensionality,
+									      columnsArrayDimensionality,
+									      afferentReceptiveField,
+									      afferentPercentage,
+									      afferentWrapAround,
+									      lateralDistalReceptiveField,
+									      lateralDistalPercentage,
+									      lateralDistalWrapAround,
+									      apicalReceptiveField,
+									      apicalPercentage,
+									      apicalWrapAround);
 
+	error_flag &= EncoderLayer::validatePopulationParameters(populationsArrayDimensionality,
+								 apicalPopulationsArrayDimensionality,
+								 potentialPercentage);
+
+	if ( error_flag )
+		MPI_Abort(MPI_COMM_WORLD,1);
+
+	//MPI_Barrier(MPI_COMM_WORLD);
 } // end function validateEncoderLayer
 
 
 // validates the parameters to configure the columns' interconnections
-void	EncoderLayer::validateComumnsInterconnectionsParameters( const std::vector<std::size_t>& afferentArrayDimensionality,
+bool	EncoderLayer::validateColumnsInterconnectionsParameters( const std::vector<std::size_t>& afferentArrayDimensionality,
 								 const std::vector<std::size_t>& apicalArrayDimensionality,
 								 const std::vector<std::size_t>& columnsArrayDimensionality,
 								 const std::vector<std::size_t>& afferentReceptiveField,
@@ -169,57 +217,59 @@ void	EncoderLayer::validateComumnsInterconnectionsParameters( const std::vector<
 								 const double apicalPercentage,
 								 const bool apicalWrapAround )
 {
+	bool	error_flag = false;
+
 	if ( afferentArrayDimensionality.size() == 0 ||
 	     apicalArrayDimensionality.size() == 0 ||
 	     columnsArrayDimensionality.size() == 0 ) {
 		std::cout << "EncoderLayer object construction inconsistence: \n";
-		std::cout << "In function validateComumnsInterconnectionsParameters\n";
+		std::cout << "In function validateColumnsInterconnectionsParameters\n";
 		std::cout << "afferentArrayDimensionality.size() = " << afferentArrayDimensionality.size() << "\n";
 		std::cout << "apicalArrayDimensionality.size() = " << apicalArrayDimensionality.size() << "\n";
 		std::cout << "columnsArrayDimensionality.size() = " << columnsArrayDimensionality.size() << "\n";
-		exit( EXIT_FAILURE );
+		error_flag = true;
 	}
 
 	for ( std::size_t dim = 0; dim < afferentArrayDimensionality.size(); dim++ ) {
 		if ( afferentArrayDimensionality[dim] == 0 ) {
 			std::cout << "EncoderLayer object construction inconsistence: \n";
-			std::cout << "In function validateComumnsInterconnectionsParameters\n";
+			std::cout << "In function validateColumnsInterconnectionsParameters\n";
 			std::cout << "afferentArrayDimensionality[" << dim << "] = " << afferentArrayDimensionality[dim] << "\n";
-			exit( EXIT_FAILURE );
+			error_flag = true;
 		}
 	}
 
 	for ( std::size_t dim = 0; dim < apicalArrayDimensionality.size(); dim++ ) {
 		if ( apicalArrayDimensionality[dim] == 0 ) {
 			std::cout << "EncoderLayer object construction inconsistence: \n";
-			std::cout << "In function validateComumnsInterconnectionsParameters\n";
+			std::cout << "In function validateColumnsInterconnectionsParameters\n";
 			std::cout << "apicalArrayDimensionality[" << dim << "] = " << apicalArrayDimensionality[dim] << "\n";
-			exit( EXIT_FAILURE );
+			error_flag = true;
 		}
 	}
 
 	for ( std::size_t dim = 0; dim < columnsArrayDimensionality.size(); dim++ ) {
 		if ( columnsArrayDimensionality[dim] == 0 ) {
 			std::cout << "EncoderLayer object construction inconsistence: \n";
-			std::cout << "In function validateComumnsInterconnectionsParameters\n";
+			std::cout << "In function validateColumnsInterconnectionsParameters\n";
 			std::cout << "columnsArrayDimensionality[" << dim << "] = " << columnsArrayDimensionality[dim] << "\n";
-			exit( EXIT_FAILURE );
+			error_flag = true;
 		}
 	}
 
 	if ( afferentReceptiveField.size() == 0 ) {
 		std::cout << "EncoderLayer object construction inconsistence: \n";
-		std::cout << "In function validateComumnsInterconnectionsParameters\n";
+		std::cout << "In function validateColumnsInterconnectionsParameters\n";
 
 		std::cout << "afferentReceptiveField.size() = " << afferentReceptiveField.size() << "\n";
-		exit( EXIT_FAILURE );
+		error_flag = true;
 	}
 
 	if ( (afferentArrayDimensionality.size() != afferentReceptiveField.size()) ||
 	     (apicalReceptiveField.size() != 0 && apicalArrayDimensionality.size() != apicalReceptiveField.size()) ||
 	     (lateralDistalReceptiveField.size() != 0 && columnsArrayDimensionality.size() != lateralDistalReceptiveField.size()) ) {
 		std::cout << "EncoderLayer object construction inconsistence: \n";
-		std::cout << "In function validateComumnsInterconnectionsParameters\n";
+		std::cout << "In function validateColumnsInterconnectionsParameters\n";
 
 		std::cout << "afferentArrayDimensionality.size() = " << afferentArrayDimensionality.size() << "\n";
 		std::cout << "while, afferentReceptiveField.size() = " << afferentReceptiveField.size() << "\n";
@@ -229,28 +279,28 @@ void	EncoderLayer::validateComumnsInterconnectionsParameters( const std::vector<
 
 		std::cout << "columnsArrayDimensionality.size() = " << columnsArrayDimensionality.size() << "\n";
 		std::cout << "while, lateralDistalReceptiveField.size() = " << lateralDistalReceptiveField.size() << "\n";
-		exit( EXIT_FAILURE );
+		error_flag = true;
 	}
 
 	for ( std::size_t dim = 0; dim < afferentReceptiveField.size(); dim++ ) {
 		if (afferentArrayDimensionality[dim] % 2) {
 			if ( afferentReceptiveField[dim] > afferentArrayDimensionality[dim]/2 ) {
 				std::cout << "EncoderLayer object construction inconsistence: \n";
-				std::cout << "In function validateComumnsInterconnectionsParameters\n";
+				std::cout << "In function validateColumnsInterconnectionsParameters\n";
 				std::cout << "afferentReceptiveField[" << dim << "] = " << afferentReceptiveField[dim] << "\n";
 				std::cout << "while afferentArrayDimensionality[" << dim << "] is = "
 				          << afferentArrayDimensionality[dim] << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 		else {
 			if ( afferentReceptiveField[dim] > afferentArrayDimensionality[dim]/2-1 ) {
 				std::cout << "EncoderLayer object construction inconsistence: \n";
-				std::cout << "In function validateComumnsInterconnectionsParameters\n";
+				std::cout << "In function validateColumnsInterconnectionsParameters\n";
 				std::cout << "afferentReceptiveField[" << dim << "] = " << afferentReceptiveField[dim] << "\n";
 				std::cout << "while afferentArrayDimensionality[" << dim << "] is = "
 				          << afferentArrayDimensionality[dim] << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 	}
@@ -259,21 +309,21 @@ void	EncoderLayer::validateComumnsInterconnectionsParameters( const std::vector<
 		if (apicalArrayDimensionality[dim] % 2) {
 			if ( apicalReceptiveField[dim] > apicalArrayDimensionality[dim]/2 ) {
 				std::cout << "EncoderLayer object construction inconsistence: \n";
-				std::cout << "In function validateComumnsInterconnectionsParameters\n";
+				std::cout << "In function validateColumnsInterconnectionsParameters\n";
 				std::cout << "apicalReceptiveField[" << dim << "] = " << apicalReceptiveField[dim] << "\n";
 				std::cout << "while apicalArrayDimensionality[" << dim << "] is = "
 				          << apicalArrayDimensionality[dim] << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 		else {
 			if ( apicalReceptiveField[dim] > apicalArrayDimensionality[dim]/2-1 ) {
 				std::cout << "EncoderLayer object construction inconsistence: \n";
-				std::cout << "In function validateComumnsInterconnectionsParameters\n";
+				std::cout << "In function validateColumnsInterconnectionsParameters\n";
 				std::cout << "apicalReceptiveField[" << dim << "] = " << apicalReceptiveField[dim] << "\n";
 				std::cout << "while apicalArrayDimensionality[" << dim << "] is = "
 				          << apicalArrayDimensionality[dim] << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 	}
@@ -282,21 +332,21 @@ void	EncoderLayer::validateComumnsInterconnectionsParameters( const std::vector<
 		if (columnsArrayDimensionality[dim] % 2) {
 			if ( lateralDistalReceptiveField[dim] > columnsArrayDimensionality[dim]/2 ) {
 				std::cout << "EncoderLayer object construction inconsistence: \n";
-				std::cout << "In function validateComumnsInterconnectionsParameters\n";
+				std::cout << "In function validateColumnsInterconnectionsParameters\n";
 				std::cout << "lateralDistalReceptiveField[" << dim << "] = " << lateralDistalReceptiveField[dim] << "\n";
 				std::cout << "while columnsArrayDimensionality[" << dim << "] is = "
 				          << columnsArrayDimensionality[dim] << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 		else {
 			if ( lateralDistalReceptiveField[dim] > columnsArrayDimensionality[dim]/2-1 ) {
 				std::cout << "EncoderLayer object construction inconsistence: \n";
-				std::cout << "In function validateComumnsInterconnectionsParameters\n";
+				std::cout << "In function validateColumnsInterconnectionsParameters\n";
 				std::cout << "lateralDistalReceptiveField[" << dim << "] = " << lateralDistalReceptiveField[dim] << "\n";
 				std::cout << "while columnsArrayDimensionality[" << dim << "] is = "
 				          << columnsArrayDimensionality[dim] << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 	}
@@ -305,26 +355,30 @@ void	EncoderLayer::validateComumnsInterconnectionsParameters( const std::vector<
 	     lateralDistalPercentage < 0.0 || lateralDistalPercentage > 1.0 ||
 	     apicalPercentage < 0.0 || apicalPercentage > 1.0 ) {
 		std::cout << "EncoderLayer object construction inconsistence: \n";
-		std::cout << "In function validateComumnsInterconnectionsParameters\n";
+		std::cout << "In function validateColumnsInterconnectionsParameters\n";
 		std::cout << "afferentPercentage = " << afferentPercentage << "\n";
 		std::cout << "lateralDistalPercentage = " << lateralDistalPercentage << "\n";
 		std::cout << "apicalPercentage = " << apicalPercentage << "\n";
-		exit( EXIT_FAILURE );
+		error_flag = true;
 	}
-} // end function validateComumnsInterconnectionsParameters
+
+	return	error_flag;
+} // end function validateColumnsInterconnectionsParameters
 
 
 // validates the parameters used to generate the columns' populations
-void	EncoderLayer::validatePopulationParameters( const std::vector<std::size_t>& populationsArrayDimensionality,
+bool	EncoderLayer::validatePopulationParameters( const std::vector<std::size_t>& populationsArrayDimensionality,
 						    const std::vector<std::size_t>& apicalPopulationsArrayDimensionality,
 	       					    const double potentialPercentage )
 {
+	bool	error_flag = false;
+
 	if ( potentialPercentage < 0.0 || potentialPercentage > 1.0 ) {
 		std::cout << "EncoderLayer object construction inconsistence: \n";
 		std::cout << "In function validatePopulationParameters\n";
 		std::cout << "potentialPercentage = "
 			  << potentialPercentage << "\n";
-		exit( EXIT_FAILURE );
+		error_flag = true;
 	}
 
 	if ( apicalPopulationsArrayDimensionality.size() == 0 ) {
@@ -332,7 +386,7 @@ void	EncoderLayer::validatePopulationParameters( const std::vector<std::size_t>&
 		std::cout << "In function validatePopulationParameters\n";
 		std::cout << "apicalPopulationsArrayDimensionality.size() = "
 			  << apicalPopulationsArrayDimensionality.size() << "\n";
-		exit( EXIT_FAILURE );
+		error_flag = true;
 	}
 	else {
 		for(const auto& s: apicalPopulationsArrayDimensionality) {
@@ -344,7 +398,7 @@ void	EncoderLayer::validatePopulationParameters( const std::vector<std::size_t>&
 					std::cout << v << ' ';
 
 				std::cout << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 	}
@@ -354,7 +408,7 @@ void	EncoderLayer::validatePopulationParameters( const std::vector<std::size_t>&
 		std::cout << "In function validatePopulationParameters\n";
 		std::cout << "populationsArrayDimensionality.size() = "
 			  << populationsArrayDimensionality.size() << "\n";
-		exit( EXIT_FAILURE );
+		error_flag = true;
 	}
 	else {
 		for(const auto& s: populationsArrayDimensionality) {
@@ -366,10 +420,12 @@ void	EncoderLayer::validatePopulationParameters( const std::vector<std::size_t>&
 					std::cout << v << ' ';
 
 				std::cout << "\n";
-				exit( EXIT_FAILURE );
+				error_flag = true;
 			}
 		}
 	}
+
+	return	error_flag;
 } // end function validatePopulationParameters
 
 
@@ -387,6 +443,12 @@ void	EncoderLayer::interconnectEncoderLayerColumns( const std::vector<std::size_
 						       const double apicalPercentage,
 						       const bool apicalWrapAround )
 {
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
 	_afferentArrayDimensionality = afferentArrayDimensionality;
 	_apicalArrayDimensionality = apicalArrayDimensionality;
 	_columnsArrayDimensionality = columnsArrayDimensionality;
@@ -407,30 +469,40 @@ void	EncoderLayer::interconnectEncoderLayerColumns( const std::vector<std::size_
 	_afferentPercentage = afferentPercentage;
 	_afferentWrapAround = afferentWrapAround;
 
-	assert(afferentReceptiveField.size() != 0);
-	_afferentConnections.resize(_columnsDimensionality);
-	for ( std::size_t column = 0; column < _columnsDimensionality; column++ )
-		_afferentConnections[column] = EncoderLayer::getAfferentInputs(column);
+	if (afferentReceptiveField.size() == 0) {
+		if (world_rank == 0)
+			std::cout << "\ninterconnectEncoderLayerColumns inconsistence: afferentReceptiveField.size() == 0\n";
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
+	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+		_afferentConnections.push_back(EncoderLayer::getAfferentInputs(column));
+
+	_afferentConnections.shrink_to_fit();
 
 	_lateralDistalReceptiveField = lateralDistalReceptiveField;
 	_lateralDistalPercentage = lateralDistalPercentage;
 	_lateralDistalWrapAround = lateralDistalWrapAround;
 
 	if ( lateralDistalReceptiveField.size() != 0 ) {
-		_lateralDistalConnections.resize(_columnsDimensionality);
-		for ( std::size_t column = 0; column < _columnsDimensionality; column++ )
-			_lateralDistalConnections[column] = EncoderLayer::getLateralDistalInputs(column);
+		for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+			_lateralDistalConnections.push_back(EncoderLayer::getLateralDistalInputs(column));
 	}
+
+	_lateralDistalConnections.shrink_to_fit();
 
 	_apicalReceptiveField = apicalReceptiveField;
 	_apicalPercentage = apicalPercentage;
 	_apicalWrapAround = apicalWrapAround;
 
 	if ( apicalReceptiveField.size() != 0 ) {
-		_apicalConnections.resize(_columnsDimensionality);
-		for ( std::size_t column = 0; column < _columnsDimensionality; column++ )
-			_apicalConnections[column] = EncoderLayer::getApicalInputs(column);
+		for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+			_apicalConnections.push_back(EncoderLayer::getApicalInputs(column));
 	}
+
+	_apicalConnections.shrink_to_fit();
 } // end function interconnectEncoderLayerColumns
 
 
@@ -439,17 +511,27 @@ void	EncoderLayer::generateColumns( const std::vector<std::size_t>& populationsA
 				       const std::vector<std::size_t>& apicalPopulationsArrayDimensionality,
 	       			       const double potentialPercentage )
 {
-	std::size_t			numberOfInputs;
 	std::vector<std::size_t>	dynamicUnits;
+	
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
 
-	assert(_afferentConnections.size() != 0);
-	for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
-		numberOfInputs = 0;
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
 
-		numberOfInputs += _afferentConnections[column].size();
+	if (_afferentConnections.size() == 0) {
+		if (world_rank == 0)
+			std::cout << "\ngenerateColumns inconsistence: _afferentConnections.size() == 0\n";
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
+	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
+		auto	numberOfInputs = _afferentConnections[column/world_size].size();
 
 		if ( _apicalConnections.size() != 0 )
-			for ( std::size_t link = 0; link < _apicalConnections[column].size(); link++ ) {
+			for ( std::size_t link = 0; link < _apicalConnections[column/world_size].size(); link++ ) {
 				auto	auxiliary = std::accumulate(apicalPopulationsArrayDimensionality.begin(),
 								    apicalPopulationsArrayDimensionality.end(),
 								    1, std::multiplies<std::size_t>());
@@ -457,7 +539,7 @@ void	EncoderLayer::generateColumns( const std::vector<std::size_t>& populationsA
 			}
 
 		if ( _lateralDistalConnections.size() != 0 )
-			for ( std::size_t link = 0; link < _lateralDistalConnections[column].size(); link++ ) {
+			for ( std::size_t link = 0; link < _lateralDistalConnections[column/world_size].size(); link++ ) {
 				auto	auxiliary = std::accumulate(populationsArrayDimensionality.begin(),
 								    populationsArrayDimensionality.end(),
 								    1, std::multiplies<std::size_t>());
@@ -482,8 +564,20 @@ void	EncoderLayer::generateColumns( const std::vector<std::size_t>& populationsA
 // initializes the proximal input limits from afferent and lateral connections
 void	EncoderLayer::initializeProximalInputLimits()
 {
-	assert(_afferentConnections.size() != 0);
-       
+	int	auxiliary;
+
+	// Get the rank of the process
+	MPI_Comm_rank(MPI_COMM_WORLD, &auxiliary);
+	std::size_t	world_rank = auxiliary;
+
+	if (_afferentConnections.size() == 0) {
+		if (world_rank == 0)
+			std::cout << "\ninitializeProximalInputLimits inconsistence: _afferentConnections.size() == 0\n";
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
 	_proximalAfferentLimits.resize(_afferentDimensionality);
 	for ( std::size_t afferentInput = 0; afferentInput < _afferentDimensionality; afferentInput++ ) {
 		_proximalAfferentLimits[afferentInput][0] = 0.0;
@@ -496,8 +590,31 @@ void	EncoderLayer::initializeProximalInputLimits()
 regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& afferent,
 						       const encoderLayerParameters& parameters )
 {
-	assert( parameters.proximalInformationThreshold >= 0.0 && parameters.proximalInformationThreshold <= 1.0 );
-	assert( parameters.distalInformationThreshold >= 0.0 && parameters.distalInformationThreshold <= 1.0 );
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if (parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0) {
+		if (world_rank == 0) {
+			std::cout << "\ncomputeResponse inconsistence: parameters.proximalInformationThreshold == "
+				  << parameters.proximalInformationThreshold << "\n";
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
+	if (parameters.distalInformationThreshold < 0.0 || parameters.distalInformationThreshold > 1.0) {
+		if (world_rank == 0) {
+			std::cout << "\ncomputeResponse inconsistence: parameters.distalInformationThreshold == "
+				  << parameters.distalInformationThreshold << "\n";
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
 
 	regularLayerResponse	output;
 
@@ -505,10 +622,10 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, parameters, output)
-	for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
-		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column, afferent);
-		auto	distalInputs = EncoderLayer::gatherDistalInputs(column, _apical, _lateral);
+	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size)
+	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
+		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
+		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, _apical, _lateral);
 
 		bool	synchronizations;
 		bool	information;
@@ -556,12 +673,12 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 
 		if ( synchronizations ) { // If there is proximal OR distal synchronization
 			if ( information ) { // If there is enough proximal OR distal information
-				auto	response = _encoderColumns[column].getResponse(proximalInputs.inputs);
+				auto	response = _encoderColumns[column/world_size].getResponse(proximalInputs.inputs);
 
-				//auto	activeIndexes = _encoderColumns[column].Activate(response,
-											 //distalInputs.activeIndexes,
-											 //parameters.activationRadius,
-											 //parameters.sparsity);
+				//auto	activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    //distalInputs.activeIndexes,
+												    //parameters.activationRadius,
+												    //parameters.sparsity);
 			
 				std::size_t	numberOfExcitedUnits = PROXIMAL_ACTIVATION_PERCENTAGE*
 								       std::accumulate(_populationsArrayDimensionality.begin(),
@@ -570,17 +687,17 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 
 				std::vector<std::size_t>	activeIndexes;
 				if ( parameters.enableLearning && parameters.learning.enableDistalLearning ) {
-					activeIndexes = _encoderColumns[column].Activate(response,
-											 distalInputs.activeIndexes,
-											 numberOfExcitedUnits,
-											 parameters.sparsity,
-											 true);
+					activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    distalInputs.activeIndexes,
+												    numberOfExcitedUnits,
+												    parameters.sparsity,
+												    true);
 				}
 				else {
-					activeIndexes = _encoderColumns[column].Activate(response,
-											 distalInputs.activeIndexes,
-											 numberOfExcitedUnits,
-											 parameters.sparsity);
+					activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    distalInputs.activeIndexes,
+												    numberOfExcitedUnits,
+												    parameters.sparsity);
 				}
 
 				if ( parameters.enableLearning ) {	// If learning is enabled
@@ -589,10 +706,10 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						"parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0");
 
 					if ( parameters.learning.enableProximalLearning ) {
-						_encoderColumns[column].learningRule(parameters.learning.proximalLearningRate,
-										     parameters.learning.proximalNeighborhood,
-										     response.ranking[0],
-										     proximalInputs.inputs);
+						_encoderColumns[column/world_size].learningRule(parameters.learning.proximalLearningRate,
+												parameters.learning.proximalNeighborhood,
+												response.ranking[0],
+												proximalInputs.inputs);
 					}
 
 					if ( parameters.learning.enableDistalLearning ) {
@@ -603,27 +720,27 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						  			    std::accumulate(_populationsArrayDimensionality.begin(),
 											    _populationsArrayDimensionality.end(), 1,
 											    std::multiplies<std::size_t>()) ) {
-							_encoderColumns[column].Update(activeIndexes,
-										       distalInputs.activeIndexes,
-										       true,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate*BUSTING);
+							_encoderColumns[column/world_size].Update(activeIndexes,
+												  distalInputs.activeIndexes,
+												  true,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
-							_encoderColumns[column].Update(activeIndexes,
-										       distalInputs.activeIndexes,
-										       true,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate);
+							_encoderColumns[column/world_size].Update(activeIndexes,
+												  distalInputs.activeIndexes,
+												  true,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate);
 						}
 
 						if ( parameters.learning.spikeTimeDependentSynapticPlasticity ) {
 							auto	lastActiveIndexes = _lateral.currentIndexes[column]; 
-							_encoderColumns[column].Update(lastActiveIndexes,
-										       distalInputs.activeIndexes,
-										       false,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate);
+							_encoderColumns[column/world_size].Update(lastActiveIndexes,
+												  distalInputs.activeIndexes,
+												  false,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate);
 						}
 					}
 				}
@@ -659,6 +776,8 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 		}
 	}
 
+	EncoderLayer::mergeOutputs(output);
+
 	if ( parameters.enableLearning )	// If learning is enabled, then it calls updateProximalInputLimits member function
 		EncoderLayer::updateProximalInputLimits(afferent, parameters.learning);
 
@@ -671,8 +790,31 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						       const regularLayerResponse& lateral,
 						       const encoderLayerParameters& parameters )
 {
-	assert( parameters.proximalInformationThreshold >= 0.0 && parameters.proximalInformationThreshold <= 1.0 );
-	assert( parameters.distalInformationThreshold >= 0.0 && parameters.distalInformationThreshold <= 1.0 );
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if (parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0) {
+		if (world_rank == 0) {
+			std::cout << "\ncomputeResponse inconsistence: parameters.proximalInformationThreshold == "
+				  << parameters.proximalInformationThreshold << "\n";
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
+	if (parameters.distalInformationThreshold < 0.0 || parameters.distalInformationThreshold > 1.0) {
+		if (world_rank == 0) {
+			std::cout << "\ncomputeResponse inconsistence: parameters.distalInformationThreshold == "
+				  << parameters.distalInformationThreshold << "\n";
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
 
 	regularLayerResponse	output;
 
@@ -680,10 +822,10 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output)
-	for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
-		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column, afferent);
-		auto	distalInputs = EncoderLayer::gatherDistalInputs(column, _apical, lateral);
+	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size)
+	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
+		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
+		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, _apical, lateral);
 
 		bool	synchronizations;
 		bool	information;
@@ -731,13 +873,32 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 
 		if ( synchronizations ) { // If there is proximal OR distal synchronization
 			if ( information ) { // If there is enough proximal OR distal information
-				auto	response = _encoderColumns[column].getResponse(proximalInputs.inputs);
+				auto	response = _encoderColumns[column/world_size].getResponse(proximalInputs.inputs);
 
-				auto	activeIndexes = _encoderColumns[column].Activate(response,
-											 distalInputs.activeIndexes,
-											 parameters.activationRadius,
-											 parameters.sparsity);
+				//auto	activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    //distalInputs.activeIndexes,
+												    //parameters.activationRadius,
+												    //parameters.sparsity);
 			
+				std::size_t	numberOfExcitedUnits = PROXIMAL_ACTIVATION_PERCENTAGE*
+								       std::accumulate(_populationsArrayDimensionality.begin(),
+										       _populationsArrayDimensionality.end(),
+										       1, std::multiplies<std::size_t>());	
+
+				std::vector<std::size_t>	activeIndexes;
+				if ( parameters.enableLearning && parameters.learning.enableDistalLearning ) {
+					activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    distalInputs.activeIndexes,
+												    numberOfExcitedUnits,
+												    parameters.sparsity,
+												    true);
+				}
+				else {
+					activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    distalInputs.activeIndexes,
+												    numberOfExcitedUnits,
+												    parameters.sparsity);
+				}
 
 				if ( parameters.enableLearning ) {	// If learning is enabled
 					if (parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0)
@@ -745,10 +906,10 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						"parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0");
 
 					if ( parameters.learning.enableProximalLearning ) {
-						_encoderColumns[column].learningRule(parameters.learning.proximalLearningRate,
-										     parameters.learning.proximalNeighborhood,
-										     response.ranking[0],
-										     proximalInputs.inputs);
+						_encoderColumns[column/world_size].learningRule(parameters.learning.proximalLearningRate,
+												parameters.learning.proximalNeighborhood,
+												response.ranking[0],
+												proximalInputs.inputs);
 					}
 
 					if ( parameters.learning.enableDistalLearning ) {
@@ -759,27 +920,27 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						  			    std::accumulate(_populationsArrayDimensionality.begin(),
 											    _populationsArrayDimensionality.end(), 1,
 											    std::multiplies<std::size_t>()) ) {
-							_encoderColumns[column].Update(activeIndexes,
-										       distalInputs.activeIndexes,
-										       true,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate*BUSTING);
+							_encoderColumns[column/world_size].Update(activeIndexes,
+												  distalInputs.activeIndexes,
+												  true,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
-							_encoderColumns[column].Update(activeIndexes,
-										       distalInputs.activeIndexes,
-										       true,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate);
+							_encoderColumns[column/world_size].Update(activeIndexes,
+												  distalInputs.activeIndexes,
+												  true,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate);
 						}
 
 						if ( parameters.learning.spikeTimeDependentSynapticPlasticity ) {
 							auto	lastActiveIndexes = lateral.currentIndexes[column]; 
-							_encoderColumns[column].Update(lastActiveIndexes,
-										       distalInputs.activeIndexes,
-										       false,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate);
+							_encoderColumns[column/world_size].Update(lastActiveIndexes,
+												  distalInputs.activeIndexes,
+												  false,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate);
 						}
 					}
 				}
@@ -814,6 +975,8 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 			}
 		}
 	}
+
+	EncoderLayer::mergeOutputs(output);
 
 	if ( parameters.enableLearning )	// If learning is enabled, then it calls updateProximalInputLimits member function
 		EncoderLayer::updateProximalInputLimits(afferent, parameters.learning);
@@ -828,8 +991,31 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						       const regularLayerResponse& apical,
 						       const encoderLayerParameters& parameters )
 {
-	assert( parameters.proximalInformationThreshold >= 0.0 && parameters.proximalInformationThreshold <= 1.0 );
-	assert( parameters.distalInformationThreshold >= 0.0 && parameters.distalInformationThreshold <= 1.0 );
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if (parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0) {
+		if (world_rank == 0) {
+			std::cout << "\ncomputeResponse inconsistence: parameters.proximalInformationThreshold == "
+				  << parameters.proximalInformationThreshold << "\n";
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
+
+	if (parameters.distalInformationThreshold < 0.0 || parameters.distalInformationThreshold > 1.0) {
+		if (world_rank == 0) {
+			std::cout << "\ncomputeResponse inconsistence: parameters.distalInformationThreshold == "
+				  << parameters.distalInformationThreshold << "\n";
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Abort(MPI_COMM_WORLD,1);
+	}
 
 	regularLayerResponse	output;
 
@@ -837,10 +1023,10 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output)
-	for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
-		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column, afferent);
-		auto	distalInputs = EncoderLayer::gatherDistalInputs(column, apical, lateral);
+	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size)
+	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
+		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
+		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, apical, lateral);
 
 		bool	synchronizations;
 		bool	information;
@@ -888,13 +1074,32 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 
 		if ( synchronizations ) { // If there is proximal OR distal synchronization
 			if ( information ) { // If there is enough proximal OR distal information
-				auto	response = _encoderColumns[column].getResponse(proximalInputs.inputs);
+				auto	response = _encoderColumns[column/world_size].getResponse(proximalInputs.inputs);
 
-				auto	activeIndexes = _encoderColumns[column].Activate(response,
-											 distalInputs.activeIndexes,
-											 parameters.activationRadius,
-											 parameters.sparsity);
+				//auto	activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    //distalInputs.activeIndexes,
+												    //parameters.activationRadius,
+												    //parameters.sparsity);
 			
+				std::size_t	numberOfExcitedUnits = PROXIMAL_ACTIVATION_PERCENTAGE*
+								       std::accumulate(_populationsArrayDimensionality.begin(),
+										       _populationsArrayDimensionality.end(),
+										       1, std::multiplies<std::size_t>());	
+
+				std::vector<std::size_t>	activeIndexes;
+				if ( parameters.enableLearning && parameters.learning.enableDistalLearning ) {
+					activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    distalInputs.activeIndexes,
+												    numberOfExcitedUnits,
+												    parameters.sparsity,
+												    true);
+				}
+				else {
+					activeIndexes = _encoderColumns[column/world_size].Activate(response,
+												    distalInputs.activeIndexes,
+												    numberOfExcitedUnits,
+												    parameters.sparsity);
+				}
 
 				if ( parameters.enableLearning ) {	// If learning is enabled
 					if (parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0)
@@ -902,10 +1107,10 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						"parameters.proximalInformationThreshold < 0.0 || parameters.proximalInformationThreshold > 1.0");
 
 					if ( parameters.learning.enableProximalLearning ) {
-						_encoderColumns[column].learningRule(parameters.learning.proximalLearningRate,
-										     parameters.learning.proximalNeighborhood,
-										     response.ranking[0],
-										     proximalInputs.inputs);
+						_encoderColumns[column/world_size].learningRule(parameters.learning.proximalLearningRate,
+												parameters.learning.proximalNeighborhood,
+												response.ranking[0],
+												proximalInputs.inputs);
 					}
 
 					if ( parameters.learning.enableDistalLearning ) {
@@ -916,27 +1121,27 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 						  			    std::accumulate(_populationsArrayDimensionality.begin(),
 											    _populationsArrayDimensionality.end(), 1,
 											    std::multiplies<std::size_t>()) ) {
-							_encoderColumns[column].Update(activeIndexes,
-										       distalInputs.activeIndexes,
-										       true,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate*BUSTING);
+							_encoderColumns[column/world_size].Update(activeIndexes,
+												  distalInputs.activeIndexes,
+												  true,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
-							_encoderColumns[column].Update(activeIndexes,
-										       distalInputs.activeIndexes,
-										       true,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate);
+							_encoderColumns[column/world_size].Update(activeIndexes,
+												  distalInputs.activeIndexes,
+												  true,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate);
 						}
 
 						if ( parameters.learning.spikeTimeDependentSynapticPlasticity ) {
 							auto	lastActiveIndexes = lateral.currentIndexes[column]; 
-							_encoderColumns[column].Update(lastActiveIndexes,
-										       distalInputs.activeIndexes,
-										       false,
-										       DISTAL_SYNAPTIC_THRESHOLD,
-										       parameters.learning.distalLearningRate);
+							_encoderColumns[column/world_size].Update(lastActiveIndexes,
+												  distalInputs.activeIndexes,
+												  false,
+												  DISTAL_SYNAPTIC_THRESHOLD,
+												  parameters.learning.distalLearningRate);
 						}
 					}
 				}
@@ -971,6 +1176,8 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 			}
 		}
 	}
+
+	EncoderLayer::mergeOutputs(output);
 
 	if ( parameters.enableLearning )	// If learning is enabled, then it calls updateProximalInputLimits member function
 		EncoderLayer::updateProximalInputLimits(afferent, parameters.learning);
@@ -1017,17 +1224,6 @@ encoderLayerDistalInput	EncoderLayer::gatherDistalInputs( const std::size_t colu
 							  const regularLayerResponse& apical,
 							  const regularLayerResponse& lateral )
 {
-       /* std::cout << "\n_apicalConnections:"  << _apicalConnections.size() << "\n";*/
-	//std::cout << "\n_lateralDistalConnections:"  << _lateralDistalConnections.size() << "\n";
-
-	//std::cout << "\napical.currentIndexes.size():"  << apical.currentIndexes.size() << "\n";
-	//std::cout << "\napical.synchronization.size():"  << apical.synchronization.size() << "\n";
-	//std::cout << "\napical.information.size():"  << apical.information.size() << "\n";
-
-	//std::cout << "\nlateral.currentIndexes.size():"  << lateral.currentIndexes.size() << "\n";
-	//std::cout << "\nlateral.synchronization.size():"  << lateral.synchronization.size() << "\n";
-	//std::cout << "\nlateral.information.size():"  << lateral.information.size() << "\n";
-
 	encoderLayerDistalInput	distalInputs;
 
 	std::size_t	numberOfDistalConnections = 0;
@@ -1233,176 +1429,258 @@ std::size_t	EncoderLayer::getReceptiveFieldCenter( const std::size_t index,
 // function that saves the EncoderLayer's status in a file
 void	EncoderLayer::saveEncoderLayerStatus( const std::string& folderName )
 {
-	// open a file in write mode.
-	ofstream outfile;
-	outfile.open("../../Octave/" + folderName + "/EncoderLayer.mat", ios::out | ios::trunc);
+	EncoderLayer::gatherConnections();
 
-	// file preamble.
-	outfile << "# This is a file created by saveEncoderLayerStatus member function in EncoderLayer class from," << endl;
-	outfile << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-	outfile << "# Author: Dematties Dario Jesus." << endl;
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
 
-	outfile << "\n\n" << endl;
-	
-	// saves afferentArrayDimensionality
-	save_vector_as_matrix("afferentArrayDimensionality", _afferentArrayDimensionality, outfile);
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
 
-	// saves afferentDimensionality
-	save_as_scalar("afferentDimensionality", _afferentDimensionality, outfile);
+	std::stringstream	outputStream;
 
-	// saves afferentReceptiveField
-	if(_afferentReceptiveField.size() != 0) {
-		save_vector_as_matrix("afferentReceptiveField", _afferentReceptiveField, outfile);
-	}
-	else {
-		std::vector<int>	receptiveField(_afferentArrayDimensionality.size(),-1);
-		save_vector_as_matrix("afferentReceptiveField", receptiveField, outfile);
-	}
+	if ( world_rank == 0 ) {
+		// file preamble.
+		outputStream << "# This is a file created by saveEncoderLayerStatus member function in EncoderLayer class from," << endl;
+		outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+		outputStream << "# Author: Dematties Dario Jesus." << endl;
 
-	// saves afferentPercentage
-	save_as_scalar("afferentPercentage", _afferentPercentage, outfile);
+		outputStream << "\n\n" << endl;
+		
+		// saves afferentArrayDimensionality
+		save_vector_as_matrix("afferentArrayDimensionality", _afferentArrayDimensionality, outputStream);
 
-	// saves afferentWrapAround
-	save_as_bool("afferentWrapAround", _afferentWrapAround, outfile);
+		// saves afferentDimensionality
+		save_as_scalar("afferentDimensionality", _afferentDimensionality, outputStream);
 
-
-
-	// saves apicalArrayDimensionality
-	save_vector_as_matrix("apicalArrayDimensionality", _apicalArrayDimensionality, outfile);
-
-	// saves apicalDimensionality
-	save_as_scalar("apicalDimensionality", _apicalDimensionality, outfile);
-
-	// saves apicalReceptiveField
-	if(_apicalReceptiveField.size() != 0) {
-		save_vector_as_matrix("apicalReceptiveField", _apicalReceptiveField, outfile);
-	}
-	else {
-		std::vector<int>	receptiveField(_apicalArrayDimensionality.size(),-1);
-		save_vector_as_matrix("apicalReceptiveField", receptiveField, outfile);
-	}
-
-	// saves apicalPercentage
-	save_as_scalar("apicalPercentage", _apicalPercentage, outfile);
-
-	// saves apicalWrapAround
-	save_as_bool("apicalWrapAround", _apicalWrapAround, outfile);
-
-
-
-	// saves columnsArrayDimensionality
-	save_vector_as_matrix("columnsArrayDimensionality", _columnsArrayDimensionality, outfile);
-
-	// saves columnsDimensionality
-	save_as_scalar("columnsDimensionality", _columnsDimensionality, outfile);
-
-
-
-	// saves lateralDistalReceptiveField
-	if(_lateralDistalReceptiveField.size() != 0) {
-		save_vector_as_matrix("lateralDistalReceptiveField", _lateralDistalReceptiveField, outfile);
-	}
-	else {
-		std::vector<int>	receptiveField(_columnsArrayDimensionality.size(),-1);
-		save_vector_as_matrix("lateralDistalReceptiveField", receptiveField, outfile);
-	}
-
-	// saves lateralDistalPercentage
-	save_as_scalar("lateralDistalPercentage", _lateralDistalPercentage, outfile);
-
-	// saves lateralDistalWrapAround
-	save_as_bool("lateralDistalWrapAround", _lateralDistalWrapAround, outfile);
-
-	if ( _afferentConnections.size() != 0 ) {
-		// saves afferentConnections
-		twodvector<bool>	afferentConnectionsBitMap;
-		afferentConnectionsBitMap.resize(_columnsDimensionality);
-		for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
-			afferentConnectionsBitMap[column].resize(_afferentDimensionality);
-			for ( std::size_t index = 0; index < _afferentConnections[column].size(); index++ )
-				afferentConnectionsBitMap[column][_afferentConnections[column][index]] = true;
+		// saves afferentReceptiveField
+		if(_afferentReceptiveField.size() != 0) {
+			save_vector_as_matrix("afferentReceptiveField", _afferentReceptiveField, outputStream);
+		}
+		else {
+			std::vector<int>	receptiveField(_afferentArrayDimensionality.size(),-1);
+			save_vector_as_matrix("afferentReceptiveField", receptiveField, outputStream);
 		}
 
-		SparseMatrixElements<bool>	sparseAfferentConnectionsBitMap;
-		sparseAfferentConnectionsBitMap = to_sparse(afferentConnectionsBitMap);
-		save_sparse_matrix_elements_as_sparse_matrix("afferentConnections", sparseAfferentConnectionsBitMap, outfile);
-	}
+		// saves afferentPercentage
+		save_as_scalar("afferentPercentage", _afferentPercentage, outputStream);
 
-	if ( _lateralDistalConnections.size() != 0 ) {
-		// saves lateralDistalConnections
-		twodvector<bool>	lateralDistalConnectionsBitMap;
-		lateralDistalConnectionsBitMap.resize(_columnsDimensionality);
-		for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
-			lateralDistalConnectionsBitMap[column].resize(_columnsDimensionality);
-			for ( std::size_t index = 0; index < _lateralDistalConnections[column].size(); index++ )
-				lateralDistalConnectionsBitMap[column][_lateralDistalConnections[column][index]] = true;
-		}	
-
-		SparseMatrixElements<bool>	sparseLateralDistalConnectionsBitMap;
-		sparseLateralDistalConnectionsBitMap = to_sparse(lateralDistalConnectionsBitMap);
-		save_sparse_matrix_elements_as_sparse_matrix("lateralDistalConnections", sparseLateralDistalConnectionsBitMap, outfile);
-	}
-
-	if ( _apicalConnections.size() != 0 ) {
-		// saves apicalConnections
-		twodvector<bool>	apicalConnectionsBitMap;
-		apicalConnectionsBitMap.resize(_columnsDimensionality);
-		for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
-			apicalConnectionsBitMap[column].resize(_apicalDimensionality);
-			for ( std::size_t index = 0; index < _apicalConnections[column].size(); index++ )
-				apicalConnectionsBitMap[column][_apicalConnections[column][index]] = true;
-		}	
-
-		SparseMatrixElements<bool>	sparseApicalConnectionsBitMap;
-		sparseApicalConnectionsBitMap = to_sparse(apicalConnectionsBitMap);
-		save_sparse_matrix_elements_as_sparse_matrix("apicalConnections", sparseApicalConnectionsBitMap, outfile);
-	}
+		// saves afferentWrapAround
+		save_as_bool("afferentWrapAround", _afferentWrapAround, outputStream);
 
 
 
-	// saves populationsArrayDimensionality
-	save_vector_as_matrix("populationsArrayDimensionality", _populationsArrayDimensionality, outfile);
+		// saves apicalArrayDimensionality
+		save_vector_as_matrix("apicalArrayDimensionality", _apicalArrayDimensionality, outputStream);
 
-	// saves apicalPopulationsArrayDimensionality
-	save_vector_as_matrix("apicalPopulationsArrayDimensionality", _apicalPopulationsArrayDimensionality, outfile);
+		// saves apicalDimensionality
+		save_as_scalar("apicalDimensionality", _apicalDimensionality, outputStream);
 
-	if ( _afferentConnections.size() != 0 ) {
-		std::vector<double>	lowerAfferentLimits, upperAfferentLimits;
-		auto	numberOfLimits = _proximalAfferentLimits.size();
-		lowerAfferentLimits.resize(numberOfLimits);
-		upperAfferentLimits.resize(numberOfLimits);
-		for ( std::size_t limit = 0; limit < numberOfLimits; limit++ ) {
-				lowerAfferentLimits[limit] =
-				_proximalAfferentLimits[limit][0];
-				upperAfferentLimits[limit] =
-				_proximalAfferentLimits[limit][1];
+		// saves apicalReceptiveField
+		if(_apicalReceptiveField.size() != 0) {
+			save_vector_as_matrix("apicalReceptiveField", _apicalReceptiveField, outputStream);
 		}
-		// saves proximalAfferentLowerLimits
-		save_vector_as_matrix("proximalAfferentLowerLimits", lowerAfferentLimits, outfile);
+		else {
+			std::vector<int>	receptiveField(_apicalArrayDimensionality.size(),-1);
+			save_vector_as_matrix("apicalReceptiveField", receptiveField, outputStream);
+		}
 
-		// saves proximalAfferentUpperLimits
-		save_vector_as_matrix("proximalAfferentUpperLimits", upperAfferentLimits, outfile);
+		// saves apicalPercentage
+		save_as_scalar("apicalPercentage", _apicalPercentage, outputStream);
+
+		// saves apicalWrapAround
+		save_as_bool("apicalWrapAround", _apicalWrapAround, outputStream);
+
+
+
+		// saves columnsArrayDimensionality
+		save_vector_as_matrix("columnsArrayDimensionality", _columnsArrayDimensionality, outputStream);
+
+		// saves columnsDimensionality
+		save_as_scalar("columnsDimensionality", _columnsDimensionality, outputStream);
+
+
+
+		// saves lateralDistalReceptiveField
+		if(_lateralDistalReceptiveField.size() != 0) {
+			save_vector_as_matrix("lateralDistalReceptiveField", _lateralDistalReceptiveField, outputStream);
+		}
+		else {
+			std::vector<int>	receptiveField(_columnsArrayDimensionality.size(),-1);
+			save_vector_as_matrix("lateralDistalReceptiveField", receptiveField, outputStream);
+		}
+
+		// saves lateralDistalPercentage
+		save_as_scalar("lateralDistalPercentage", _lateralDistalPercentage, outputStream);
+
+		// saves lateralDistalWrapAround
+		save_as_bool("lateralDistalWrapAround", _lateralDistalWrapAround, outputStream);
+
+
+		if ( _afferentConnections.size() != 0 ) {
+			// saves afferentConnections
+			twodvector<bool>	afferentConnectionsBitMap;
+			afferentConnectionsBitMap.resize(_columnsDimensionality);
+			for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
+				afferentConnectionsBitMap[column].resize(_afferentDimensionality);
+				for ( std::size_t index = 0; index < _afferentConnections[column].size(); index++ )
+					afferentConnectionsBitMap[column][_afferentConnections[column][index]] = true;
+			}
+
+			SparseMatrixElements<bool>	sparseAfferentConnectionsBitMap;
+			sparseAfferentConnectionsBitMap = to_sparse(afferentConnectionsBitMap);
+			save_sparse_matrix_elements_as_sparse_matrix("afferentConnections", sparseAfferentConnectionsBitMap, outputStream);
+		}
+
+		if ( _lateralDistalConnections.size() != 0 ) {
+			// saves lateralDistalConnections
+			twodvector<bool>	lateralDistalConnectionsBitMap;
+			lateralDistalConnectionsBitMap.resize(_columnsDimensionality);
+			for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
+				lateralDistalConnectionsBitMap[column].resize(_columnsDimensionality);
+				for ( std::size_t index = 0; index < _lateralDistalConnections[column].size(); index++ )
+					lateralDistalConnectionsBitMap[column][_lateralDistalConnections[column][index]] = true;
+			}	
+
+			SparseMatrixElements<bool>	sparseLateralDistalConnectionsBitMap;
+			sparseLateralDistalConnectionsBitMap = to_sparse(lateralDistalConnectionsBitMap);
+			save_sparse_matrix_elements_as_sparse_matrix("lateralDistalConnections", sparseLateralDistalConnectionsBitMap, outputStream);
+		}
+
+		if ( _apicalConnections.size() != 0 ) {
+			// saves apicalConnections
+			twodvector<bool>	apicalConnectionsBitMap;
+			apicalConnectionsBitMap.resize(_columnsDimensionality);
+			for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
+				apicalConnectionsBitMap[column].resize(_apicalDimensionality);
+				for ( std::size_t index = 0; index < _apicalConnections[column].size(); index++ )
+					apicalConnectionsBitMap[column][_apicalConnections[column][index]] = true;
+			}	
+
+			SparseMatrixElements<bool>	sparseApicalConnectionsBitMap;
+			sparseApicalConnectionsBitMap = to_sparse(apicalConnectionsBitMap);
+			save_sparse_matrix_elements_as_sparse_matrix("apicalConnections", sparseApicalConnectionsBitMap, outputStream);
+		}
+
+
+		// saves populationsArrayDimensionality
+		save_vector_as_matrix("populationsArrayDimensionality", _populationsArrayDimensionality, outputStream);
+
+		// saves apicalPopulationsArrayDimensionality
+		save_vector_as_matrix("apicalPopulationsArrayDimensionality", _apicalPopulationsArrayDimensionality, outputStream);
+
+		if ( _afferentConnections.size() != 0 ) {
+			std::vector<double>	lowerAfferentLimits, upperAfferentLimits;
+			auto	numberOfLimits = _proximalAfferentLimits.size();
+			lowerAfferentLimits.resize(numberOfLimits);
+			upperAfferentLimits.resize(numberOfLimits);
+			for ( std::size_t limit = 0; limit < numberOfLimits; limit++ ) {
+					lowerAfferentLimits[limit] =
+					_proximalAfferentLimits[limit][0];
+					upperAfferentLimits[limit] =
+					_proximalAfferentLimits[limit][1];
+			}
+			// saves proximalAfferentLowerLimits
+			save_vector_as_matrix("proximalAfferentLowerLimits", lowerAfferentLimits, outputStream);
+
+			// saves proximalAfferentUpperLimits
+			save_vector_as_matrix("proximalAfferentUpperLimits", upperAfferentLimits, outputStream);
+		}
+
+		if ( _afferentConnections.size() != 0 ) {
+			// saves afferentUpdateStep
+			save_as_scalar("afferentUpdateStep", _afferentUpdateStep, outputStream);
+		}
+
+		// saves potentialPercentage
+		save_as_scalar("potentialPercentage", _potentialPercentage, outputStream);
 	}
 
-	if ( _afferentConnections.size() != 0 ) {
-		// saves afferentUpdateStep
-		save_as_scalar("afferentUpdateStep", _afferentUpdateStep, outfile);
+	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+		_encoderColumns[column/world_size].saveComplexSelfOrganizingMapStatus(std::to_string(column), outputStream);
+
+	// File view comunication among ranks
+	std::size_t	fileView = 0, fileViewNew;
+	std::size_t	lengthToBeSent = outputStream.str().size();
+	if ( world_rank == 0 ) {
+		fileViewNew = fileView+lengthToBeSent;
+		if ( world_size > 1 )
+			MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+				 (int)(world_rank+1), 3, MPI_COMM_WORLD);
 	}
+	else if ( world_rank == world_size-1 ) {
+		MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+			 (int)(world_rank-1), 3, MPI_COMM_WORLD,
+			 MPI_STATUS_IGNORE);
+	}
+	else {
+		MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+			 (int)(world_rank-1), 3, MPI_COMM_WORLD,
+			 MPI_STATUS_IGNORE);
+		
+		fileViewNew = fileView+lengthToBeSent;
+		MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+			 (int)(world_rank+1), 3, MPI_COMM_WORLD);
+	}
+	//MPI_Barrier(MPI_COMM_WORLD);
 
-	// saves potentialPercentage
-	save_as_scalar("potentialPercentage", _potentialPercentage, outfile);
+	// open a file in write mode
+	MPI::File outfile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + folderName + "/EncoderLayer.mat").c_str(),
+					    MPI::MODE_CREATE | MPI::MODE_WRONLY,
+					    MPI::INFO_NULL);
 
-	for ( std::size_t column = 0; column < _columnsDimensionality; column++ )
-		_encoderColumns[column].saveComplexSelfOrganizingMapStatus(std::to_string(column), outfile);
+	// sets the file view for this rank
+	outfile.Set_view(fileView * sizeof(char),
+			 MPI_UNSIGNED_CHAR, MPI_UNSIGNED_CHAR,
+			 "native", MPI::INFO_NULL);
+
+	// write stream in file
+	outfile.Write(&outputStream.str()[0],
+		     lengthToBeSent,
+		     MPI_UNSIGNED_CHAR);
 
 	// close the opened file.
-	outfile.close();
+	outfile.Close();
 } // end function saveEncoderLayerStatus
 
 
 // function that loads the EncoderLayer's status in a file
 void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 {
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	std::stringstream	inputStream;
+
+	// open a file in read mode.
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + folderName + "/EncoderLayer.mat").c_str(),
+					   MPI::MODE_RDONLY,
+					   MPI::INFO_NULL);
+
+	// gets the file size
+	MPI::Offset filesize = infile.Get_size(); // in bytes
+	int	bufsize = filesize / sizeof(char); /* in number of char */
+	std::string	auxiliaryString;
+	auxiliaryString.resize(bufsize);
+
+	// sets the files view
+	infile.Set_view(0 * bufsize * sizeof(char),
+			MPI_UNSIGNED_CHAR,
+			MPI_UNSIGNED_CHAR,
+			"native", MPI::INFO_NULL);
+
+	// read the complete file
+	infile.Read(&auxiliaryString[0], bufsize,
+		    MPI_UNSIGNED_CHAR);
+
+	inputStream.str(auxiliaryString);
+
+	// close the opened file.
+	infile.Close();
+
 	bool	check_afferentArrayDimensionality = false;
 	bool	check_afferentDimensionality = false;
 	bool	check_afferentReceptiveField = false;
@@ -1431,21 +1709,17 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 	std::string	str;
 	std::string	STR;
 
-	// open a file in read mode.
-	ifstream infile;
-	infile.open("../../Octave/" + folderName + "/EncoderLayer.mat", ios::in | std::ifstream::binary);
-
-	while ( std::getline(infile, str) ) {
+	while ( std::getline(inputStream, str) ) {
 
 		STR = "# name: afferentArrayDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_afferentArrayDimensionality, infile);
+			load_matrix_to_vector(_afferentArrayDimensionality, inputStream);
 			check_afferentArrayDimensionality = true;
 		}
 
 		STR = "# name: afferentDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_afferentDimensionality, infile);
+			load_scalar(_afferentDimensionality, inputStream);
 			check_afferentDimensionality = true;
 		}
 
@@ -1453,7 +1727,7 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 		if ( str.compare(STR) == 0 ) {
 			_afferentReceptiveField.clear();
 			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, infile);
+			load_matrix_to_vector(receptiveField, inputStream);
 			for(const auto& s : receptiveField) {
 				if ( s > -1 )
 					_afferentReceptiveField.push_back(s);
@@ -1463,13 +1737,13 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 
 		STR = "# name: afferentPercentage";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_afferentPercentage, infile);
+			load_scalar(_afferentPercentage, inputStream);
 			check_afferentPercentage = true;
 		}
 
 		STR = "# name: afferentWrapAround";
 		if ( str.compare(STR) == 0 ) {
-			load_bool(_afferentWrapAround, infile);
+			load_bool(_afferentWrapAround, inputStream);
 			check_afferentWrapAround = true;
 		}
 
@@ -1477,13 +1751,13 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 
 		STR = "# name: apicalArrayDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_apicalArrayDimensionality, infile);
+			load_matrix_to_vector(_apicalArrayDimensionality, inputStream);
 			check_apicalArrayDimensionality = true;
 		}
 
 		STR = "# name: apicalDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_apicalDimensionality, infile);
+			load_scalar(_apicalDimensionality, inputStream);
 			check_apicalDimensionality = true;
 		}
 
@@ -1491,7 +1765,7 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 		if ( str.compare(STR) == 0 ) {
 			_apicalReceptiveField.clear();
 			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, infile);
+			load_matrix_to_vector(receptiveField, inputStream);
 			for(const auto& s : receptiveField) {
 				if ( s > -1 )
 					_apicalReceptiveField.push_back(s);
@@ -1501,13 +1775,13 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 
 		STR = "# name: apicalPercentage";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_apicalPercentage, infile);
+			load_scalar(_apicalPercentage, inputStream);
 			check_apicalPercentage = true;
 		}
 
 		STR = "# name: apicalWrapAround";
 		if ( str.compare(STR) == 0 ) {
-			load_bool(_apicalWrapAround, infile);
+			load_bool(_apicalWrapAround, inputStream);
 			check_apicalWrapAround = true;
 		}
 
@@ -1515,13 +1789,13 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 
 		STR = "# name: columnsArrayDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_columnsArrayDimensionality, infile);
+			load_matrix_to_vector(_columnsArrayDimensionality, inputStream);
 			check_columnsArrayDimensionality = true;
 		}
 
 		STR = "# name: columnsDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_columnsDimensionality, infile);
+			load_scalar(_columnsDimensionality, inputStream);
 			check_columnsDimensionality = true;
 		}
 
@@ -1531,7 +1805,7 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 		if ( str.compare(STR) == 0 ) {
 			_lateralDistalReceptiveField.clear();
 			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, infile);
+			load_matrix_to_vector(receptiveField, inputStream);
 			for(const auto& s : receptiveField) {
 				if ( s > -1 )
 					_lateralDistalReceptiveField.push_back(s);
@@ -1541,13 +1815,13 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 
 		STR = "# name: lateralDistalPercentage";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_lateralDistalPercentage, infile);
+			load_scalar(_lateralDistalPercentage, inputStream);
 			check_lateralDistalPercentage = true;
 		}
 
 		STR = "# name: lateralDistalWrapAround";
 		if ( str.compare(STR) == 0 ) {
-			load_bool(_lateralDistalWrapAround, infile);
+			load_bool(_lateralDistalWrapAround, inputStream);
 			check_lateralDistalWrapAround = true;
 		}
 
@@ -1557,67 +1831,66 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 		if ( str.compare(STR) == 0 ) {
 			check_afferentConnections = true;
 			SparseMatrixElements<bool>	sparseAfferentConnectionsBitMap;
-			load_sparse_matrix_to_sparse_matrix_elements(sparseAfferentConnectionsBitMap, infile);
+			load_sparse_matrix_to_sparse_matrix_elements(sparseAfferentConnectionsBitMap, inputStream);
 			twodvector<bool>	afferentConnectionsBitMap;
 			afferentConnectionsBitMap = from_sparse(sparseAfferentConnectionsBitMap);
-			_afferentConnections.resize(_columnsDimensionality);
-			for ( std::size_t column = 0; column < afferentConnectionsBitMap.size(); column++ ) {
+			for ( std::size_t column = world_rank; column < afferentConnectionsBitMap.size(); column=column+world_size ) {
+				std::vector<std::size_t>	auxiliaryConnections;
 				for ( std::size_t index = 0; index < afferentConnectionsBitMap[column].size(); index++ ) {
 					if ( afferentConnectionsBitMap[column][index] == true )
-						_afferentConnections[column].push_back(index);
-
-					_afferentConnections[column].shrink_to_fit();
+						auxiliaryConnections.push_back(index);
 				}
-			}
 
+				_afferentConnections.push_back(auxiliaryConnections);
+			}
+			_afferentConnections.shrink_to_fit();
 		}
 
 		STR = "# name: lateralDistalConnections";
 		if ( str.compare(STR) == 0 ) {
 			check_lateralDistalConnections = true;
 			SparseMatrixElements<bool>	sparseLateralDistalConnectionsBitMap;
-			load_sparse_matrix_to_sparse_matrix_elements(sparseLateralDistalConnectionsBitMap, infile);
+			load_sparse_matrix_to_sparse_matrix_elements(sparseLateralDistalConnectionsBitMap, inputStream);
 			twodvector<bool>	lateralDistalConnectionsBitMap;
 			lateralDistalConnectionsBitMap = from_sparse(sparseLateralDistalConnectionsBitMap);
-			_lateralDistalConnections.resize(_columnsDimensionality);
-			for ( std::size_t column = 0; column < lateralDistalConnectionsBitMap.size(); column++ ) {
+			for ( std::size_t column = world_rank; column < lateralDistalConnectionsBitMap.size(); column=column+world_size ) {
+				std::vector<std::size_t>	auxiliaryConnections;
 				for ( std::size_t index = 0; index < lateralDistalConnectionsBitMap[column].size(); index++ ) {
 					if ( lateralDistalConnectionsBitMap[column][index] == true )
-						_lateralDistalConnections[column].push_back(index);
-
-					_lateralDistalConnections[column].shrink_to_fit();
+						auxiliaryConnections.push_back(index);
 				}
+				_lateralDistalConnections.push_back(auxiliaryConnections);
 			}
-
+			_lateralDistalConnections.shrink_to_fit();
 		}
 
 		STR = "# name: apicalConnections";
 		if ( str.compare(STR) == 0 ) {
 			check_apicalConnections = true;
 			SparseMatrixElements<bool>	sparseApicalConnectionsBitMap;
-			load_sparse_matrix_to_sparse_matrix_elements(sparseApicalConnectionsBitMap, infile);
+			load_sparse_matrix_to_sparse_matrix_elements(sparseApicalConnectionsBitMap, inputStream);
 			twodvector<bool>	apicalConnectionsBitMap;
 			apicalConnectionsBitMap = from_sparse(sparseApicalConnectionsBitMap);
-			_apicalConnections.resize(_columnsDimensionality);
-			for ( std::size_t column = 0; column < apicalConnectionsBitMap.size(); column++ ) {
+			for ( std::size_t column = world_rank; column < apicalConnectionsBitMap.size(); column=column+world_size ) {
+				std::vector<std::size_t>	auxiliaryConnections;
 				for ( std::size_t index = 0; index < apicalConnectionsBitMap[column].size(); index++ ) {
 					if ( apicalConnectionsBitMap[column][index] == true )
-						_apicalConnections[column].push_back(index);
-
-					_apicalConnections[column].shrink_to_fit();
+						auxiliaryConnections.push_back(index);
 				}
+				_apicalConnections.push_back(auxiliaryConnections);
 			}
+			_apicalConnections.shrink_to_fit();
 		}
 
 		STR = "# name: populationsArrayDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_populationsArrayDimensionality, infile);
+			load_matrix_to_vector(_populationsArrayDimensionality, inputStream);
 			check_populationsArrayDimensionality = true;
 		}
 
 		STR = "# name: apicalPopulationsArrayDimensionality";
 		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_apicalPopulationsArrayDimensionality, infile);
+			load_matrix_to_vector(_apicalPopulationsArrayDimensionality, inputStream);
 			check_apicalPopulationsArrayDimensionality = true;
 		}
 
@@ -1627,7 +1900,7 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 		if ( str.compare(STR) == 0 ) {
 			check_proximalAfferentLowerLimits = true;
 			std::vector<double>	lowerLimits;
-			load_matrix_to_vector(lowerLimits, infile);
+			load_matrix_to_vector(lowerLimits, inputStream);
 			auto	numberOfLimits = lowerLimits.size();
 			_proximalAfferentLimits.resize(numberOfLimits);
 			for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
@@ -1638,7 +1911,7 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 		if ( str.compare(STR) == 0 ) {
 			check_proximalAfferentUpperLimits = true;
 			std::vector<double>	upperLimits;
-			load_matrix_to_vector(upperLimits, infile);
+			load_matrix_to_vector(upperLimits, inputStream);
 			auto	numberOfLimits = upperLimits.size();
 			_proximalAfferentLimits.resize(numberOfLimits);
 			for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
@@ -1647,19 +1920,17 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 
 		STR = "# name: afferentUpdateStep";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_afferentUpdateStep, infile);
+			load_scalar(_afferentUpdateStep, inputStream);
 			check_afferentUpdateStep = true;
 		}
 
 		STR = "# name: potentialPercentage";
 		if ( str.compare(STR) == 0 ) {
-			load_scalar(_potentialPercentage, infile);
+			load_scalar(_potentialPercentage, inputStream);
 			check_potentialPercentage = true;
 		}
 
 	}
-	// close the opened file.
-	infile.close();
 
 	assert(check_afferentArrayDimensionality == true);
 	assert(check_afferentDimensionality == true);
@@ -1686,8 +1957,8 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 	assert(check_afferentUpdateStep == true);
 	assert(check_potentialPercentage == true);
 
-	for ( std::size_t column = 0; column < _columnsDimensionality; column++ )
-		_encoderColumns.push_back(ComplexSelfOrganizingMap(folderName + "/EncoderLayer", std::to_string(column)));
+	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+		_encoderColumns.push_back(ComplexSelfOrganizingMap(inputStream, std::to_string(column)));
 
 	_encoderColumns.shrink_to_fit();
 
@@ -1721,9 +1992,463 @@ void	EncoderLayer::checkEncoderLayerStructure( const encoderLayerStructure& stru
 } // end function checkEncoderLayerStructure
 
 
+// this function merges all the column outputs
+void	EncoderLayer::mergeOutputs( regularLayerResponse& output )
+{
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	if ( world_size > 1 ) {
+		// Get the rank of the process
+		std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+		for ( std::size_t root = 0; root < world_size; root++ ) {
+			// First of all, computes the number of columns in the root process
+			std::size_t	numberOfColumnsInRoot;
+			numberOfColumnsInRoot = _columnsDimensionality/world_size;
+			if ( root < _columnsDimensionality%world_size )
+				numberOfColumnsInRoot++;
+
+			// First, the root process transmits the synchronization in its columns
+			// and the non-root processes receive such information
+			std::vector<std::size_t>	synchronizationVector;
+
+			if ( world_rank == root ) {
+				for ( std::size_t column = root; column < _columnsDimensionality; column=column+world_size ) {
+					if ( output.synchronization[column] ) {
+						synchronizationVector.push_back(1);
+					}
+					else {
+						synchronizationVector.push_back(0);
+					}
+				}
+			}
+			else {
+				synchronizationVector.resize(numberOfColumnsInRoot);
+			}
+			
+			synchronizationVector.shrink_to_fit();
+			MPI_Bcast(&synchronizationVector[0], 
+				  (int)synchronizationVector.size(), 
+				  my_MPI_SIZE_T, (int)root, MPI_COMM_WORLD);
+
+			if ( world_rank != root ) {
+				for ( std::size_t column = root; column < _columnsDimensionality; column=column+world_size ) {
+					if ( synchronizationVector[column/world_size] == 1 ) {
+						output.synchronization[column] = true;
+					}
+					else {
+						output.synchronization[column] = false;
+					}
+				}
+			}
+
+			// Then the root process transmits the information in its columns, and
+			// the non-root processes receives such information
+			std::vector<std::size_t>	informationVector;
+			if ( world_rank == root ) {
+				for ( std::size_t column = root; column < _columnsDimensionality; column=column+world_size ) {
+					if ( output.information[column] ) {
+						informationVector.push_back(1);
+					}
+					else {
+						informationVector.push_back(0);
+					}
+				}
+			}
+			else {
+				informationVector.resize(numberOfColumnsInRoot);
+			}
+			
+			informationVector.shrink_to_fit();
+			MPI_Bcast(&informationVector[0], 
+				  (int)informationVector.size(), 
+				  my_MPI_SIZE_T, (int)root, MPI_COMM_WORLD);
+	
+			if ( world_rank != root ) {
+				for ( std::size_t column = root; column < _columnsDimensionality; column=column+world_size ) {
+					if ( informationVector[column/world_size] == 1 ) {
+						output.information[column] = true;
+					}
+					else {
+						output.information[column] = false;
+					}
+				}
+			}
+
+			// Finally, the root process transmits the vectors with active indices
+			// and the non-root processes receive such information
+			std::vector<std::size_t>	lengthsVector;
+			if ( world_rank == root ) {
+				for ( std::size_t column = root; column < _columnsDimensionality; column=column+world_size )
+					lengthsVector.push_back(output.currentIndexes[column].size());
+			}
+			else {
+				lengthsVector.resize(numberOfColumnsInRoot);
+			}
+	
+			lengthsVector.shrink_to_fit();
+			MPI_Bcast(&lengthsVector[0], 
+				  (int)lengthsVector.size(),
+				  my_MPI_SIZE_T, (int)root, MPI_COMM_WORLD);
+
+			if ( lengthsVector.size() != numberOfColumnsInRoot ) {
+				std::cout << "\nIn process " << world_rank << "\n"; 
+				std::cout << "mergeOutputs inconsistence:\n"; 
+				std::cout << "lengthsVector.size(): " << lengthsVector.size() << "\n"; 
+				std::cout << "numberOfColumnsInRoot: " << numberOfColumnsInRoot << "\n"; 
+				MPI_Abort(MPI_COMM_WORLD,1);
+			}
+
+			std::vector<std::size_t>	indexesVector;
+			if ( world_rank == root ) {
+				for ( std::size_t column = root; column < _columnsDimensionality; column=column+world_size ) {
+					indexesVector.insert(indexesVector.end(), 
+							     output.currentIndexes[column].begin(),
+							     output.currentIndexes[column].end());
+				}
+			}
+			else {
+				indexesVector.resize(std::accumulate(lengthsVector.begin(), lengthsVector.end(), 0));
+			}
+	
+			indexesVector.shrink_to_fit();
+			MPI_Bcast(&indexesVector[0], 
+				  (int)indexesVector.size(),
+				  my_MPI_SIZE_T, (int)root, MPI_COMM_WORLD);
+
+			if ( world_rank != root ) {
+				// Checks the consistence of the recieved data
+				if ( (int)indexesVector.size() != std::accumulate(lengthsVector.begin(), lengthsVector.end(), 0) ) {
+					std::cout << "\nIn process " << world_rank << "\n"; 
+					std::cout << "mergeOutputs inconsistence:\n"; 
+					std::cout << "indexesVector.size(): " << indexesVector.size() << "\n"; 
+					std::cout << "std::accumulate(lengthsVector.begin(), lengthsVector.end(), 0): " 
+						  <<    std::accumulate(lengthsVector.begin(), lengthsVector.end(), 0) 
+						  << "\n"; 
+					MPI_Abort(MPI_COMM_WORLD,1);
+				}
+				      
+				for ( std::size_t column = root; column < _columnsDimensionality; column=column+world_size ) {
+					if ( output.currentIndexes[column].size() != 0 ) {
+						std::cout << "\nIn process " << world_rank << "\n"; 
+						std::cout << "mergeOutputs inconsistence:\n"; 
+						std::cout << "output.currentIndexes[column].size() != 0\n"; 
+						MPI_Abort(MPI_COMM_WORLD,1);
+					}
+					output.currentIndexes[column].insert(output.currentIndexes[column].end(),
+									     indexesVector.begin(),
+									     indexesVector.begin()+lengthsVector[column/world_size]);
+
+					indexesVector.erase(indexesVector.begin(), indexesVector.begin()+lengthsVector[column/world_size]);
+				}
+			}
+		}
+	}
+} // end function mergeOutputs
 
 
+// merges all connections in rank 0
+void	EncoderLayer::gatherConnections()
+{
+	// Get the number of processes
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	if ( world_size > 1 ) {
+		// Get the rank of the process
+		std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+		std::vector<std::size_t>	connectionsStructure;
+		std::vector<std::size_t>	connections;
+
+		if ( world_rank == 0 ) { // If this is rank 0, then gather all the other rank connections in order to save them
+			int	number_amount;
+			MPI_Status status;
+
+			twodvector<std::size_t>		afferentConnections;
+
+			if ( _afferentConnections.size() != 0 ) {
+				// Allocate memory for afferent connections
+				afferentConnections.resize(_columnsDimensionality);
+				// Collects rank 0 afferent connections
+				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+					afferentConnections[column] = _afferentConnections[column/world_size];
+			}
+
+			twodvector<std::size_t>		lateralDistalConnections;
+
+			if ( _lateralDistalConnections.size() != 0 ) {
+				// Allocate memory for lateral distal connections
+				lateralDistalConnections.resize(_columnsDimensionality);
+				// Collects rank 0 lateral distal connections
+				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+					lateralDistalConnections[column] = _lateralDistalConnections[column/world_size];
+			}
+
+			twodvector<std::size_t>		apicalConnections;
+
+			if ( _apicalConnections.size() != 0 ) {
+				// Allocate memory for apical connections
+				apicalConnections.resize(_columnsDimensionality);
+				// Collects rank 0 apical connections
+				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
+					apicalConnections[column] = _apicalConnections[column/world_size];
+			}
+
+			// Receives connections from other processes
+			for ( std::size_t process = 1; process < world_size; process++ ) {
+				if ( _afferentConnections.size() != 0 ) {
+					// Receives afferent connections from process
+
+					// Probe for an incoming message from process
+					MPI_Probe((int)process, 1, MPI_COMM_WORLD, &status);
+
+					// When probe returns, the status object has the size and other
+					// attributes of the incoming message. Get the message size
+					MPI_Get_count(&status, my_MPI_SIZE_T, &number_amount);
+
+					// Allocate a buffer to hold the incoming data
+					std::vector<std::size_t>	connectionsStructure(number_amount);
+
+					// Now receive the message with the allocated buffer
+					MPI_Recv(&connectionsStructure[0], number_amount, my_MPI_SIZE_T, 
+						 (int)process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+					std::size_t	numberOfConnections = std::accumulate(connectionsStructure.begin(), 
+											      connectionsStructure.end(), 
+											      0);
+
+					// Allocate a buffer to hold the incoming data
+					std::vector<std::size_t>	connections(numberOfConnections);
+
+					// Receive at most numberOfConnections elements from process
+					MPI_Recv(&connections[0], (int)numberOfConnections, 
+						 my_MPI_SIZE_T, (int)process, 2, MPI_COMM_WORLD, &status);
+
+					// After receiving the message, check the status to determine
+					// how many elements were actually received
+					MPI_Get_count(&status, my_MPI_SIZE_T, &number_amount);
+
+					if ( number_amount != (int)numberOfConnections ) {
+						std::cout << "\nIn process " << world_rank << "\n"; 
+						std::cout << "\nmergeConnections inconsistence:\n"; 
+						std::cout << "\nnumber_amount: " << number_amount << "\n"; 
+						std::cout << "\nnumberOfConnections: " << numberOfConnections << "\n"; 
+						MPI_Abort(MPI_COMM_WORLD,1);
+					}
+
+					// Collects in rank 0 afferent connections from process
+					for ( std::size_t column = process; column < _columnsDimensionality; column=column+world_size ) {
+						if ( afferentConnections[column].size() != 0 ) {
+							std::cout << "\nIn process " << world_rank << "\n"; 
+							std::cout << "\nmergeConnections inconsistence:\n"; 
+							std::cout << "\nafferentConnections[column].size() != 0\n"; 
+							MPI_Abort(MPI_COMM_WORLD,1);
+						}
+						afferentConnections[column].insert(afferentConnections[column].end(),
+										   connections.begin(),
+										   connections.begin()+connectionsStructure[column/world_size]);
+
+						connections.erase(connections.begin(), connections.begin()+connectionsStructure[column/world_size]);
+					}
+
+					connectionsStructure.clear();
+					connections.clear();
+				}
+	
 
 
+				if ( _lateralDistalConnections.size() != 0 ) {
+					// Receives lateral distal connections from process
+
+					// Probe for an incoming message from process
+					MPI_Probe((int)process, 1, MPI_COMM_WORLD, &status);
+
+					// When probe returns, the status object has the size and other
+					// attributes of the incoming message. Get the message size
+					MPI_Get_count(&status, my_MPI_SIZE_T, &number_amount);
+
+					// Allocate a buffer to hold the incoming data
+					connectionsStructure.resize(number_amount);
+
+					// Now receive the message with the allocated buffer
+					MPI_Recv(&connectionsStructure[0], number_amount, my_MPI_SIZE_T, 
+						 (int)process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+					std::size_t	numberOfConnections = std::accumulate(connectionsStructure.begin(), 
+											      connectionsStructure.end(), 
+											      0);
+
+					// Allocate a buffer to hold the incoming data
+					connections.resize(numberOfConnections);
+
+					// Receive at most numberOfConnections elements from process
+					MPI_Recv(&connections[0], (int)numberOfConnections, 
+						 my_MPI_SIZE_T, (int)process, 2, MPI_COMM_WORLD, &status);
+
+					// After receiving the message, check the status to determine
+					// how many elements were actually received
+					MPI_Get_count(&status, my_MPI_SIZE_T, &number_amount);
+
+					if ( number_amount != (int)numberOfConnections ) {
+						std::cout << "\nIn process " << world_rank << "\n"; 
+						std::cout << "\nmergeConnections inconsistence:\n"; 
+						std::cout << "\nnumber_amount: " << number_amount << "\n"; 
+						std::cout << "\nnumberOfConnections: " << numberOfConnections << "\n"; 
+						MPI_Abort(MPI_COMM_WORLD,1);
+					}
+
+					// Collects in rank 0 lateral distal connections from process
+					for ( std::size_t column = process; column < _columnsDimensionality; column=column+world_size ) {
+						if ( lateralDistalConnections[column].size() != 0 ) {
+							std::cout << "\nIn process " << world_rank << "\n"; 
+							std::cout << "\nmergeConnections inconsistence:\n"; 
+							std::cout << "\nlateralDistalConnections[column].size() != 0\n"; 
+							MPI_Abort(MPI_COMM_WORLD,1);
+						}
+						lateralDistalConnections[column].insert(lateralDistalConnections[column].end(),
+										   connections.begin(),
+										   connections.begin()+connectionsStructure[column/world_size]);
+
+						connections.erase(connections.begin(), connections.begin()+connectionsStructure[column/world_size]);
+					}
+
+					connectionsStructure.clear();
+					connections.clear();
+				}
+	
 
 
+				if ( _apicalConnections.size() != 0 ) {
+					// Receives apical connections from process
+
+					// Probe for an incoming message from process
+					MPI_Probe((int)process, 1, MPI_COMM_WORLD, &status);
+
+					// When probe returns, the status object has the size and other
+					// attributes of the incoming message. Get the message size
+					MPI_Get_count(&status, my_MPI_SIZE_T, &number_amount);
+
+					// Allocate a buffer to hold the incoming data
+					connectionsStructure.resize(number_amount);
+
+					// Now receive the message with the allocated buffer
+					MPI_Recv(&connectionsStructure[0], number_amount, my_MPI_SIZE_T, 
+						 (int)process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+					std::size_t	numberOfConnections = std::accumulate(connectionsStructure.begin(), 
+											      connectionsStructure.end(), 
+											      0);
+
+					// Allocate a buffer to hold the incoming data
+					connections.resize(numberOfConnections);
+
+					// Receive at most numberOfConnections elements from process
+					MPI_Recv(&connections[0], (int)numberOfConnections, 
+						 my_MPI_SIZE_T, (int)process, 2, MPI_COMM_WORLD, &status);
+
+					// After receiving the message, check the status to determine
+					// how many elements were actually received
+					MPI_Get_count(&status, my_MPI_SIZE_T, &number_amount);
+
+					if ( number_amount != (int)numberOfConnections ) {
+						std::cout << "\nIn process " << world_rank << "\n"; 
+						std::cout << "\nmergeConnections inconsistence:\n"; 
+						std::cout << "\nnumber_amount: " << number_amount << "\n"; 
+						std::cout << "\nnumberOfConnections: " << numberOfConnections << "\n"; 
+						MPI_Abort(MPI_COMM_WORLD,1);
+					}
+
+					// Collects in rank 0 apical connections from process
+					for ( std::size_t column = process; column < _columnsDimensionality; column=column+world_size ) {
+						if ( apicalConnections[column].size() != 0 ) {
+							std::cout << "\nIn process " << world_rank << "\n"; 
+							std::cout << "\nmergeConnections inconsistence:\n"; 
+							std::cout << "\napicalConnections[column].size() != 0\n"; 
+							MPI_Abort(MPI_COMM_WORLD,1);
+						}
+						apicalConnections[column].insert(apicalConnections[column].end(),
+										 connections.begin(),
+										 connections.begin()+connectionsStructure[column/world_size]);
+
+						connections.erase(connections.begin(), connections.begin()+connectionsStructure[column/world_size]);
+					}
+
+					connectionsStructure.clear();
+					connections.clear();
+
+				}
+			}
+
+			// rank 0 merges all connections in its connections members
+			_afferentConnections.clear();
+			_afferentConnections = afferentConnections;
+			_lateralDistalConnections.clear();
+			_lateralDistalConnections = lateralDistalConnections;
+			_apicalConnections.clear();
+			_apicalConnections = apicalConnections;
+
+		}
+		else { // If this is not rank 0, then it sends its connections to rank 0
+			if ( _afferentConnections.size() != 0 ) {
+				// Sends afferent connections structure
+				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
+					connectionsStructure.push_back(_afferentConnections[column/world_size].size());
+					for ( std::size_t connection = 0; connection < _afferentConnections[column/world_size].size(); connection++ )
+						connections.push_back(_afferentConnections[column/world_size][connection]);
+				}
+
+				MPI_Send(&connectionsStructure[0], 
+					 (int)connectionsStructure.size(),
+					 my_MPI_SIZE_T, 0, 1, MPI_COMM_WORLD);
+
+				MPI_Send(&connections[0], 
+					 (int)connections.size(),
+					 my_MPI_SIZE_T, 0, 2, MPI_COMM_WORLD);
+
+				connectionsStructure.clear();
+				connections.clear();
+			}
+
+			if ( _lateralDistalConnections.size() != 0 ) {
+				// Sends lateral distal connections structure
+				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
+					connectionsStructure.push_back(_lateralDistalConnections[column/world_size].size());
+					for ( std::size_t connection = 0; connection < _lateralDistalConnections[column/world_size].size(); connection++ )
+						connections.push_back(_lateralDistalConnections[column/world_size][connection]);
+				}
+
+				MPI_Send(&connectionsStructure[0], 
+					 (int)connectionsStructure.size(),
+					 my_MPI_SIZE_T, 0, 1, MPI_COMM_WORLD);
+
+				MPI_Send(&connections[0], 
+					 (int)connections.size(),
+					 my_MPI_SIZE_T, 0, 2, MPI_COMM_WORLD);
+
+				connectionsStructure.clear();
+				connections.clear();
+			}
+			
+			if ( _apicalConnections.size() != 0 ) {
+				// Sends apical connections structure
+				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
+					connectionsStructure.push_back(_apicalConnections[column/world_size].size());
+					for ( std::size_t connection = 0; connection < _apicalConnections[column/world_size].size(); connection++ )
+						connections.push_back(_apicalConnections[column/world_size][connection]);
+				}
+
+				MPI_Send(&connectionsStructure[0], 
+					 (int)connectionsStructure.size(),
+					 my_MPI_SIZE_T, 0, 1, MPI_COMM_WORLD);
+
+				MPI_Send(&connections[0], 
+					 (int)connections.size(),
+					 my_MPI_SIZE_T, 0, 2, MPI_COMM_WORLD);
+
+				connectionsStructure.clear();
+				connections.clear();
+			}
+		}
+	}
+} // end function gatherConnections

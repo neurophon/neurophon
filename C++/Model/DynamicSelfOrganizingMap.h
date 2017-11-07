@@ -58,7 +58,7 @@ public:
 										// The StaticSelfOrganizingMap weights willbe initialized with random numbers
 										// between weightLimits
 
-		DynamicSelfOrganizingMap( const std::string&,
+		DynamicSelfOrganizingMap( std::stringstream&,
 					  const std::string& );			// constructor that initializes _dynamicUnits by means of previous
 										// values from file
 
@@ -74,10 +74,10 @@ public:
 										// a vector with distances and an vector with indexes sorthed in ascending order
 										// corresponding to the vector of distances
 	void	saveDynamicSelfOrganizingMapStatus( const std::string&,
-						    std::ofstream& );		// function that saves the DynamicSelfOrganizingMap' status in a file
+						    std::stringstream& );	// function that saves the DynamicSelfOrganizingMap' status in a file
 
 	void	loadDynamicSelfOrganizingMapStatus( const std::string&,
-						    std::ifstream& );		// function to save the DynamicSelfOrganizingMap' status from a file
+						    std::stringstream& );	// function to save the DynamicSelfOrganizingMap' status from a file
 
 protected:
 	threedvector<double>			_dynamicUnits;				// matrixes with dynamic units stats

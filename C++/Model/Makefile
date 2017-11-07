@@ -1,8 +1,8 @@
 Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o DynamicSelfOrganizingMap.o DynamicProcessor.o ComplexSelfOrganizingMap.o ComplexProcessor.o EncoderLayer.o RegularLayer.o Model.o Utilities.o Random.o Topology.o
-	g++-5 -fopenmp -Wall -pedantic -std=c++14 main.o StaticSelfOrganizingMap.o StaticProcessor.o DynamicSelfOrganizingMap.o DynamicProcessor.o ComplexSelfOrganizingMap.o ComplexProcessor.o EncoderLayer.o RegularLayer.o Model.o Utilities.o Random.o Topology.o -o Test
+	mpic++ -cxx=g++-5 -fopenmp -Wall -pedantic -std=c++14 main.o StaticSelfOrganizingMap.o StaticProcessor.o DynamicSelfOrganizingMap.o DynamicProcessor.o ComplexSelfOrganizingMap.o ComplexProcessor.o EncoderLayer.o RegularLayer.o Model.o Utilities.o Random.o Topology.o -o Test
 
 main.o: main.cpp
-	g++-5 -c -fopenmp -Wall -pedantic -std=c++14 main.cpp
+	mpic++ -cxx=g++-5 -c -fopenmp -Wall -pedantic -std=c++14 main.cpp
 
 StaticSelfOrganizingMap.o: StaticSelfOrganizingMap.cpp StaticSelfOrganizingMap.h ../Libraries/Model/Templates.h ../Libraries/Model/Constants.h ../Libraries/Model/DataTypes.h ../Libraries/Model/OctaveInterface.h
 	g++-5 -c -fopenmp -Wall -pedantic -std=c++14 StaticSelfOrganizingMap.cpp
@@ -23,13 +23,13 @@ ComplexProcessor.o: ComplexProcessor.cpp ComplexProcessor.h ../Libraries/Model/T
 	g++-5 -c -fopenmp -Wall -pedantic -std=c++14 ComplexProcessor.cpp
 
 EncoderLayer.o: EncoderLayer.cpp EncoderLayer.h ../Libraries/Model/Templates.h ../Libraries/Model/Constants.h ../Libraries/Model/DataTypes.h ../Libraries/Model/OctaveInterface.h
-	g++-5 -c -fopenmp -Wall -pedantic -std=c++14 EncoderLayer.cpp
+	mpic++ -cxx=g++-5 -c -fopenmp -Wall -pedantic -std=c++14 EncoderLayer.cpp
 
 RegularLayer.o: RegularLayer.cpp RegularLayer.h ../Libraries/Model/Templates.h ../Libraries/Model/Constants.h ../Libraries/Model/DataTypes.h ../Libraries/Model/OctaveInterface.h
-	g++-5 -c -fopenmp -Wall -pedantic -std=c++14 RegularLayer.cpp
+	mpic++ -cxx=g++-5 -c -fopenmp -Wall -pedantic -std=c++14 RegularLayer.cpp
 	
 Model.o: Model.cpp Model.h ../Libraries/Model/Templates.h ../Libraries/Model/Constants.h ../Libraries/Model/DataTypes.h ../Libraries/Model/OctaveInterface.h
-	g++-5 -c -fopenmp -Wall -pedantic -std=c++14 Model.cpp
+	mpic++ -cxx=g++-5 -c -fopenmp -Wall -pedantic -std=c++14 Model.cpp
 
 Utilities.o: ../Libraries/Model/Utilities.cpp ../Libraries/Model/Utilities.h ../Libraries/Model/Templates.h ../Libraries/Model/Constants.h ../Libraries/Model/DataTypes.h ../Libraries/Model/OctaveInterface.h
 	g++-5 -c -fopenmp -Wall -pedantic -std=c++14 ../Libraries/Model/Utilities.cpp

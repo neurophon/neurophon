@@ -51,10 +51,10 @@ ComplexSelfOrganizingMap::ComplexSelfOrganizingMap( const std::vector<std::size_
 
 
 // constructor initializes populationDimensions, numberOfInputs and dynamicUnits with variables supplied as arguments
-ComplexSelfOrganizingMap::ComplexSelfOrganizingMap( const std::string& fileName,
+ComplexSelfOrganizingMap::ComplexSelfOrganizingMap( std::stringstream& inputStream,
 						    const std::string& dynamicUnitsIdentification )
 	// explicitly call base-class constructor
-	: DynamicSelfOrganizingMap(fileName, dynamicUnitsIdentification)
+	: DynamicSelfOrganizingMap(inputStream, dynamicUnitsIdentification)
 {
 } // end ComplexSelfOrganizingMap constructor
 
@@ -73,9 +73,13 @@ std::vector<std::size_t>	ComplexSelfOrganizingMap::Activate( const somResponseIn
 		double	newDistanceMinimum = get_minimum_element(newDistances);
 		auto	minimumIndexes = get_indexes_from_value(newResponse.distances, newDistanceMinimum);
 		auto	aptToActivate = coincidence_indexes(distanceIndexes,minimumIndexes);
-		std::random_device rd;
-		std::mt19937 g(rd());
-		std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+
+		// if random behaviour is enabled then randomize the order of the active indexes in the output
+		if ( ENABLE_RANDOM_BEHAVIOUR ) {
+			std::random_device rd;
+			std::mt19937 g(rd());
+			std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+		}
 
 		for ( std::size_t number = 0; number < aptToActivate.size(); number++ )
 			output.push_back(distanceIndexes[aptToActivate[number]]);
@@ -116,9 +120,13 @@ std::vector<std::size_t>	ComplexSelfOrganizingMap::Activate( const somResponseIn
 			aptToActivate.insert(aptToActivate.end(), partialAptToActivate.begin(), partialAptToActivate.end());
 			newDistances.erase(std::remove(newDistances.begin(), newDistances.end(), newDistanceMinimum), newDistances.end());
 		}
-		std::random_device rd;
-		std::mt19937 g(rd());
-		std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+
+		// if random behaviour is enabled then randomize the order of the active indexes in the output
+		if ( ENABLE_RANDOM_BEHAVIOUR ) {
+			std::random_device rd;
+			std::mt19937 g(rd());
+			std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+		}
 
 		for ( std::size_t number = 0; number < aptToActivate.size(); number++ )
 			output.push_back(distanceIndexes[aptToActivate[number]]);
@@ -172,9 +180,13 @@ std::vector<std::size_t>	ComplexSelfOrganizingMap::Activate( const somResponseIn
 		aptToActivate.insert(aptToActivate.end(), partialAptToActivate.begin(), partialAptToActivate.end());
 		newDistances.erase(std::remove(newDistances.begin(), newDistances.end(), newDistanceMinimum), newDistances.end());
 	}
-	std::random_device rd;
-	std::mt19937 g(rd());
-	std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+
+	// if random behaviour is enabled then randomize the order of the active indexes in the output
+	if ( ENABLE_RANDOM_BEHAVIOUR ) {
+		std::random_device rd;
+		std::mt19937 g(rd());
+		std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+	}
 
 	for ( std::size_t number = 0; number < aptToActivate.size(); number++ )
 		output.push_back(excitedUnits[aptToActivate[number]]);
@@ -187,13 +199,13 @@ std::vector<std::size_t>	ComplexSelfOrganizingMap::Activate( const somResponseIn
 
 // function to save the ComplexSelfOrganizingMap' status in a file
 void	ComplexSelfOrganizingMap::saveComplexSelfOrganizingMapStatus( const std::string& complexSelfOrganizingMapIdentification,
-								      ofstream& outfile )
+								      std::stringstream& outStream )
 {
 	StaticSelfOrganizingMap::saveStaticSelfOrganizingMapStatus(complexSelfOrganizingMapIdentification,
-	       							   outfile);
+	       							   outStream);
 
 	DynamicSelfOrganizingMap::saveDynamicSelfOrganizingMapStatus(complexSelfOrganizingMapIdentification,
-								     outfile);
+								     outStream);
 } // end functiom saveComplexSelfOrganizingMapStatus
 
 

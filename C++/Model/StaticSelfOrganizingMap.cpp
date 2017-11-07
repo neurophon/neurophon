@@ -46,8 +46,12 @@ StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>
 		_weights[row].resize(_inputDimensionality);
 
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ )
-		for ( std::size_t column = 0; column < inputDimensionality; column++ )
-			_weights[row][column] = ((double) rand() / (RAND_MAX));		// generate secret number between 0 and 1
+		for ( std::size_t column = 0; column < inputDimensionality; column++ ) {
+			if ( ENABLE_RANDOM_BEHAVIOUR )
+				_weights[row][column] = ((double) rand() / (RAND_MAX));		// generate secret number between 0 and 1
+			else
+				_weights[row][column] = 0.5; // if random beahaviour is desabled, fill the weights with deterministic values
+		}
 
 	assert(is_rectangular(_weights));
 } // end StaticSelfOrganizingMap constructor
@@ -81,17 +85,12 @@ StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>
 
 
 // constructor that initializes _weights with previous values from file
-StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::string& fileName,
+StaticSelfOrganizingMap::StaticSelfOrganizingMap( std::stringstream& inputStream,
 						  const std::string& selfOrganizingMapIdentifier )
 {
-	// open a file in read mode.
-	ifstream infile;
-	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
-
-	StaticSelfOrganizingMap::loadStaticSelfOrganizingMapStatus(selfOrganizingMapIdentifier, infile);
-
-	// close the opened file.
-	infile.close();
+	inputStream.clear();
+	inputStream.str(inputStream.str());
+	StaticSelfOrganizingMap::loadStaticSelfOrganizingMapStatus(selfOrganizingMapIdentifier, inputStream);
 } // end StaticSelfOrganizingMap explicit constructor
 
 
@@ -218,7 +217,7 @@ somResponseInfo	StaticSelfOrganizingMap::getResponse( const std::vector<double>&
 
 // function to save the Self Organizing Map's status in a file
 void	StaticSelfOrganizingMap::saveStaticSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier,
-	       							    ofstream& outfile )
+	       							    std::stringstream& outStream )
 {
 	std::string	str = "StaticSelfOrganizingMap_";
 	std::string	STR;
@@ -226,25 +225,25 @@ void	StaticSelfOrganizingMap::saveStaticSelfOrganizingMapStatus( const std::stri
 	str += "_";
 
         // saves _inputDimensionality
-	save_as_scalar(str + "inputDimensionality", _inputDimensionality, outfile);
+	save_as_scalar(str + "inputDimensionality", _inputDimensionality, outStream);
 
         // saves _unitsDimensionality
-	save_as_scalar(str + "unitsDimensionality", _unitsDimensionality, outfile);
+	save_as_scalar(str + "unitsDimensionality", _unitsDimensionality, outStream);
 
         // saves _unitsArrayDimensionality
-	save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
+	save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outStream);
 
         // saves _weights
-	save_vector_of_vectors_conditionally_as_sparse_matrix(str + "weights",_weights,SPARSITY_THRESHOLD,outfile);
+	save_vector_of_vectors_conditionally_as_sparse_matrix(str + "weights",_weights,SPARSITY_THRESHOLD,outStream);
 
         // saves _updateStep
-	save_as_scalar(str + "updateStep", _updateStep, outfile);
+	save_as_scalar(str + "updateStep", _updateStep, outStream);
 } // end functiom saveStaticSelfOrganizingMapStatus
 
 
 // function to load the Self Organizing Map's status from a file
 void	StaticSelfOrganizingMap::loadStaticSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier,
-	       							    ifstream& infile )
+	       							    std::stringstream& infile )
 {
 	std::string	str;
 	std::string	STR = "StaticSelfOrganizingMap_";

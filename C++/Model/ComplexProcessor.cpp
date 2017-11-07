@@ -41,10 +41,10 @@ ComplexProcessor::ComplexProcessor( const std::vector<std::size_t>& populationDi
 
 
 // constructor initializes populationDimensions, numberOfInputs and dynamicUnits with variables supplied as arguments
-ComplexProcessor::ComplexProcessor( const std::string& fileName,
+ComplexProcessor::ComplexProcessor( std::stringstream& inputStream,
 				    const std::string& dynamicUnitsIdentification )
 	// explicitly call base-class constructor
-	: DynamicProcessor(fileName, dynamicUnitsIdentification)
+	: DynamicProcessor(inputStream, dynamicUnitsIdentification)
 {
 } // end ComplexProcessor constructor
 
@@ -87,9 +87,13 @@ std::vector<std::size_t>	ComplexProcessor::Activate( const responseInfo& respons
 		aptToActivate.insert(aptToActivate.end(), partialAptToActivate.begin(), partialAptToActivate.end());
 		newExcitations.erase(std::remove(newExcitations.begin(), newExcitations.end(), newExcitationMaximum), newExcitations.end());
 	}
-	std::random_device rd;
-	std::mt19937 g(rd());
-	std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+
+	// if random behaviour is enabled then randomize the order of the active indexes in the output
+	if ( ENABLE_RANDOM_BEHAVIOUR ) {
+		std::random_device rd;
+		std::mt19937 g(rd());
+		std::shuffle(aptToActivate.begin(), aptToActivate.end(), g);
+	}
 
 	for ( std::size_t number = 0; number < aptToActivate.size(); number++ )
 		output.push_back(excitedUnits[aptToActivate[number]]);
@@ -102,13 +106,13 @@ std::vector<std::size_t>	ComplexProcessor::Activate( const responseInfo& respons
 
 // function to save the ComplexProcessor' status in a file
 void	ComplexProcessor::saveComplexProcessorStatus( const std::string& complexProcessorIdentification,
-						      ofstream& outfile )
+						      stringstream& outputStream )
 {
 	StaticProcessor::saveStaticProcessorStatus(complexProcessorIdentification,
-	       							   outfile);
+	       							   outputStream);
 
 	DynamicProcessor::saveDynamicProcessorStatus(complexProcessorIdentification,
-								     outfile);
+								     outputStream);
 } // end functiom saveComplexProcessorStatus
 
 

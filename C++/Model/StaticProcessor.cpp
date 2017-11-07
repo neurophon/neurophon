@@ -90,17 +90,12 @@ StaticProcessor::StaticProcessor( const std::vector<std::size_t>& unitsArrayDime
 
 
 // constructor that initializes _weights with previous values from file
-StaticProcessor::StaticProcessor( const std::string& fileName,
+StaticProcessor::StaticProcessor( std::stringstream& inputStream,
 				  const std::string& staticUnitsIdentifier )
 {
-	// open a file in read mode.
-	ifstream infile;
-	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
-
-	StaticProcessor::loadStaticProcessorStatus(staticUnitsIdentifier, infile);
-
-	// close the opened file.
-	infile.close();
+	inputStream.clear();
+	inputStream.str(inputStream.str());
+	StaticProcessor::loadStaticProcessorStatus(staticUnitsIdentifier, inputStream);
 } // end StaticProcessor explicit constructor
 
 
@@ -217,7 +212,8 @@ responseInfo	StaticProcessor::learningRule( const double learningRate,
 				}
 				potentialIndexes.shrink_to_fit();
 
-				if ( !_weightsSparsity[row] ) {
+				// this is just done when the random behaviour is enabled
+				if ( ENABLE_RANDOM_BEHAVIOUR && !_weightsSparsity[row] ) {
 					auto	numberOfAffectedSynapses = (std::size_t)(MASSIVE_PLASTICITY*_potentialDimensionality); 
 					std::vector<std::size_t>	inactiveIndexes;
 					for ( std::size_t randomChoise = 0; randomChoise < numberOfAffectedSynapses; randomChoise++ ) {
@@ -374,21 +370,24 @@ void	StaticProcessor::synapticHomeostasis( const double synapticThreshold )
 			for ( const auto& neighborUnit : neighborUnits )
 				_weights[row] += _weights[neighborUnit];
 
-		       	// tries to fill its weights at random, with random asynaptic weights
-			auto	numberOfChoises = (std::size_t)(MASSIVE_PLASTICITY*_potentialDimensionality); 
-			std::vector<std::size_t>	randomChoises;
-			for ( std::size_t randomChoise = 0; randomChoise < numberOfChoises; randomChoise++ ) {
-				std::size_t	choise = rand() % _potentialDimensionality;
-				std::size_t	securityScape = 0;
-				while ( std::find(randomChoises.begin(), randomChoises.end(), choise) != randomChoises.end() ) {
-					choise = rand() % _potentialDimensionality;
-					if (securityScape > 0.1*_inputDimensionality)
-						break;
-						
-					securityScape++;
+			// it does the following work only if random behaviour is enabled
+			if ( ENABLE_RANDOM_BEHAVIOUR ) {
+				// tries to fill its weights at random, with random asynaptic weights
+				auto	numberOfChoises = (std::size_t)(MASSIVE_PLASTICITY*_potentialDimensionality); 
+				std::vector<std::size_t>	randomChoises;
+				for ( std::size_t randomChoise = 0; randomChoise < numberOfChoises; randomChoise++ ) {
+					std::size_t	choise = rand() % _potentialDimensionality;
+					std::size_t	securityScape = 0;
+					while ( std::find(randomChoises.begin(), randomChoises.end(), choise) != randomChoises.end() ) {
+						choise = rand() % _potentialDimensionality;
+						if (securityScape > 0.1*_inputDimensionality)
+							break;
+							
+						securityScape++;
+					}
+					randomChoises.push_back(choise);
+					_weights[row][choise] += randomFromDoubleInterval(SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT);
 				}
-				randomChoises.push_back(choise);
-				_weights[row][choise] += randomFromDoubleInterval(SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT);
 			}
 		}
 	}
@@ -431,7 +430,7 @@ void	StaticProcessor::activationHomeostasis( const double boostingFactor )
 
 // function to save the Self Organizing Map's status in a file
 void	StaticProcessor::saveStaticProcessorStatus( const std::string& staticUnitsIdentifier,
-						    ofstream& outfile )
+						    stringstream& outfile )
 {
 	std::string	str = "StaticProcessor_";
 	std::string	STR;
@@ -476,7 +475,7 @@ void	StaticProcessor::saveStaticProcessorStatus( const std::string& staticUnitsI
 
 // function to load the Self Organizing Map's status from a file
 void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsIdentifier,
-						    ifstream& infile )
+						    stringstream& infile )
 {
 	std::string	str;
 	std::string	STR = "StaticProcessor_";

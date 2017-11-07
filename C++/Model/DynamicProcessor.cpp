@@ -73,19 +73,14 @@ DynamicProcessor::DynamicProcessor( const std::vector<std::size_t>& populationDi
 
 // constructor initializes populationDimensions and numberOfInputs with variables supplied as arguments.
 // This loads _dynamicUnits with previous vector supplied as argument too
-DynamicProcessor::DynamicProcessor( const std::string& fileName,
+DynamicProcessor::DynamicProcessor( std::stringstream& inputStream,
 				    const std::string& dynamicProcessorIdentification )
 	// explicitly call base-class constructor
-	: StaticProcessor(fileName, dynamicProcessorIdentification)
+	: StaticProcessor(inputStream, dynamicProcessorIdentification)
 {
-	// open a file in read mode.
-	ifstream infile;
-	infile.open("../../Octave/" + fileName + ".mat", ios::in | std::ifstream::binary);
-
-	DynamicProcessor::loadDynamicProcessorStatus(dynamicProcessorIdentification, infile);
-
-	// close the opened file.
-	infile.close();
+	inputStream.clear();
+	inputStream.str(inputStream.str());
+	DynamicProcessor::loadDynamicProcessorStatus(dynamicProcessorIdentification, inputStream);
 } // end DynamicProcessor constructor
 
 
@@ -212,7 +207,7 @@ responseInfo	DynamicProcessor::getDynamicResponse( const responseInfo& response,
 
 // function to save the DynamicProcessor' status in a file
 void	DynamicProcessor::saveDynamicProcessorStatus( const std::string dynamicProcessorIdentification,
-						      ofstream& outfile )
+						      stringstream& outfile )
 {
 	std::string	str = "DynamicProcessor_";
 	std::string	STR;
@@ -249,7 +244,7 @@ void	DynamicProcessor::saveDynamicProcessorStatus( const std::string dynamicProc
 
 // function to load the DynamicProcessor' status from a file
 void	DynamicProcessor::loadDynamicProcessorStatus( const std::string dynamicProcessorIdentification,
-						      ifstream& infile )
+						      stringstream& infile )
 {
 	std::string	str;
 	std::string	STR = "DynamicProcessor_";

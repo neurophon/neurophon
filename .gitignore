@@ -37,3 +37,16 @@ Test
 # swp files
 *.swp
 
+# Octave mat files
+*.mat
+
+# octave.workspace files
+octave-workspace
+
+# wav files
+*.wav
+
+# Festival: SABLE markup files
+*.sable
+
+

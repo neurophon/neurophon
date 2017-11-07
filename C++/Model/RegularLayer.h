@@ -65,7 +65,7 @@ public:
 						      const std::vector<std::size_t>&,
 						      const double );// validates the layer
 
-	void			validateComumnsInterconnectionsParameters( const std::vector<std::size_t>&,
+	bool			validateColumnsInterconnectionsParameters( const std::vector<std::size_t>&,
 									   const std::vector<std::size_t>&,
 									   const std::vector<std::size_t>&,
 									   const std::vector<std::size_t>&,
@@ -82,7 +82,7 @@ public:
 									   const bool,
 									   const std::size_t );// validates the parameters to configure the columns' interconnections
 
-	void			validatePopulationParameters( const std::vector<std::size_t>&,
+	bool			validatePopulationParameters( const std::vector<std::size_t>&,
 							      const std::vector<std::size_t>&,
 							      const std::vector<std::size_t>&,
 							      const std::size_t,
@@ -188,6 +188,13 @@ public:
 
 	void	checkRegularLayerStructure( const regularLayerStructure& );	// this function checks the coeherence of the regular layer structure
 	
+	void	mergeOutputs( regularLayerResponse& output );			// this function merges all the column outputs,
+										// this uses mpi inter-process-comunication
+										// once the function returns, every process count on a complete
+										// cortical layer output
+
+	void	gatherConnections();						// gathers all connections in rank 0
+
 private:
 	std::vector<ComplexProcessor>		_layerColumns;
 

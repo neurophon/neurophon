@@ -29,6 +29,7 @@
 #include <cassert>
 #include <unordered_map>
 
+#include "Constants.h"
 #include "DataTypes.h"
 
 // Fisher-Yates shuffle that stops after num_random iterations.
@@ -57,23 +58,35 @@ void	sample_vector( std::vector<T> vec, std::vector<T>& sample, std::size_t samp
 {
 	assert(vec.size() >= sampleSize);
 	sample.clear();
-	random_unique(vec.begin(), vec.end(), sampleSize);
-	for ( std::size_t i = 0; i < sampleSize; i++ )
-		sample.push_back (vec[i]);
+	if ( ENABLE_RANDOM_BEHAVIOUR ) {	
+		random_unique(vec.begin(), vec.end(), sampleSize);
+		for ( std::size_t i = 0; i < sampleSize; i++ )
+			sample.push_back (vec[i]);
+	}
+	else {	// if random behaviour is disabled then put just the first sampleSize elements from vec into sample
+		sample.insert(sample.end(),vec.begin(),vec.begin()+sampleSize);
+	}
 
 	sample.shrink_to_fit();
 } // end template sample_vector
 
 
 // Sort vector indexes based on vector values (ascending orfder)
-// when the vector values are equal, the order aplied is random
+// if random behaviour is enabled,
+// when the vector values are equal,
+// the order aplied is random
 template <typename T>
 std::vector<std::size_t> sort_indexes(const std::vector<T> &v) {
 
 	// initialize original index locations
 	std::vector<std::size_t> idx(v.size());
 	iota(idx.begin(), idx.end(), 0);
-	std::random_shuffle(idx.begin(),idx.end());
+	// if random behaviour is enabled,
+	// when the vector values are equal,
+	// the order aplied is random
+	if ( ENABLE_RANDOM_BEHAVIOUR )	
+		std::random_shuffle(idx.begin(),idx.end());
+
 	// sort indexes based on comparing values in v
 	sort(idx.begin(), idx.end(),
 	[&v](std::size_t i1, std::size_t i2)
@@ -346,10 +359,10 @@ std::vector<std::vector<T>>	from_sparse(const SparseMatrixElements<T>& arr)
 	std::vector<std::vector<T>>	output;
 
 	output.resize(arr.numberOfRows);
-	for ( int row = 0; row < arr.numberOfRows; row++ )
+	for ( std::size_t row = 0; row < arr.numberOfRows; row++ )
 		output[row].resize(arr.numberOfColumns);
 
-	for ( int element = 0; element < arr.numberOfNonZero; element++ )
+	for ( std::size_t element = 0; element < arr.numberOfNonZero; element++ )
 		output[arr.rows[element]][arr.columns[element]] = arr.values[element];
 
 	return	output;
@@ -362,10 +375,10 @@ SparseMatrixElements<V>	to_sparse(const std::vector<std::vector<V>>& v)
 {
 	SparseMatrixElements<V>	output;
 
-	int	rows = v.size();
-	int	columns = v[0].size();
-	for ( int column = 0; column < columns; column++ ) {
-		for ( int row = 0; row < rows; row++ ) {
+	std::size_t	rows = v.size();
+	std::size_t	columns = v[0].size();
+	for ( std::size_t column = 0; column < columns; column++ ) {
+		for ( std::size_t row = 0; row < rows; row++ ) {
 			if ( v[row][column] != 0.0 ) {
 				output.rows.push_back(row);
 				output.columns.push_back(column);

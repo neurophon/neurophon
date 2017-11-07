@@ -48,7 +48,7 @@ public:
 												// SelfOrganizingMap weights are initialized with random
 												// values between weight limits
 
-				ComplexSelfOrganizingMap( const std::string&,
+				ComplexSelfOrganizingMap( std::stringstream&,
 							  const std::string& );		// constructor that initializes ComplexSelfOrganizingMap
 											// _dynamicUnits are initialized from previous vectors
 
@@ -78,7 +78,7 @@ public:
 											// weighted randomness in the process of selection of the
 											// excited units
 	void	saveComplexSelfOrganizingMapStatus( const std::string&,
-						    std::ofstream& );			// function to save the ComplexSelfOrganizingMap' status in a file
+						    std::stringstream& );		// function to save the ComplexSelfOrganizingMap' status in a file
 
 
 }; // end class ComplexSelfOrganizingMap

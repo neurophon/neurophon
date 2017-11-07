@@ -1,2 +1,2 @@
 This is the command needed to create the audio corpus 
-examples/text2wave /home/dario/Contenidos/HSTM/Octave/GenerateTextCorpora/Corpus.sable -o /home/dario/Contenidos/HSTM/Audio/Corpus.wav
+examples/text2wave /home/dario/Contenidos/hstm_git_repository/Octave/GenerateTextCorpora/Corpus.sable -o /home/dario/Contenidos/hstm_git_repository/Audio/Corpus.wav
