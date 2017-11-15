@@ -24,55 +24,35 @@ int main(int argc, char* argv[])
 	if ( argc == 3 ) {
 		// this is the name of the folder that contains the model configuration
 		std::string	folderName = argv[1];
-		std::string	inference = argv[2];
-		std::string	auxiliary = "inference";
+		std::string	mode = argv[2];
+		std::string	inference = "inference";
+		std::string	training = "training";
 
-		if ( inference.compare(auxiliary) != 0 ) {
+		if ( mode.compare(inference) == 0 ) {
+			MPI_Barrier(MPI::COMM_WORLD);
+			// generates object of Model class 
+			Model	model(folderName, false);
+
+			// run inference
+			model.run(folderName);
+			MPI_Barrier(MPI::COMM_WORLD);
+		}
+		else if ( mode.compare(training) == 0 ) {
+			MPI_Barrier(MPI::COMM_WORLD);
+			// generates object of Model class 
+			Model	model(folderName, true);
+
+			// train the model 
+			model.train(folderName);
+			MPI_Barrier(MPI::COMM_WORLD);
+		}
+		else {
 			if ( world_rank == 0 ) {
 				std::cout << "\nsecond argument must be \"inference\"" << std::endl;
+				std::cout << "or \"training\"" << std::endl;
 			}
-			MPI_Barrier(MPI::COMM_WORLD);
 			MPI_Abort(MPI::COMM_WORLD, 1);
 		}
-
-		MPI_Barrier(MPI::COMM_WORLD);
-		// generates object of Model class 
-		Model	model(folderName);
-
-		// run inference
-		model.run(folderName);
-		MPI_Barrier(MPI::COMM_WORLD);
-
-		return	0;
-	}
-	else if ( argc == 5 ) {
-		// this is the name of the folder that contains the model configuration
-		std::string	folderName = argv[1];
-		std::string	training = argv[2];
-		std::size_t	iterations = std::atoi(argv[3]);	// in the model conditions we advise to use iterations = 2;
-		std::size_t	stages = std::atoi(argv[4]);		// in the model conditions we advise to use stages = 3;
-		std::string	auxiliary = "training";
-
-		if ( training.compare(auxiliary) != 0 ) {
-			if ( world_rank == 0 ) {
-				std::cout << "\nsecond argument must be \"training\"" << std::endl;
-			}
-			MPI_Barrier(MPI::COMM_WORLD);
-			MPI_Abort(MPI::COMM_WORLD, 1);
-		}
-
-		if ( world_rank == 0 ) {
-			std::cout << "\nThe number of stages in each layer training process is: " << stages << std::endl;
-			std::cout << "\nThe number of iterations in every stage of the training process is: " << iterations << std::endl;
-		}
-
-		MPI_Barrier(MPI::COMM_WORLD);
-		// generates object of Model class 
-		Model	model(folderName);
-
-		// train the model 
-		model.train(folderName, iterations, stages);
-		MPI_Barrier(MPI::COMM_WORLD);
 
 		return	0;
 	}
@@ -80,12 +60,10 @@ int main(int argc, char* argv[])
 		// Tell the user how to run the program
 		if (world_rank == 0) {
 			std::cerr << "\nUsage: " << argv[0] << " folderName inference" << std::endl;
-			std::cerr << "Or usage: " << argv[0] << " folderName training iterations stages" << std::endl;
+			std::cerr << "Or usage: " << argv[0] << " folderName training" << std::endl;
 			std::cerr << "folderName: this is the name of the folder where the model structure resides" << std::endl;
 			std::cerr << "inference: the model executes inference with the input corpus" << std::endl;
 			std::cerr << "training: the model executes training with the input corpus" << std::endl;
-			std::cerr << "iterations: the number of iterations in every stage of the training process" << std::endl;
-			std::cerr << "stages: the number of stages in each layer training process" << std::endl;
 		}
 		return 1;
        }

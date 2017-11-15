@@ -231,11 +231,19 @@ struct	modelStructure						// Specifies the complete model structure
 										// true: encoder incorporated as a initial layer
 										// false: encoder is not incorporated
 	bool					newEncoder;			// indicates if the encoder has to be created
+										// or trained from a restart
 										// true: a new encoder has to be created
+										// or trained from a restart
 										// false: the encoder has to be loaded from file
 	std::size_t				numberOfLayers;			// the number of layers in the model 0-n
 	std::size_t				newLayerAt;			// indicates from which level in the hierarchy a new layer has to be
-										// created. Layers below this one have to be loaded from file
+										// created or trained from a restart.
+										// Layers below this one have to be loaded from file
+	std::size_t				initialStageAt;			// indicates from which stage a new encoder or layer has to be
+										// trained.
+	std::size_t				iterations;			// this is the number of iterations in every stage of the training process
+	std::size_t				stages;				// this is the number of stages in each layer training process
+
 };
 
 #endif

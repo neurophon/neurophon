@@ -29,13 +29,11 @@ class Model
 {
 public:
 
-				Model( std::string& );			// Model constructor with data from file
+	Model( std::string&, const bool );		// Model constructor with data from file
 
 	void	run( const std::string& );		// run the model
 
-	void	train( const std::string&,
-		       const std::size_t,
-		       const std::size_t );		// train the model
+	void	train( const std::string& );		// train the model
 
 	std::vector<encoderLayerInput>	loadEncoderInputs( const std::string& );	// loads input information for the encoder.
 											// puts the inputs in a vector of encoderLayerInput structures
@@ -48,12 +46,19 @@ public:
 											// in the run
 
 	void	saveModelStatus( const std::string& );			// function that saves the Model's status in a file
+									// this has to be called every time a stage is completed
+									// when the encoder or a layer training is completes
+									// newEncoder becomes false or newLayerAt is increades
+									// respectively and initialStageAt is reseted to 0
 
-	void	loadModelStatus( const std::string& );			// function that loads the Model's status from a file
+	void	loadModelStatus( const std::string&,
+		       		 const bool );				// function that loads the Model's status from a file
+
+	void	saveModelStructure( const std::string& );		// function that saves the Model structure in a file
 
 	void	loadModelStructure( const std::string& );		// function that loads the Model's structure from a file
 
-	void	validateModelStructure();				// function that validates the model structure
+	void	validateModelStructure( const bool );			// function that validates the model structure
 
 	void	validateLayersInterconnection();			// function that validates the interconnection between
        									// the layers of the model structure
