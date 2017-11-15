@@ -67,18 +67,27 @@ for ( std::size_t row = 0; row < numberOfInputs; row++ ) {
 
 std::cout << "Saving Object.\n";
 std::string	selfOrganizingMapIdentifier = "SOM", fileName = "SOM_Status";
+
+// stream to put the formated data to be saved in the file
+std::stringstream	outstream;
+
+// file preamble.
+outstream << "# This is a file created by saveLayerStatus member function in Layer class from," << endl;
+outstream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+outstream << "# Author: Dematties Dario Jesus." << endl;
+
+outstream << "\n\n" << endl;
+	
+SOM.saveStaticSelfOrganizingMapStatus(selfOrganizingMapIdentifier,outstream);
+
+
+
 // open a file in write mode.
 ofstream outfile;
 outfile.open("../../Octave/" + fileName + ".mat", ios::out | ios::trunc);
 
-// file preamble.
-outfile << "# This is a file created by saveLayerStatus member function in Layer class from," << endl;
-outfile << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-outfile << "# Author: Dematties Dario Jesus." << endl;
-
-outfile << "\n\n" << endl;
-	
-SOM.saveStaticSelfOrganizingMapStatus(selfOrganizingMapIdentifier,outfile);
+// write the file with the stream
+outfile << outstream.rdbuf();
 
 // close the opened file.
 outfile.close();
