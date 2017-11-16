@@ -1,19 +1,25 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//				Author:		Dematties Dario Jesus						//
-//				Contact:	dariodematties@hotmail.com.ar					//
-//						dariodematties@yahoo.com.ar					//
-//						dario.dematties@frm.utn.edu.ar					//
-//				Project:	Engineering PhD Project						//
-//				Institution:	Universidad de Buenos Aires					//
-//						Facultad de Ingeniería (FIUBA)					//
-//				Workplace:	Instituto de Ingeniería						//
-//						Biomédica FIUBA	&						//
-//						CCT CONICET Mendoza INCIHUSA					//
+/*
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// File Name:		Structs.h
-// File Description:	Structs definition. This file contains the structs definition to be used in the cortical layers of the node
+				Author:		Dematties Dario Jesus						
+				Contact:	dariodematties@hotmail.com.ar					
+						dariodematties@yahoo.com.ar					
+						dario.dematties@frm.utn.edu.ar					
+				Project:	Engineering PhD Project						
+				Institution:	Universidad de Buenos Aires					
+						Facultad de Ingeniería (FIUBA)					
+				Workplace:	Instituto de Ingeniería						
+						Biomédica FIUBA	&						
+						CCT CONICET Mendoza INCIHUSA					
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+File Name:		Structs.h
+File Description:	Structs definition.
+			This file contains the structs definition to be used in the model. 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
 
 #ifndef STRUCTS_H
 #define STRUCTS_H
@@ -23,10 +29,28 @@
 
 #include "../Libraries/Model/DataTypes.h"
 
-struct	somResponseInfo		// Self Organizing Map response information
+//! Self Organizing Map response information
+
+/*!
+This structure specifies the predisposition of every unit
+in a Self Organizing Map to be in active state.
+It also gives a ranking with the units ordered
+in accordance with its predisposition 
+to be in active state.
+*/
+struct	somResponseInfo
 {
-	std::vector<std::size_t>	ranking;		// This is a vector with a ranking of the units' indexes distances (smaller distance first)
-	std::vector<double>		distances;		// This is a vector with the distance between every unit and the inputVector
+	std::vector<std::size_t>	ranking;	/**< A vector of natural numbers that
+							     specifies the positions of distances elements
+							     according to its values in ascending order.
+							     (smaller distance first) */
+	std::vector<double>		distances;	/**< A vector of positive real numbers that
+							     specifies the predisposition of a unit
+							     -in a self organizing map- to be in active
+							     state (see StaticSelfOrganizingMap.cpp,
+							     DynamicSelfOrganizingMap.cpp and ComplexSelfOrganizingMap.cpp).
+							     The smaller the distance element value
+							     the more predisposed is the unit to be active. */
 };
 
 struct	responseInfo
