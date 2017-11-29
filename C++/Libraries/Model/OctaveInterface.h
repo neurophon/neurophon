@@ -445,7 +445,6 @@ void	load_cell_to_multidimensional_vector( std::vector<std::vector<T>>& matrix, 
 	std::size_t	row = 0;
 	std::string	str, str1;
 	std::vector<std::size_t>	dimensions;
-	std::vector<V>	aux;
 	if(!(std::getline(stm, str) && str == type_tag + "cell")) goto failure;
 
 	std::size_t	expected_rows;
