@@ -60,4 +60,11 @@ std::vector<std::size_t>	trueIndexes( const std::vector<bool>& );
 // computes the percentage of true elements in vector of bool
 double	truePercentage( const std::vector<bool>& );
 
+// this is for OS auto-detection
+std::string getOsName();
+
+// this checkts if this machine is little endian
+int is_big_endian();
+
+
 #endif

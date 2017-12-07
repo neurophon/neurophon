@@ -54,6 +54,7 @@ int main(int argc, char* argv[])
 			MPI_Abort(MPI::COMM_WORLD, 1);
 		}
 
+		MPI::Finalize();
 		return	0;
 	}
 	else {
@@ -65,6 +66,7 @@ int main(int argc, char* argv[])
 			std::cerr << "inference: the model executes inference with the input corpus" << std::endl;
 			std::cerr << "training: the model executes training with the input corpus" << std::endl;
 		}
+		MPI::Finalize();
 		return 1;
        }
 }

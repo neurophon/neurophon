@@ -21,11 +21,15 @@
 #include <fstream>
 #include <mpi.h>
 
+#include "../Libraries/Model/Utilities.h"
 #include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
+#include "../Libraries/Model/GlobalVariables.h"
 #include "Model.h"
 
 using namespace std;
 
+bool	big_endianness;
 
 // constructor that initializes an object instantiation of this class
 Model::Model( std::string& folderName, const bool training )
@@ -891,11 +895,26 @@ std::vector<encoderLayerInput>	Model::loadEncoderInputs( const std::string& file
 	std::string	STR;
 	twodvector<double>	input;
 
-	while ( std::getline(inputStream, str) ) {
-		STR = "# name: inputs";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector_of_vectors(input, inputStream);
-			check_inputs = true;
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(inputStream);
+		auto	array_structure = check_next_data_structure(inputStream, big_endianness);
+		while ( array_structure.more_data ) {
+			STR = "inputs";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector_of_vectors(array_structure, input, inputStream, big_endianness);
+				check_inputs = true;
+			}
+
+			array_structure = check_next_data_structure(inputStream,big_endianness);
+		}
+	}
+	else {
+		while ( std::getline(inputStream, str) ) {
+			STR = "# name: inputs";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector_of_vectors(input, inputStream);
+				check_inputs = true;
+			}
 		}
 	}
 
@@ -974,13 +993,29 @@ std::vector<regularLayerResponse>	Model::loadRegularInputs( const std::string& f
 	std::string	STR;
 	threedvector<int>	input;
 
-	while ( std::getline(inputStream, str) ) {
-		STR = "# name: inputs";
-		if ( str.compare(STR) == 0 ) {
-			load_cell_to_multidimensional_vector(input, inputStream);
-			check_inputs = true;
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(inputStream);
+		auto	array_structure = check_next_data_structure(inputStream, big_endianness);
+		while ( array_structure.more_data ) {
+			STR = "inputs";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_cell_array_to_multidimensional_vector(array_structure, input, inputStream, big_endianness);
+				check_inputs = true;
+			}
+
+			array_structure = check_next_data_structure(inputStream,big_endianness);
 		}
 	}
+	else {
+		while ( std::getline(inputStream, str) ) {
+			STR = "# name: inputs";
+			if ( str.compare(STR) == 0 ) {
+				load_cell_to_multidimensional_vector(input, inputStream);
+				check_inputs = true;
+			}
+		}
+	}
+
 	if (!(check_inputs == true)) {
 		if ( world_rank == 0 ) {
 			std::cout << "(check_inputs == true) no satisfied" << std::endl;
@@ -1395,32 +1430,73 @@ void	Model::saveModelStructure( const std::string& folderName )
 		outfile.open ("../../Octave/" + folderName + "/ModelStructure.mat", ios::out | ios::trunc);
 
 		// file preamble.
-		outfile << "# This is a file created by saveModelStructure member function in Model class from," << endl;
-		outfile << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-		outfile << "# Author: Dematties Dario Jesus." << endl;
-
-		outfile << "\n\n" << endl;
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			save_the_header(outfile);
+		}
+		else {
+			outfile << "# This is a file created by saveModelStructure member function in Model class from," << endl;
+			outfile << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+			outfile << "# Author: Dematties Dario Jesus." << endl;
+			outfile << "\n\n" << endl;
+		}
 		
 		// saves encoderIncorporation
-		save_as_bool("encoderIncorporation", _modelStructure.encoderIncorporation, outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			std::size_t	aux_bool;
+			if (_modelStructure.encoderIncorporation)
+				aux_bool = 1;
+			else
+				aux_bool = 0;
+
+			save_scalar_as_numeric_array("encoderIncorporation", aux_bool, outfile);
+		}
+		else {
+			save_as_bool("encoderIncorporation", _modelStructure.encoderIncorporation, outfile);
+		}
 
 		// saves newEncoder
-		save_as_bool("newEncoder", _modelStructure.newEncoder, outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			std::size_t	aux_bool;
+			if (_modelStructure.newEncoder)
+				aux_bool = 1;
+			else
+				aux_bool = 0;
+
+			save_scalar_as_numeric_array("newEncoder", aux_bool, outfile);
+		}
+		else {
+			save_as_bool("newEncoder", _modelStructure.newEncoder, outfile);
+		}
 
 		// saves numberOfLayers
-		save_as_scalar("numberOfLayers", _modelStructure.numberOfLayers, outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("numberOfLayers", _modelStructure.numberOfLayers, outfile);
+		else
+			save_as_scalar("numberOfLayers", _modelStructure.numberOfLayers, outfile);
 
 		// saves newLayerAt
-		save_as_scalar("newLayerAt", _modelStructure.newLayerAt, outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("newLayerAt", _modelStructure.newLayerAt, outfile);
+		else
+			save_as_scalar("newLayerAt", _modelStructure.newLayerAt, outfile);
 
 		// saves initialStageAt
-		save_as_scalar("initialStageAt", _modelStructure.initialStageAt, outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("initialStageAt", _modelStructure.initialStageAt, outfile);
+		else
+			save_as_scalar("initialStageAt", _modelStructure.initialStageAt, outfile);
 
 		// saves iterations
-		save_as_scalar("iterations", _modelStructure.iterations, outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("iterations", _modelStructure.iterations, outfile);
+		else
+			save_as_scalar("iterations", _modelStructure.iterations, outfile);
 
 		// saves stages
-		save_as_scalar("stages", _modelStructure.stages, outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("stages", _modelStructure.stages, outfile);
+		else
+			save_as_scalar("stages", _modelStructure.stages, outfile);
 
 		outfile.close();
 	}
@@ -1448,50 +1524,114 @@ void	Model::loadModelStructure( const std::string& folderName )
 	ifstream infile;
 	infile.open("../../Octave/" + folderName + "/ModelStructure.mat", ios::in | std::ifstream::binary);
 
-	while ( std::getline(infile, str) ) {
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(infile);
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
 
-		STR = "# name: encoderIncorporation";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_modelStructure.encoderIncorporation, infile);
-			check_encoderIncorporation = true;
+			STR = "encoderIncorporation";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_modelStructure.encoderIncorporation = true;
+				else
+					_modelStructure.encoderIncorporation = false;
+
+				check_encoderIncorporation = true;
+			}
+
+			STR = "newEncoder";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_modelStructure.newEncoder = true;
+				else
+					_modelStructure.newEncoder = false;
+
+				check_newEncoder = true;
+			}
+
+			STR = "numberOfLayers";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _modelStructure.numberOfLayers, infile, big_endianness);
+				check_numberOfLayers = true;
+			}
+
+			STR = "newLayerAt";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _modelStructure.newLayerAt, infile, big_endianness);
+				check_newLayerAt = true;
+			}
+
+			STR = "initialStageAt";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _modelStructure.initialStageAt, infile, big_endianness);
+				check_initialStageAt = true;
+			}
+
+			STR = "iterations";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _modelStructure.iterations, infile, big_endianness);
+				check_iterations = true;
+			}
+
+			STR = "stages";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _modelStructure.stages, infile, big_endianness);
+				check_stages = true;
+			}
+
+			array_structure = check_next_data_structure(infile,big_endianness);
 		}
+	}
+	else {
+		while ( std::getline(infile, str) ) {
 
-		STR = "# name: newEncoder";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_modelStructure.newEncoder, infile);
-			check_newEncoder = true;
+			STR = "# name: encoderIncorporation";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_modelStructure.encoderIncorporation, infile);
+				check_encoderIncorporation = true;
+			}
+
+			STR = "# name: newEncoder";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_modelStructure.newEncoder, infile);
+				check_newEncoder = true;
+			}
+
+			STR = "# name: numberOfLayers";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_modelStructure.numberOfLayers, infile);
+				check_numberOfLayers = true;
+			}
+
+			STR = "# name: newLayerAt";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_modelStructure.newLayerAt, infile);
+				check_newLayerAt = true;
+			}
+
+			STR = "# name: initialStageAt";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_modelStructure.initialStageAt, infile);
+				check_initialStageAt = true;
+			}
+
+			STR = "# name: iterations";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_modelStructure.iterations, infile);
+				check_iterations = true;
+			}
+
+			STR = "# name: stages";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_modelStructure.stages, infile);
+				check_stages = true;
+			}
+
 		}
-
-		STR = "# name: numberOfLayers";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_modelStructure.numberOfLayers, infile);
-			check_numberOfLayers = true;
-		}
-
-		STR = "# name: newLayerAt";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_modelStructure.newLayerAt, infile);
-			check_newLayerAt = true;
-		}
-
-		STR = "# name: initialStageAt";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_modelStructure.initialStageAt, infile);
-			check_initialStageAt = true;
-		}
-
-		STR = "# name: iterations";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_modelStructure.iterations, infile);
-			check_iterations = true;
-		}
-
-		STR = "# name: stages";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_modelStructure.stages, infile);
-			check_stages = true;
-		}
-
 	}
 	// close the opened file.
 	infile.close();
@@ -1739,139 +1879,282 @@ void	Model::loadEncoderLayerStructure( const std::string& folderName )
 	ifstream infile;
 	infile.open("../../Octave/" + folderName + "/EncoderLayerStructure.mat", ios::in | std::ifstream::binary);
 
-	while ( std::getline(infile, str) ) {
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(infile);
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
 
-		STR = "# name: afferentArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_encoderLayerStructure.afferentArrayDimensionality, infile);
-			check_afferentArrayDimensionality = true;
-		}
-		
-		STR = "# name: apicalArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_encoderLayerStructure.apicalArrayDimensionality, infile);
-			check_apicalArrayDimensionality = true;
-		}
-
-		STR = "# name: columnsArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_encoderLayerStructure.columnsArrayDimensionality, infile);
-			check_columnsArrayDimensionality = true;
-		}
-
-
-
-
-		STR = "# name: afferentReceptiveField";
-		if ( str.compare(STR) == 0 ) {
-			_encoderLayerStructure.afferentReceptiveField.clear();
-			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, infile);
-			for(const auto& s : receptiveField) {
-				if ( s > -1 )
-					_encoderLayerStructure.afferentReceptiveField.push_back(s);
+			STR = "afferentArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _encoderLayerStructure.afferentArrayDimensionality, infile, big_endianness);
+				check_afferentArrayDimensionality = true;
 			}
-			check_afferentReceptiveField = true;
-		}
-
-		STR = "# name: afferentPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerStructure.afferentPercentage, infile);
-			check_afferentPercentage = true;
-		}
-
-		STR = "# name: afferentWrapAround";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerStructure.afferentWrapAround, infile);
-			check_afferentWrapAround = true;
-		}
-
-
-
-
-		STR = "# name: lateralDistalReceptiveField";
-		if ( str.compare(STR) == 0 ) {
-			_encoderLayerStructure.lateralDistalReceptiveField.clear();
-			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, infile);
-			for(const auto& s : receptiveField) {
-				if ( s > -1 )
-					_encoderLayerStructure.lateralDistalReceptiveField.push_back(s);
+	
+			STR = "apicalArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _encoderLayerStructure.apicalArrayDimensionality, infile, big_endianness);
+				check_apicalArrayDimensionality = true;
 			}
-			check_lateralDistalReceptiveField = true;
-		}
 
-		STR = "# name: lateralDistalPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerStructure.lateralDistalPercentage, infile);
-			check_lateralDistalPercentage = true;
-		}
-
-		STR = "# name: lateralDistalWrapAround";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerStructure.lateralDistalWrapAround, infile);
-			check_lateralDistalWrapAround = true;
-		}
-
-
-
-
-		STR = "# name: apicalReceptiveField";
-		if ( str.compare(STR) == 0 ) {
-			_encoderLayerStructure.apicalReceptiveField.clear();
-			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, infile);
-			for(const auto& s : receptiveField) {
-				if ( s > -1 )
-					_encoderLayerStructure.apicalReceptiveField.push_back(s);
+			STR = "columnsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _encoderLayerStructure.columnsArrayDimensionality, infile, big_endianness);
+				check_columnsArrayDimensionality = true;
 			}
-			check_apicalReceptiveField = true;
+
+			STR = "afferentReceptiveField";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				_encoderLayerStructure.afferentReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_numeric_array_to_vector(array_structure, receptiveField, infile, big_endianness);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_encoderLayerStructure.afferentReceptiveField.push_back(s);
+				}
+				check_afferentReceptiveField = true;
+			}
+
+			STR = "afferentPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerStructure.afferentPercentage, infile, big_endianness);
+				check_afferentPercentage = true;
+			}
+
+			STR = "afferentWrapAround";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerStructure.afferentWrapAround = true;
+				else
+					_encoderLayerStructure.afferentWrapAround = false;
+
+				check_afferentWrapAround = true;
+			}
+
+			STR = "lateralDistalReceptiveField";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				_encoderLayerStructure.lateralDistalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_numeric_array_to_vector(array_structure, receptiveField, infile, big_endianness);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_encoderLayerStructure.lateralDistalReceptiveField.push_back(s);
+				}
+				check_lateralDistalReceptiveField = true;
+			}
+
+			STR = "lateralDistalPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerStructure.lateralDistalPercentage, infile, big_endianness);
+				check_lateralDistalPercentage = true;
+			}
+
+			STR = "lateralDistalWrapAround";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerStructure.lateralDistalWrapAround = true;
+				else
+					_encoderLayerStructure.lateralDistalWrapAround = false;
+
+				check_lateralDistalWrapAround = true;
+			}
+
+			STR = "apicalReceptiveField";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				_encoderLayerStructure.apicalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_numeric_array_to_vector(array_structure, receptiveField, infile, big_endianness);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_encoderLayerStructure.apicalReceptiveField.push_back(s);
+				}
+				check_apicalReceptiveField = true;
+			}
+
+			STR = "apicalPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerStructure.apicalPercentage, infile, big_endianness);
+				check_apicalPercentage = true;
+			}
+
+			STR = "apicalWrapAround";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerStructure.apicalWrapAround = true;
+				else
+					_encoderLayerStructure.apicalWrapAround = false;
+
+				check_apicalWrapAround = true;
+			}
+
+			STR = "iterationNum";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerStructure.iterationNum, infile, big_endianness);
+				check_iterationNum = true;
+			}
+
+			STR = "populationsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _encoderLayerStructure.populationsArrayDimensionality, infile, big_endianness);
+				check_populationsArrayDimensionality = true;
+			}
+
+			STR = "apicalPopulationsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _encoderLayerStructure.apicalPopulationsArrayDimensionality, infile, big_endianness);
+				check_apicalPopulationsArrayDimensionality = true;
+			}
+
+			STR = "potentialPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerStructure.potentialPercentage, infile, big_endianness);
+				check_potentialPercentage = true;
+			}
+
+			array_structure = check_next_data_structure(infile,big_endianness);
 		}
+	}
+	else {
 
-		STR = "# name: apicalPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerStructure.apicalPercentage, infile);
-			check_apicalPercentage = true;
+		while ( std::getline(infile, str) ) {
+
+			STR = "# name: afferentArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_encoderLayerStructure.afferentArrayDimensionality, infile);
+				check_afferentArrayDimensionality = true;
+			}
+			
+			STR = "# name: apicalArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_encoderLayerStructure.apicalArrayDimensionality, infile);
+				check_apicalArrayDimensionality = true;
+			}
+
+			STR = "# name: columnsArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_encoderLayerStructure.columnsArrayDimensionality, infile);
+				check_columnsArrayDimensionality = true;
+			}
+
+
+
+
+			STR = "# name: afferentReceptiveField";
+			if ( str.compare(STR) == 0 ) {
+				_encoderLayerStructure.afferentReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_matrix_to_vector(receptiveField, infile);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_encoderLayerStructure.afferentReceptiveField.push_back(s);
+				}
+				check_afferentReceptiveField = true;
+			}
+
+			STR = "# name: afferentPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerStructure.afferentPercentage, infile);
+				check_afferentPercentage = true;
+			}
+
+			STR = "# name: afferentWrapAround";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerStructure.afferentWrapAround, infile);
+				check_afferentWrapAround = true;
+			}
+
+
+
+
+			STR = "# name: lateralDistalReceptiveField";
+			if ( str.compare(STR) == 0 ) {
+				_encoderLayerStructure.lateralDistalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_matrix_to_vector(receptiveField, infile);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_encoderLayerStructure.lateralDistalReceptiveField.push_back(s);
+				}
+				check_lateralDistalReceptiveField = true;
+			}
+
+			STR = "# name: lateralDistalPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerStructure.lateralDistalPercentage, infile);
+				check_lateralDistalPercentage = true;
+			}
+
+			STR = "# name: lateralDistalWrapAround";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerStructure.lateralDistalWrapAround, infile);
+				check_lateralDistalWrapAround = true;
+			}
+
+
+
+
+			STR = "# name: apicalReceptiveField";
+			if ( str.compare(STR) == 0 ) {
+				_encoderLayerStructure.apicalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_matrix_to_vector(receptiveField, infile);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_encoderLayerStructure.apicalReceptiveField.push_back(s);
+				}
+				check_apicalReceptiveField = true;
+			}
+
+			STR = "# name: apicalPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerStructure.apicalPercentage, infile);
+				check_apicalPercentage = true;
+			}
+
+			STR = "# name: apicalWrapAround";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerStructure.apicalWrapAround, infile);
+				check_apicalWrapAround = true;
+			}
+
+
+
+
+			STR = "# name: iterationNum";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerStructure.iterationNum, infile);
+				check_iterationNum = true;
+			}
+
+
+
+
+			STR = "# name: populationsArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_encoderLayerStructure.populationsArrayDimensionality, infile);
+				check_populationsArrayDimensionality = true;
+			}
+
+			STR = "# name: apicalPopulationsArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_encoderLayerStructure.apicalPopulationsArrayDimensionality, infile);
+				check_apicalPopulationsArrayDimensionality = true;
+			}
+
+
+
+			STR = "# name: potentialPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerStructure.potentialPercentage, infile);
+				check_potentialPercentage = true;
+			}
+
 		}
-
-		STR = "# name: apicalWrapAround";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerStructure.apicalWrapAround, infile);
-			check_apicalWrapAround = true;
-		}
-
-
-
-
-		STR = "# name: iterationNum";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerStructure.iterationNum, infile);
-			check_iterationNum = true;
-		}
-
-
-
-
-		STR = "# name: populationsArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_encoderLayerStructure.populationsArrayDimensionality, infile);
-			check_populationsArrayDimensionality = true;
-		}
-
-		STR = "# name: apicalPopulationsArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_encoderLayerStructure.apicalPopulationsArrayDimensionality, infile);
-			check_apicalPopulationsArrayDimensionality = true;
-		}
-
-
-
-		STR = "# name: potentialPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerStructure.potentialPercentage, infile);
-			check_potentialPercentage = true;
-		}
-
 	}
 	// close the opened file.
 	infile.close();
@@ -2042,182 +2325,392 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 					    + std::to_string(layerNumber)
 					    + ".mat", ios::in | std::ifstream::binary);
 
-		while ( std::getline(infile, str) ) {
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			bool	big_endianness = load_the_header(infile);
+			auto	array_structure = check_next_data_structure(infile, big_endianness);
+			while ( array_structure.more_data ) {
 
-
-			STR = "# name: afferentArrayDimensionality";
-			if ( str.compare(STR) == 0 ) {
-				load_matrix_to_vector(_regularLayerStructures[layerNumber].afferentArrayDimensionality, infile);
-				check_afferentArrayDimensionality = true;
-			}
-			
-			STR = "# name: apicalArrayDimensionality";
-			if ( str.compare(STR) == 0 ) {
-				load_matrix_to_vector(_regularLayerStructures[layerNumber].apicalArrayDimensionality, infile);
-				check_apicalArrayDimensionality = true;
-			}
-
-			STR = "# name: columnsArrayDimensionality";
-			if ( str.compare(STR) == 0 ) {
-				load_matrix_to_vector(_regularLayerStructures[layerNumber].columnsArrayDimensionality, infile);
-				check_columnsArrayDimensionality = true;
-			}
-
-
-
-
-			STR = "# name: afferentReceptiveField";
-			if ( str.compare(STR) == 0 ) {
-				_regularLayerStructures[layerNumber].afferentReceptiveField.clear();
-				std::vector<int>	receptiveField;
-				load_matrix_to_vector(receptiveField, infile);
-				for(const auto& s : receptiveField) {
-					if ( s > -1 )
-						_regularLayerStructures[layerNumber].afferentReceptiveField.push_back(s);
+				STR = "afferentArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_vector(array_structure,
+								     _regularLayerStructures[layerNumber].afferentArrayDimensionality,
+								     infile, big_endianness);
+					check_afferentArrayDimensionality = true;
 				}
-				check_afferentReceptiveField = true;
-			}
-
-			STR = "# name: afferentPercentage";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerStructures[layerNumber].afferentPercentage, infile);
-				check_afferentPercentage = true;
-			}
-
-			STR = "# name: afferentWrapAround";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerStructures[layerNumber].afferentWrapAround, infile);
-				check_afferentWrapAround = true;
-			}
-
-
-
-
-			STR = "# name: lateralProximalReceptiveField";
-			if ( str.compare(STR) == 0 ) {
-				_regularLayerStructures[layerNumber].lateralProximalReceptiveField.clear();
-				std::vector<int>	receptiveField;
-				load_matrix_to_vector(receptiveField, infile);
-				for(const auto& s : receptiveField) {
-					if ( s > -1 )
-						_regularLayerStructures[layerNumber].lateralProximalReceptiveField.push_back(s);
+	
+				STR = "apicalArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_vector(array_structure,
+								     _regularLayerStructures[layerNumber].apicalArrayDimensionality,
+								     infile, big_endianness);
+					check_apicalArrayDimensionality = true;
 				}
-				check_lateralProximalReceptiveField = true;
-			}
 
-			STR = "# name: lateralProximalPercentage";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerStructures[layerNumber].lateralProximalPercentage, infile);
-				check_lateralProximalPercentage = true;
-			}
-
-			STR = "# name: lateralProximalWrapAround";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerStructures[layerNumber].lateralProximalWrapAround, infile);
-				check_lateralProximalWrapAround = true;
-			}
-
-
-
-
-			STR = "# name: lateralDistalReceptiveField";
-			if ( str.compare(STR) == 0 ) {
-				_regularLayerStructures[layerNumber].lateralDistalReceptiveField.clear();
-				std::vector<int>	receptiveField;
-				load_matrix_to_vector(receptiveField, infile);
-				for(const auto& s : receptiveField) {
-					if ( s > -1 )
-						_regularLayerStructures[layerNumber].lateralDistalReceptiveField.push_back(s);
+				STR = "columnsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_vector(array_structure,
+								     _regularLayerStructures[layerNumber].columnsArrayDimensionality,
+								     infile, big_endianness);
+					check_columnsArrayDimensionality = true;
 				}
-				check_lateralDistalReceptiveField = true;
-			}
 
-			STR = "# name: lateralDistalPercentage";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerStructures[layerNumber].lateralDistalPercentage, infile);
-				check_lateralDistalPercentage = true;
-			}
-
-			STR = "# name: lateralDistalWrapAround";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerStructures[layerNumber].lateralDistalWrapAround, infile);
-				check_lateralDistalWrapAround = true;
-			}
-
-
-
-
-			STR = "# name: apicalReceptiveField";
-			if ( str.compare(STR) == 0 ) {
-				_regularLayerStructures[layerNumber].apicalReceptiveField.clear();
-				std::vector<int>	receptiveField;
-				load_matrix_to_vector(receptiveField, infile);
-				for(const auto& s : receptiveField) {
-					if ( s > -1 )
-						_regularLayerStructures[layerNumber].apicalReceptiveField.push_back(s);
+				STR = "afferentReceptiveField";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].afferentReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_numeric_array_to_vector(array_structure, receptiveField, infile, big_endianness);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].afferentReceptiveField.push_back(s);
+					}
+					check_afferentReceptiveField = true;
 				}
-				check_apicalReceptiveField = true;
+
+				STR = "afferentPercentage";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].afferentPercentage,
+								     infile, big_endianness);
+					check_afferentPercentage = true;
+				}
+
+				STR = "afferentWrapAround";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerStructures[layerNumber].afferentWrapAround = true;
+					else
+						_regularLayerStructures[layerNumber].afferentWrapAround = false;
+
+					check_afferentWrapAround = true;
+				}
+
+				STR = "lateralProximalReceptiveField";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].lateralProximalReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_numeric_array_to_vector(array_structure, receptiveField, infile, big_endianness);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].lateralProximalReceptiveField.push_back(s);
+					}
+					check_lateralProximalReceptiveField = true;
+				}
+
+				STR = "lateralProximalPercentage";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].lateralProximalPercentage,
+								     infile, big_endianness);
+					check_lateralProximalPercentage = true;
+				}
+
+				STR = "lateralProximalWrapAround";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerStructures[layerNumber].lateralProximalWrapAround = true;
+					else
+						_regularLayerStructures[layerNumber].lateralProximalWrapAround = false;
+
+					check_lateralProximalWrapAround = true;
+				}
+
+				STR = "lateralDistalReceptiveField";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].lateralDistalReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_numeric_array_to_vector(array_structure, receptiveField, infile, big_endianness);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].lateralDistalReceptiveField.push_back(s);
+					}
+					check_lateralDistalReceptiveField = true;
+				}
+
+				STR = "lateralDistalPercentage";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].lateralDistalPercentage,
+								     infile, big_endianness);
+					check_lateralDistalPercentage = true;
+				}
+
+				STR = "lateralDistalWrapAround";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerStructures[layerNumber].lateralDistalWrapAround = true;
+					else
+						_regularLayerStructures[layerNumber].lateralDistalWrapAround = false;
+
+					check_lateralDistalWrapAround = true;
+				}
+
+				STR = "apicalReceptiveField";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].apicalReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_numeric_array_to_vector(array_structure, receptiveField, infile, big_endianness);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].apicalReceptiveField.push_back(s);
+					}
+					check_apicalReceptiveField = true;
+				}
+
+				STR = "apicalPercentage";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].apicalPercentage,
+								     infile, big_endianness);
+					check_apicalPercentage = true;
+				}
+
+				STR = "apicalWrapAround";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerStructures[layerNumber].apicalWrapAround = true;
+					else
+						_regularLayerStructures[layerNumber].apicalWrapAround = false;
+
+					check_apicalWrapAround = true;
+				}
+
+				STR = "iterationNum";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].iterationNum,
+								     infile, big_endianness);
+					check_iterationnum = true;
+				}
+
+				STR = "populationsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_vector(array_structure,
+								     _regularLayerStructures[layerNumber].populationsArrayDimensionality,
+								     infile, big_endianness);
+					check_populationsArrayDimensionality = true;
+				}
+
+				STR = "afferentPopulationsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_vector(array_structure,
+								     _regularLayerStructures[layerNumber].afferentPopulationsArrayDimensionality,
+								     infile, big_endianness);
+					check_afferentPopulationsArrayDimensionality = true;
+				}
+
+				STR = "apicalPopulationsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_vector(array_structure,
+								     _regularLayerStructures[layerNumber].apicalPopulationsArrayDimensionality,
+								     infile, big_endianness);
+					check_apicalPopulationsArrayDimensionality = true;
+				}
+
+				STR = "temporalGatheringAfferentValue";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].temporalGatheringAfferentValue,
+								     infile, big_endianness);
+					check_temporalGatheringAfferentValue = true;
+				}
+
+				STR = "potentialPercentage";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].potentialPercentage,
+								     infile, big_endianness);
+					check_potentialPercentage = true;
+				}
+
+				array_structure = check_next_data_structure(infile,big_endianness);
 			}
+		}
+		else {
 
-			STR = "# name: apicalPercentage";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerStructures[layerNumber].apicalPercentage, infile);
-				check_apicalPercentage = true;
+			while ( std::getline(infile, str) ) {
+
+				STR = "# name: afferentArrayDimensionality";
+				if ( str.compare(STR) == 0 ) {
+					load_matrix_to_vector(_regularLayerStructures[layerNumber].afferentArrayDimensionality, infile);
+					check_afferentArrayDimensionality = true;
+				}
+				
+				STR = "# name: apicalArrayDimensionality";
+				if ( str.compare(STR) == 0 ) {
+					load_matrix_to_vector(_regularLayerStructures[layerNumber].apicalArrayDimensionality, infile);
+					check_apicalArrayDimensionality = true;
+				}
+
+				STR = "# name: columnsArrayDimensionality";
+				if ( str.compare(STR) == 0 ) {
+					load_matrix_to_vector(_regularLayerStructures[layerNumber].columnsArrayDimensionality, infile);
+					check_columnsArrayDimensionality = true;
+				}
+
+
+
+
+				STR = "# name: afferentReceptiveField";
+				if ( str.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].afferentReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_matrix_to_vector(receptiveField, infile);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].afferentReceptiveField.push_back(s);
+					}
+					check_afferentReceptiveField = true;
+				}
+
+				STR = "# name: afferentPercentage";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].afferentPercentage, infile);
+					check_afferentPercentage = true;
+				}
+
+				STR = "# name: afferentWrapAround";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerStructures[layerNumber].afferentWrapAround, infile);
+					check_afferentWrapAround = true;
+				}
+
+
+
+
+				STR = "# name: lateralProximalReceptiveField";
+				if ( str.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].lateralProximalReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_matrix_to_vector(receptiveField, infile);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].lateralProximalReceptiveField.push_back(s);
+					}
+					check_lateralProximalReceptiveField = true;
+				}
+
+				STR = "# name: lateralProximalPercentage";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].lateralProximalPercentage, infile);
+					check_lateralProximalPercentage = true;
+				}
+
+				STR = "# name: lateralProximalWrapAround";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerStructures[layerNumber].lateralProximalWrapAround, infile);
+					check_lateralProximalWrapAround = true;
+				}
+
+
+
+
+				STR = "# name: lateralDistalReceptiveField";
+				if ( str.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].lateralDistalReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_matrix_to_vector(receptiveField, infile);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].lateralDistalReceptiveField.push_back(s);
+					}
+					check_lateralDistalReceptiveField = true;
+				}
+
+				STR = "# name: lateralDistalPercentage";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].lateralDistalPercentage, infile);
+					check_lateralDistalPercentage = true;
+				}
+
+				STR = "# name: lateralDistalWrapAround";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerStructures[layerNumber].lateralDistalWrapAround, infile);
+					check_lateralDistalWrapAround = true;
+				}
+
+
+
+
+				STR = "# name: apicalReceptiveField";
+				if ( str.compare(STR) == 0 ) {
+					_regularLayerStructures[layerNumber].apicalReceptiveField.clear();
+					std::vector<int>	receptiveField;
+					load_matrix_to_vector(receptiveField, infile);
+					for(const auto& s : receptiveField) {
+						if ( s > -1 )
+							_regularLayerStructures[layerNumber].apicalReceptiveField.push_back(s);
+					}
+					check_apicalReceptiveField = true;
+				}
+
+				STR = "# name: apicalPercentage";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].apicalPercentage, infile);
+					check_apicalPercentage = true;
+				}
+
+				STR = "# name: apicalWrapAround";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerStructures[layerNumber].apicalWrapAround, infile);
+					check_apicalWrapAround = true;
+				}
+
+
+
+
+				STR = "# name: iterationNum";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].iterationNum, infile);
+					check_iterationnum = true;
+				}
+
+
+
+
+				STR = "# name: populationsArrayDimensionality";
+				if ( str.compare(STR) == 0 ) {
+					load_matrix_to_vector(_regularLayerStructures[layerNumber].populationsArrayDimensionality, infile);
+					check_populationsArrayDimensionality = true;
+				}
+
+				STR = "# name: afferentPopulationsArrayDimensionality";
+				if ( str.compare(STR) == 0 ) {
+					load_matrix_to_vector(_regularLayerStructures[layerNumber].afferentPopulationsArrayDimensionality, infile);
+					check_afferentPopulationsArrayDimensionality = true;
+				}
+
+				STR = "# name: apicalPopulationsArrayDimensionality";
+				if ( str.compare(STR) == 0 ) {
+					load_matrix_to_vector(_regularLayerStructures[layerNumber].apicalPopulationsArrayDimensionality, infile);
+					check_apicalPopulationsArrayDimensionality = true;
+				}
+
+
+
+				STR = "# name: temporalGatheringAfferentValue";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].temporalGatheringAfferentValue, infile);
+					check_temporalGatheringAfferentValue = true;
+				}
+
+
+
+
+				STR = "# name: potentialPercentage";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].potentialPercentage, infile);
+					check_potentialPercentage = true;
+				}
+
 			}
-
-			STR = "# name: apicalWrapAround";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerStructures[layerNumber].apicalWrapAround, infile);
-				check_apicalWrapAround = true;
-			}
-
-
-
-
-			STR = "# name: iterationNum";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerStructures[layerNumber].iterationNum, infile);
-				check_iterationnum = true;
-			}
-
-
-
-
-			STR = "# name: populationsArrayDimensionality";
-			if ( str.compare(STR) == 0 ) {
-				load_matrix_to_vector(_regularLayerStructures[layerNumber].populationsArrayDimensionality, infile);
-				check_populationsArrayDimensionality = true;
-			}
-
-			STR = "# name: afferentPopulationsArrayDimensionality";
-			if ( str.compare(STR) == 0 ) {
-				load_matrix_to_vector(_regularLayerStructures[layerNumber].afferentPopulationsArrayDimensionality, infile);
-				check_afferentPopulationsArrayDimensionality = true;
-			}
-
-			STR = "# name: apicalPopulationsArrayDimensionality";
-			if ( str.compare(STR) == 0 ) {
-				load_matrix_to_vector(_regularLayerStructures[layerNumber].apicalPopulationsArrayDimensionality, infile);
-				check_apicalPopulationsArrayDimensionality = true;
-			}
-
-
-
-			STR = "# name: temporalGatheringAfferentValue";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerStructures[layerNumber].temporalGatheringAfferentValue, infile);
-				check_temporalGatheringAfferentValue = true;
-			}
-
-
-
-
-			STR = "# name: potentialPercentage";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerStructures[layerNumber].potentialPercentage, infile);
-				check_potentialPercentage = true;
-			}
-
 		}
 		// close the opened file.
 		infile.close();
@@ -2400,89 +2893,208 @@ void	Model::loadEncoderLayerParameters( const std::string& folderName )
 	ifstream infile;
 	infile.open("../../Octave/" + folderName + "/EncoderLayerParameters.mat", ios::in | std::ifstream::binary);
 
-	while ( std::getline(infile, str) ) {
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(infile);
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
 
-		STR = "# name: enableLearning";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerParameters.enableLearning, infile);
-			check_enableLearning = true;
+			STR = "enableLearning";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerParameters.enableLearning = true;
+				else
+					_encoderLayerParameters.enableLearning = false;
+
+				check_enableLearning = true;
+			}
+
+			STR = "distalSensitivity";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerParameters.distalSensitivity = true;
+				else
+					_encoderLayerParameters.distalSensitivity = false;
+
+				check_distalSensitivity = true;
+			}
+
+			STR = "proximalInformationThreshold";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.proximalInformationThreshold, infile, big_endianness);
+				check_proximalInformationThreshold = true;
+			}
+
+			STR = "distalInformationThreshold";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.distalInformationThreshold, infile, big_endianness);
+				check_distalInformationThreshold = true;
+			}
+
+			STR = "activationRadius";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.activationRadius, infile, big_endianness);
+				check_activationRadius = true;
+			}
+
+			STR = "sparsity";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.sparsity, infile, big_endianness);
+				check_sparsity = true;
+			}
+
+			STR = "enableProximalLearning";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerParameters.learning.enableProximalLearning = true;
+				else
+					_encoderLayerParameters.learning.enableProximalLearning = false;
+
+				check_enableProximalLearning = true;
+			}
+
+			STR = "enableDistalLearning";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerParameters.learning.enableDistalLearning = true;
+				else
+					_encoderLayerParameters.learning.enableDistalLearning = false;
+
+				check_enableDistalLearning = true;
+			}
+
+			STR = "proximalLearningRate";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.learning.proximalLearningRate, infile, big_endianness);
+				check_proximalLearningRate = true;
+			}
+
+			STR = "proximalNeighborhood";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.learning.proximalNeighborhood, infile, big_endianness);
+				check_proximalNeighborhood = true;
+			}
+
+			STR = "spikeTimeDependentSynapticPlasticity";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+				if (aux_bool > 0)
+					_encoderLayerParameters.learning.spikeTimeDependentSynapticPlasticity = true;
+				else
+					_encoderLayerParameters.learning.spikeTimeDependentSynapticPlasticity = false;
+
+				check_spikeTimeDependentSynapticPlasticity = true;
+			}
+
+			STR = "distalLearningRate";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.learning.distalLearningRate, infile, big_endianness);
+				check_distalLearningRate = true;
+			}
+
+			STR = "limitsLearningRate";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _encoderLayerParameters.learning.limitsLearningRate, infile, big_endianness);
+				check_limitsLearningRate = true;
+			}
+
+			array_structure = check_next_data_structure(infile,big_endianness);
 		}
+	}
+	else {
 
-		STR = "# name: distalSensitivity";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerParameters.distalSensitivity, infile);
-			check_distalSensitivity = true;
+		while ( std::getline(infile, str) ) {
+
+			STR = "# name: enableLearning";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerParameters.enableLearning, infile);
+				check_enableLearning = true;
+			}
+
+			STR = "# name: distalSensitivity";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerParameters.distalSensitivity, infile);
+				check_distalSensitivity = true;
+			}
+
+			STR = "# name: proximalInformationThreshold";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.proximalInformationThreshold, infile);
+				check_proximalInformationThreshold = true;
+			}
+
+			STR = "# name: distalInformationThreshold";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.distalInformationThreshold, infile);
+				check_distalInformationThreshold = true;
+			}
+
+			STR = "# name: activationRadius";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.activationRadius, infile);
+				check_activationRadius = true;
+			}
+
+			STR = "# name: sparsity";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.sparsity, infile);
+				check_sparsity = true;
+			}
+
+
+
+
+			STR = "# name: enableProximalLearning";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerParameters.learning.enableProximalLearning, infile);
+				check_enableProximalLearning = true;
+			}
+
+			STR = "# name: enableDistalLearning";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerParameters.learning.enableDistalLearning, infile);
+				check_enableDistalLearning = true;
+			}
+
+			STR = "# name: proximalLearningRate";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.learning.proximalLearningRate, infile);
+				check_proximalLearningRate = true;
+			}
+
+			STR = "# name: proximalNeighborhood";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.learning.proximalNeighborhood, infile);
+				check_proximalNeighborhood = true;
+			}
+
+			STR = "# name: spikeTimeDependentSynapticPlasticity";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_encoderLayerParameters.learning.spikeTimeDependentSynapticPlasticity, infile);
+				check_spikeTimeDependentSynapticPlasticity = true;
+			}
+
+			STR = "# name: distalLearningRate";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.learning.distalLearningRate, infile);
+				check_distalLearningRate = true;
+			}
+
+			STR = "# name: limitsLearningRate";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_encoderLayerParameters.learning.limitsLearningRate, infile);
+				check_limitsLearningRate = true;
+			}
+
 		}
-
-		STR = "# name: proximalInformationThreshold";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.proximalInformationThreshold, infile);
-			check_proximalInformationThreshold = true;
-		}
-
-		STR = "# name: distalInformationThreshold";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.distalInformationThreshold, infile);
-			check_distalInformationThreshold = true;
-		}
-
-		STR = "# name: activationRadius";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.activationRadius, infile);
-			check_activationRadius = true;
-		}
-
-		STR = "# name: sparsity";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.sparsity, infile);
-			check_sparsity = true;
-		}
-
-
-
-
-		STR = "# name: enableProximalLearning";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerParameters.learning.enableProximalLearning, infile);
-			check_enableProximalLearning = true;
-		}
-
-		STR = "# name: enableDistalLearning";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerParameters.learning.enableDistalLearning, infile);
-			check_enableDistalLearning = true;
-		}
-
-		STR = "# name: proximalLearningRate";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.learning.proximalLearningRate, infile);
-			check_proximalLearningRate = true;
-		}
-
-		STR = "# name: proximalNeighborhood";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.learning.proximalNeighborhood, infile);
-			check_proximalNeighborhood = true;
-		}
-
-		STR = "# name: spikeTimeDependentSynapticPlasticity";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_encoderLayerParameters.learning.spikeTimeDependentSynapticPlasticity, infile);
-			check_spikeTimeDependentSynapticPlasticity = true;
-		}
-
-		STR = "# name: distalLearningRate";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.learning.distalLearningRate, infile);
-			check_distalLearningRate = true;
-		}
-
-		STR = "# name: limitsLearningRate";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_encoderLayerParameters.learning.limitsLearningRate, infile);
-			check_limitsLearningRate = true;
-		}
-
 	}
 	// close the opened file.
 	infile.close();
@@ -2624,95 +3236,246 @@ void	Model::loadRegularLayerParameters( const std::string& folderName )
 					    + std::to_string(layerNumber)
 					    + ".mat", ios::in | std::ifstream::binary);
 
-		while ( std::getline(infile, str) ) {
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			bool	big_endianness = load_the_header(infile);
+			auto	array_structure = check_next_data_structure(infile, big_endianness);
+			while ( array_structure.more_data ) {
 
-			STR = "# name: enableLearning";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerParameters[layerNumber].enableLearning, infile);
-				check_enableLearning = true;
+				STR = "enableLearning";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerParameters[layerNumber].enableLearning = true;
+					else
+						_regularLayerParameters[layerNumber].enableLearning = false;
+
+					check_enableLearning = true;
+				}
+
+				STR = "distalSensitivity";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerParameters[layerNumber].distalSensitivity = true;
+					else
+						_regularLayerParameters[layerNumber].distalSensitivity = false;
+
+					check_distalSensitivity = true;
+				}
+
+				STR = "activationHomeostasis";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerParameters[layerNumber].activationHomeostasis = true;
+					else
+						_regularLayerParameters[layerNumber].activationHomeostasis = false;
+
+					check_activationHomeostasis = true;
+				}
+
+				STR = "proximalInformationThreshold";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerParameters[layerNumber].proximalInformationThreshold,
+								     infile, big_endianness);
+					check_proximalInformationThreshold = true;
+				}
+
+				STR = "distalInformationThreshold";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerParameters[layerNumber].distalInformationThreshold,
+								     infile, big_endianness);
+					check_distalInformationThreshold = true;
+				}
+
+				STR = "sparsity";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerParameters[layerNumber].sparsity,
+								     infile, big_endianness);
+					check_sparsity = true;
+				}
+
+				STR = "enableProximalLearning";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerParameters[layerNumber].learning.enableProximalLearning = true;
+					else
+						_regularLayerParameters[layerNumber].learning.enableProximalLearning = false;
+
+					check_enableProximalLearning = true;
+				}
+
+				STR = "enableDistalLearning";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerParameters[layerNumber].learning.enableDistalLearning = true;
+					else
+						_regularLayerParameters[layerNumber].learning.enableDistalLearning = false;
+
+					check_enableDistalLearning = true;
+				}
+
+				STR = "synapticHomeostasis";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerParameters[layerNumber].learning.synapticHomeostasis = true;
+					else
+						_regularLayerParameters[layerNumber].learning.synapticHomeostasis = false;
+
+					check_synapticHomeostasis = true;
+				}
+
+				STR = "proximalLearningRate";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerParameters[layerNumber].learning.proximalLearningRate,
+								     infile, big_endianness);
+					check_proximalLearningRate = true;
+				}
+
+				STR = "proximalNeighborhood";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerParameters[layerNumber].learning.proximalNeighborhood,
+								     infile, big_endianness);
+					check_proximalNeighborhood = true;
+				}
+
+				STR = "plasticity";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerParameters[layerNumber].learning.plasticity,
+								     infile, big_endianness);
+					check_plasticity = true;
+				}
+
+				STR = "spikeTimeDependentSynapticPlasticity";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					std::size_t	aux_bool;
+					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
+					if (aux_bool > 0)
+						_regularLayerParameters[layerNumber].learning.spikeTimeDependentSynapticPlasticity = true;
+					else
+						_regularLayerParameters[layerNumber].learning.spikeTimeDependentSynapticPlasticity = false;
+
+					check_spikeTimeDependentSynapticPlasticity = true;
+				}
+
+				STR = "distalLearningRate";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerParameters[layerNumber].learning.distalLearningRate,
+								     infile, big_endianness);
+					check_distalLearningRate = true;
+				}
+
+				array_structure = check_next_data_structure(infile,big_endianness);
 			}
+		}
+		else {
+			
+			while ( std::getline(infile, str) ) {
 
-			STR = "# name: distalSensitivity";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerParameters[layerNumber].distalSensitivity, infile);
-				check_distalSensitivity = true;
+				STR = "# name: enableLearning";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerParameters[layerNumber].enableLearning, infile);
+					check_enableLearning = true;
+				}
+
+				STR = "# name: distalSensitivity";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerParameters[layerNumber].distalSensitivity, infile);
+					check_distalSensitivity = true;
+				}
+
+				STR = "# name: activationHomeostasis";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerParameters[layerNumber].activationHomeostasis, infile);
+					check_activationHomeostasis = true;
+				}
+
+				STR = "# name: proximalInformationThreshold";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerParameters[layerNumber].proximalInformationThreshold, infile);
+					check_proximalInformationThreshold = true;
+				}
+
+				STR = "# name: distalInformationThreshold";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerParameters[layerNumber].distalInformationThreshold, infile);
+					check_distalInformationThreshold = true;
+				}
+
+				STR = "# name: sparsity";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerParameters[layerNumber].sparsity, infile);
+					check_sparsity = true;
+				}
+
+
+
+
+				STR = "# name: enableProximalLearning";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerParameters[layerNumber].learning.enableProximalLearning, infile);
+					check_enableProximalLearning = true;
+				}
+
+				STR = "# name: enableDistalLearning";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerParameters[layerNumber].learning.enableDistalLearning, infile);
+					check_enableDistalLearning = true;
+				}
+
+				STR = "# name: synapticHomeostasis";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerParameters[layerNumber].learning.synapticHomeostasis, infile);
+					check_synapticHomeostasis = true;
+				}
+
+				STR = "# name: proximalLearningRate";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerParameters[layerNumber].learning.proximalLearningRate, infile);
+					check_proximalLearningRate = true;
+				}
+
+				STR = "# name: proximalNeighborhood";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerParameters[layerNumber].learning.proximalNeighborhood, infile);
+					check_proximalNeighborhood = true;
+				}
+
+				STR = "# name: plasticity";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerParameters[layerNumber].learning.plasticity, infile);
+					check_plasticity = true;
+				}
+
+				STR = "# name: spikeTimeDependentSynapticPlasticity";
+				if ( str.compare(STR) == 0 ) {
+					load_bool(_regularLayerParameters[layerNumber].learning.spikeTimeDependentSynapticPlasticity, infile);
+					check_spikeTimeDependentSynapticPlasticity = true;
+				}
+
+				STR = "# name: distalLearningRate";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerParameters[layerNumber].learning.distalLearningRate, infile);
+					check_distalLearningRate = true;
+				}
+
 			}
-
-			STR = "# name: activationHomeostasis";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerParameters[layerNumber].activationHomeostasis, infile);
-				check_activationHomeostasis = true;
-			}
-
-			STR = "# name: proximalInformationThreshold";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerParameters[layerNumber].proximalInformationThreshold, infile);
-				check_proximalInformationThreshold = true;
-			}
-
-			STR = "# name: distalInformationThreshold";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerParameters[layerNumber].distalInformationThreshold, infile);
-				check_distalInformationThreshold = true;
-			}
-
-			STR = "# name: sparsity";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerParameters[layerNumber].sparsity, infile);
-				check_sparsity = true;
-			}
-
-
-
-
-			STR = "# name: enableProximalLearning";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerParameters[layerNumber].learning.enableProximalLearning, infile);
-				check_enableProximalLearning = true;
-			}
-
-			STR = "# name: enableDistalLearning";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerParameters[layerNumber].learning.enableDistalLearning, infile);
-				check_enableDistalLearning = true;
-			}
-
-			STR = "# name: synapticHomeostasis";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerParameters[layerNumber].learning.synapticHomeostasis, infile);
-				check_synapticHomeostasis = true;
-			}
-
-			STR = "# name: proximalLearningRate";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerParameters[layerNumber].learning.proximalLearningRate, infile);
-				check_proximalLearningRate = true;
-			}
-
-			STR = "# name: proximalNeighborhood";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerParameters[layerNumber].learning.proximalNeighborhood, infile);
-				check_proximalNeighborhood = true;
-			}
-
-			STR = "# name: plasticity";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerParameters[layerNumber].learning.plasticity, infile);
-				check_plasticity = true;
-			}
-
-			STR = "# name: spikeTimeDependentSynapticPlasticity";
-			if ( str.compare(STR) == 0 ) {
-				load_bool(_regularLayerParameters[layerNumber].learning.spikeTimeDependentSynapticPlasticity, infile);
-				check_spikeTimeDependentSynapticPlasticity = true;
-			}
-
-			STR = "# name: distalLearningRate";
-			if ( str.compare(STR) == 0 ) {
-				load_scalar(_regularLayerParameters[layerNumber].learning.distalLearningRate, infile);
-				check_distalLearningRate = true;
-			}
-
 		}
 		// close the opened file.
 		infile.close();
@@ -2850,11 +3613,15 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 	std::stringstream	outputStream;
 
 	// file preamble.
-	outputStream << "# This is a file created by saveCumulativeEncoderLayerOutput function from," << endl;
-	outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-	outputStream << "# Author: Dematties Dario Jesus." << endl;
-
-	outputStream << "\n\n" << endl;
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		save_the_header(outputStream);
+	}
+	else {
+		outputStream << "# This is a file created by saveCumulativeEncoderLayerOutput function from," << endl;
+		outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+		outputStream << "# Author: Dematties Dario Jesus." << endl;
+		outputStream << "\n\n" << endl;
+	}
 
 	std::string	str;
 	std::string	STR;
@@ -2864,31 +3631,59 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 	infile.open("../../Octave/" + folderName + "/EncoderLayer.mat", ios::in | std::ifstream::binary);
 	std::vector<std::size_t>	columnsArrayDimensionality;
 	std::vector<std::size_t>	populationsArrayDimensionality;
-	while ( std::getline(infile, str) ) {
 
-		STR = "# name: columnsArrayDimensionality";
-		if ( str.compare(STR) == 0 )
-			load_matrix_to_vector(columnsArrayDimensionality, infile);
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(infile);
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
 
-		STR = "# name: populationsArrayDimensionality";
-		if ( str.compare(STR) == 0 )
-			load_matrix_to_vector(populationsArrayDimensionality, infile);
+			STR = "columnsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 )
+				load_numeric_array_to_vector(array_structure, columnsArrayDimensionality, infile, big_endianness);
 
+			STR = "populationsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 )
+				load_numeric_array_to_vector(array_structure, populationsArrayDimensionality, infile, big_endianness);
+
+			array_structure = check_next_data_structure(infile,big_endianness);
+		}	
+	}
+	else {
+		while ( std::getline(infile, str) ) {
+
+			STR = "# name: columnsArrayDimensionality";
+			if ( str.compare(STR) == 0 )
+				load_matrix_to_vector(columnsArrayDimensionality, infile);
+
+			STR = "# name: populationsArrayDimensionality";
+			if ( str.compare(STR) == 0 )
+				load_matrix_to_vector(populationsArrayDimensionality, infile);
+
+		}
 	}
 	// close the opened file.
 	infile.close();
 
 	// saves columnsArrayDimensionality
-	save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+	else
+		save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
 
 	// saves populationsArrayDimensionality
-	save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+	else
+		save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
 
-	// saves outputFromEncoderLayer
 	if ( world_rank == 0 )
 		std::cout << "\nsaving cumulative output from Encoder Layer\n";
 
-	save_multidimensional_vector_as_cell("encoderLayerOutput", output, outputStream);
+	// saves outputFromEncoderLayer
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_multidimensional_vector_as_cell_array("encoderLayerOutput", output, outputStream);
+	else
+		save_multidimensional_vector_as_cell("encoderLayerOutput", output, outputStream);
 
 	if ( world_rank == 0 )
 		std::cout << "\ncumulative output from Encoder Layer saved\n";
@@ -2924,7 +3719,9 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 
 	// open a file in write mode
 	std::string	outputFileName = "EncoderLayerOutput";
-	MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + outputFileName + ".mat").c_str(),
+	std::string	name = "../../Octave/" + outputFileName + ".mat";
+	std::remove(&name[0]);
+	MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
 						  MPI::MODE_CREATE | MPI::MODE_WRONLY,
 						  MPI::INFO_NULL);
 
@@ -2982,11 +3779,15 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 		std::stringstream	outputStream;
 
 		// file preamble.
-		outputStream << "# This is a file created by saveCumulativeRegularLayerOutput function from," << endl;
-		outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-		outputStream << "# Author: Dematties Dario Jesus." << endl;
-
-		outputStream << "\n\n" << endl;
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			save_the_header(outputStream);
+		}
+		else {
+			outputStream << "# This is a file created by saveCumulativeRegularLayerOutput function from," << endl;
+			outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+			outputStream << "# Author: Dematties Dario Jesus." << endl;
+			outputStream << "\n\n" << endl;
+		}
 
 		std::string	str;
 		std::string	STR;
@@ -2996,32 +3797,60 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 		infile.open("../../Octave/" + folderName + "/RegularLayer_" + std::to_string(layer) + ".mat", ios::in | std::ifstream::binary);
 		std::vector<std::size_t>	columnsArrayDimensionality;
 		std::vector<std::size_t>	populationsArrayDimensionality;
-		while ( std::getline(infile, str) ) {
 
-			STR = "# name: columnsArrayDimensionality";
-			if ( str.compare(STR) == 0 )
-				load_matrix_to_vector(columnsArrayDimensionality, infile);
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			bool	big_endianness = load_the_header(infile);
+			auto	array_structure = check_next_data_structure(infile, big_endianness);
+			while ( array_structure.more_data ) {
 
-			STR = "# name: populationsArrayDimensionality";
-			if ( str.compare(STR) == 0 )
-				load_matrix_to_vector(populationsArrayDimensionality, infile);
+				STR = "columnsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 )
+					load_numeric_array_to_vector(array_structure, columnsArrayDimensionality, infile, big_endianness);
 
+				STR = "populationsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 )
+					load_numeric_array_to_vector(array_structure, populationsArrayDimensionality, infile, big_endianness);
+
+				array_structure = check_next_data_structure(infile,big_endianness);
+			}	
+		}
+		else {
+			while ( std::getline(infile, str) ) {
+
+				STR = "# name: columnsArrayDimensionality";
+				if ( str.compare(STR) == 0 )
+					load_matrix_to_vector(columnsArrayDimensionality, infile);
+
+				STR = "# name: populationsArrayDimensionality";
+				if ( str.compare(STR) == 0 )
+					load_matrix_to_vector(populationsArrayDimensionality, infile);
+
+			}
 		}
 		// close the opened file.
 		infile.close();
 
 		// saves columnsArrayDimensionality
-		save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
 
 		// saves populationsArrayDimensionality
-		save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
 
 
-		// saves outputFromRegularLayers
 		if ( world_rank == 0 )
 			std::cout << "\nsaving cumulative output from Regular Layer number " << layer << "\n";
 
-		save_multidimensional_vector_as_cell("regularLayerOutput", output[layer], outputStream);
+		// saves outputFromRegularLayers
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_multidimensional_vector_as_cell_array("regularLayerOutput", output[layer], outputStream);
+		else
+			save_multidimensional_vector_as_cell("regularLayerOutput", output[layer], outputStream);
 
 		if ( world_rank == 0 )
 			std::cout << "\ncumulative output from Regular Layer " << layer << " saved\n";
@@ -3057,7 +3886,9 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 
 		// open a file in write mode
 		std::string	outputFileName = "RegularLayerOutput_";
-		MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + outputFileName + std::to_string(layer) + ".mat").c_str(),
+		std::string	name = "../../Octave/" + outputFileName + std::to_string(layer) + ".mat";
+		std::remove(&name[0]);
+		MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
 							  MPI::MODE_CREATE | MPI::MODE_WRONLY,
 							  MPI::INFO_NULL);
 

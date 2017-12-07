@@ -62,7 +62,10 @@
 // in every column of a regular layer
 #define	WEIGHTS_SPARSITY 0.6
 
-// this constant enable random behaviour in all the model
+// this constant enables random behaviour in all the model
 #define		ENABLE_RANDOM_BEHAVIOUR true
+
+// this constant enables binary Matlab output file format compatibility
+#define		ENABLE_MATLAB_COMPATIBILITY true
 
 #endif

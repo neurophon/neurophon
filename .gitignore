@@ -37,6 +37,9 @@ Test
 # swp files
 *.swp
 
+# swo files
+*.swo
+
 # Octave mat files
 *.mat
 

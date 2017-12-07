@@ -1,23 +1,23 @@
-##################################################################################################################
-##				Author:		Dematties Dario Jesus						##
-##				Contact:	dariodematties@hotmail.com.ar					##
-##						dariodematties@yahoo.com.ar					##
-##						dario.dematties@frm.utn.edu.ar					##
-##				Project:	Engineering PhD Project						##
-##				Institution:	Universidad de Buenos Aires					##
-##						Facultad de Ingeniería (FIUBA)					##
-##				Workplace:	Instituto de Ingeniería						##
-##						Biomédica FIUBA	&						##
-##						CCT CONICET Mendoza INCIHUSA					##
-##################################################################################################################
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%				Author:		Dematties Dario Jesus						%%
+%%				Contact:	dariodematties@hotmail.com.ar					%%
+%%						dariodematties@yahoo.com.ar					%%
+%%						dario.dematties@frm.utn.edu.ar					%%
+%%				Project:	Engineering PhD Project						%%
+%%				Institution:	Universidad de Buenos Aires					%%
+%%						Facultad de Ingeniería (FIUBA)					%%
+%%				Workplace:	Instituto de Ingeniería						%%
+%%						Biomédica FIUBA	&						%%
+%%						CCT CONICET Mendoza INCIHUSA					%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# File Name:		GenerateModelFiles.m
-# Language:		GNU Octave high-level interpreted language.
+% File Name:		GenerateModelFiles.m
+% Language:		GNU Octave high-level interpreted language.
 
-# This program generates a set of files which will be used by Model object class 
-# in order togenerate its structure and configuration.
+% This program generates a set of files which will be used by Model object class 
+% in order togenerate its structure and configuration.
 
-function GenerateModelFiles(folderName)
+function GenerateModelFiles_M(folderName)
 
 if ( !is_dq_string(folderName) && !is_sq_string(folderName) )
 	error("folder name must be of type string");
@@ -32,17 +32,17 @@ endif
 
 clear -x folderName
 
-# This is the model structure
-logical(encoderIncorporation = true);
-logical(newEncoder = true);
-int32(numberOfLayers = 2);
-int32(newLayerAt = 0);
-int32(initialStageAt = 0);
-int32(iterations = 2);
-int32(stages = 3);
+% This is the model structure
+encoderIncorporation = 1;
+newEncoder = 1;
+numberOfLayers = 2;
+newLayerAt = 0;
+initialStageAt = 0;
+iterations = 2;
+stages = 3;
 
-# Saves the model structure
-save (["./" folderName "/ModelStructure.mat"], "encoderIncorporation", ...
+% Saves the model structure
+save ("-mat", ["./" folderName "/ModelStructure.mat"], "encoderIncorporation", ...
 					       "newEncoder", ...
 					       "numberOfLayers", ...
 					       "newLayerAt", ...
@@ -52,31 +52,31 @@ save (["./" folderName "/ModelStructure.mat"], "encoderIncorporation", ...
 
 clear -x folderName
 
-# This is the encoder layer structure
-int32(afferentArrayDimensionality = [5, 128]);
-int32(apicalArrayDimensionality = [5, 5]);
-int32(columnsArrayDimensionality = [5, 5]);
+% This is the encoder layer structure
+afferentArrayDimensionality = [5, 128];
+apicalArrayDimensionality = [5, 5];
+columnsArrayDimensionality = [5, 5];
 
-int32(afferentReceptiveField = [2, 63]);
+afferentReceptiveField = [2, 63];
 afferentPercentage = 0.05;
-logical(afferentWrapAround = true);
+afferentWrapAround = 1;
 
-int32(lateralDistalReceptiveField = [2, 2]);
+lateralDistalReceptiveField = [2, 2];
 lateralDistalPercentage = 0.6*0.5;
-logical(lateralDistalWrapAround = true);
+lateralDistalWrapAround = 1;
 
-int32(apicalReceptiveField = [2, 2]);
+apicalReceptiveField = [2, 2];
 apicalPercentage = 0.6*0.5;
-logical(apicalWrapAround = true);
+apicalWrapAround = 1;
 
-int32(iterationNum = 0);
+iterationNum = 0;
 
-int32(populationsArrayDimensionality = [5, 5]);
-int32(apicalPopulationsArrayDimensionality = [5, 5]);
+populationsArrayDimensionality = [5, 5];
+apicalPopulationsArrayDimensionality = [5, 5];
 potentialPercentage = 0.1;
 
-# Saves the encoder layer structure
-save (["./" folderName "/EncoderLayerStructure.mat"], "afferentArrayDimensionality", ...
+% Saves the encoder layer structure
+save ("-mat", ["./" folderName "/EncoderLayerStructure.mat"], "afferentArrayDimensionality", ...
 						      "apicalArrayDimensionality", ...
 						      "columnsArrayDimensionality", ...
 						      "afferentReceptiveField", ...
@@ -95,23 +95,23 @@ save (["./" folderName "/EncoderLayerStructure.mat"], "afferentArrayDimensionali
 
 clear -x folderName
 
-# These are the encoder layer parameters 
-logical(enableLearning = false);
-logical(distalSensitivity = false);
+% These are the encoder layer parameters 
+enableLearning = 0;
+distalSensitivity = 0;
 proximalInformationThreshold = 0.1;
 distalInformationThreshold = 0.5;
 activationRadius = 0.8;
 sparsity = 0.99;
-logical(enableProximalLearning = false);
-logical(enableDistalLearning = false);
+enableProximalLearning = 0;
+enableDistalLearning = 0;
 proximalLearningRate = 0.001;
 proximalNeighborhood = 0.005;
-logical(spikeTimeDependentSynapticPlasticity = true);
+spikeTimeDependentSynapticPlasticity = 1;
 distalLearningRate = 0.001;
 limitsLearningRate = 0.1;
 
-# Saves the encoder layer parameters
-save (["./" folderName "/EncoderLayerParameters.mat"], "enableLearning", ...
+% Saves the encoder layer parameters
+save ("-mat", ["./" folderName "/EncoderLayerParameters.mat"], "enableLearning", ...
 						       "distalSensitivity", ...
 						       "proximalInformationThreshold", ...
 						       "distalInformationThreshold", ...
@@ -127,39 +127,39 @@ save (["./" folderName "/EncoderLayerParameters.mat"], "enableLearning", ...
 
 clear -x folderName
 
-##{
-# This is the regular layer structure number 0
-int32(afferentArrayDimensionality = [5, 5]);
-int32(apicalArrayDimensionality = [5, 5]);
-int32(columnsArrayDimensionality = [5, 5]);
+%%{
+% This is the regular layer structure number 0
+afferentArrayDimensionality = [5, 5];
+apicalArrayDimensionality = [5, 5];
+columnsArrayDimensionality = [5, 5];
 
-int32(afferentReceptiveField = [2, 2]);
+afferentReceptiveField = [2, 2];
 afferentPercentage = 0.6*0.5;
-logical(afferentWrapAround = true);
+afferentWrapAround = 1;
 
-int32(lateralProximalReceptiveField = [2, 2]);
+lateralProximalReceptiveField = [2, 2];
 lateralProximalPercentage = 0.5*0.5;
-logical(lateralProximalWrapAround = true);
+lateralProximalWrapAround = 1;
 
-int32(lateralDistalReceptiveField = [2, 2]);
+lateralDistalReceptiveField = [2, 2];
 lateralDistalPercentage = 0.5*0.5;
-logical(lateralDistalWrapAround = true);
+lateralDistalWrapAround = 1;
 
-int32(apicalReceptiveField = [2, 2]);
+apicalReceptiveField = [2, 2];
 apicalPercentage = 0.5*0.5;
-logical(apicalWrapAround = true);
+apicalWrapAround = 1;
 
-int32(iterationNum = 0);
+iterationNum = 0;
 
-int32(populationsArrayDimensionality = [5, 5]);
-int32(afferentPopulationsArrayDimensionality = [5, 5]);
-int32(apicalPopulationsArrayDimensionality = [5, 5]);
+populationsArrayDimensionality = [5, 5];
+afferentPopulationsArrayDimensionality = [5, 5];
+apicalPopulationsArrayDimensionality = [5, 5];
 
-int32(temporalGatheringAfferentValue = 1);
+temporalGatheringAfferentValue = 1;
 potentialPercentage = 0.1;
 
-# Saves the regular layer structure number 0
-save (["./" folderName "/RegularLayerStructure_0.mat"], "afferentArrayDimensionality", ...
+% Saves the regular layer structure number 0
+save ("-mat", ["./" folderName "/RegularLayerStructure_0.mat"], "afferentArrayDimensionality", ...
 						      "apicalArrayDimensionality", ...
 						      "columnsArrayDimensionality", ...
 						      "afferentReceptiveField", ...
@@ -183,24 +183,24 @@ save (["./" folderName "/RegularLayerStructure_0.mat"], "afferentArrayDimensiona
 
 clear -x folderName
 
-# These are the regular layer parameters number 0
-logical(enableLearning = false);
-logical(distalSensitivity = false);
-logical(activationHomeostasis = false);
+% These are the regular layer parameters number 0
+enableLearning = 0;
+distalSensitivity = 0;
+activationHomeostasis = 0;
 proximalInformationThreshold = 0.5;
 distalInformationThreshold = 0.5;
-sparsity = 0.95; # 0.99;
-logical(enableProximalLearning = false);
-logical(enableDistalLearning = false);
-logical(synapticHomeostasis = false);
+sparsity = 0.95; % 0.99;
+enableProximalLearning = 0;
+enableDistalLearning = 0;
+synapticHomeostasis = 0;
 proximalLearningRate = 0.001;
 proximalNeighborhood = 0.005;
-plasticity = 0.1; #0.01;
-logical(spikeTimeDependentSynapticPlasticity = true);
+plasticity = 0.1; %0.01;
+spikeTimeDependentSynapticPlasticity = 1;
 distalLearningRate = 0.001;
 
-# Saves the encoder layer parameters
-save (["./" folderName "/RegularLayerParameters_0.mat"], "enableLearning", ...
+% Saves the encoder layer parameters
+save ("-mat", ["./" folderName "/RegularLayerParameters_0.mat"], "enableLearning", ...
 						         "distalSensitivity", ...
 						         "activationHomeostasis", ...
 						         "proximalInformationThreshold", ...
@@ -217,40 +217,40 @@ save (["./" folderName "/RegularLayerParameters_0.mat"], "enableLearning", ...
 
 clear -x folderName
 
-#}
-##{
-# This is the regular layer structure number 1
-int32(afferentArrayDimensionality = [5, 5]);
-int32(apicalArrayDimensionality = [5, 5]);
-int32(columnsArrayDimensionality = [5, 5]);
+%}
+%%{
+% This is the regular layer structure number 1
+afferentArrayDimensionality = [5, 5];
+apicalArrayDimensionality = [5, 5];
+columnsArrayDimensionality = [5, 5];
 
-int32(afferentReceptiveField = [2, 2]);
+afferentReceptiveField = [2, 2];
 afferentPercentage = 0.6*0.5;
-logical(afferentWrapAround = true);
+afferentWrapAround = 1;
 
-int32(lateralProximalReceptiveField = [2, 2]);
+lateralProximalReceptiveField = [2, 2];
 lateralProximalPercentage = 0.5*0.5;
-logical(lateralProximalWrapAround = true);
+lateralProximalWrapAround = 1;
 
-int32(lateralDistalReceptiveField = [2, 2]);
+lateralDistalReceptiveField = [2, 2];
 lateralDistalPercentage = 0.5*0.5;
-logical(lateralDistalWrapAround = true);
+lateralDistalWrapAround = 1;
 
-int32(apicalReceptiveField = [2, 2]);
+apicalReceptiveField = [2, 2];
 apicalPercentage = 0.5*0.5;
-logical(apicalWrapAround = true);
+apicalWrapAround = 1;
 
-int32(iterationNum = 0);
+iterationNum = 0;
 
-int32(populationsArrayDimensionality = [5, 5]);
-int32(afferentPopulationsArrayDimensionality = [5, 5]);
-int32(apicalPopulationsArrayDimensionality = [5, 5]);
+populationsArrayDimensionality = [5, 5];
+afferentPopulationsArrayDimensionality = [5, 5];
+apicalPopulationsArrayDimensionality = [5, 5];
 
-int32(temporalGatheringAfferentValue = 1);
+temporalGatheringAfferentValue = 1;
 potentialPercentage = 0.1;
 
-# Saves the regular layer structure number 1
-save (["./" folderName "/RegularLayerStructure_1.mat"], "afferentArrayDimensionality", ...
+% Saves the regular layer structure number 1
+save ("-mat", ["./" folderName "/RegularLayerStructure_1.mat"], "afferentArrayDimensionality", ...
 						      "apicalArrayDimensionality", ...
 						      "columnsArrayDimensionality", ...
 						      "afferentReceptiveField", ...
@@ -274,24 +274,24 @@ save (["./" folderName "/RegularLayerStructure_1.mat"], "afferentArrayDimensiona
 
 clear -x folderName
 
-# These are the regular layer parameters number 1
-logical(enableLearning = false);
-logical(distalSensitivity = false);
-logical(activationHomeostasis = false);
+% These are the regular layer parameters number 1
+enableLearning = 0;
+distalSensitivity = 0;
+activationHomeostasis = 0;
 proximalInformationThreshold = 0.5;
 distalInformationThreshold = 0.5;
-sparsity = 0.95; # 0.99;
-logical(enableProximalLearning = false);
-logical(enableDistalLearning = false);
-logical(synapticHomeostasis = false);
+sparsity = 0.95; % 0.99;
+enableProximalLearning = 0;
+enableDistalLearning = 0;
+synapticHomeostasis = 0;
 proximalLearningRate = 0.001;
 proximalNeighborhood = 0.005;
-plasticity = 0.1; #0.01;
-logical(spikeTimeDependentSynapticPlasticity = true);
+plasticity = 0.1; %0.01;
+spikeTimeDependentSynapticPlasticity = 1;
 distalLearningRate = 0.001;
 
-# Saves the encoder layer parameters
-save (["./" folderName "/RegularLayerParameters_1.mat"], "enableLearning", ...
+% Saves the encoder layer parameters
+save ("-mat", ["./" folderName "/RegularLayerParameters_1.mat"], "enableLearning", ...
 						         "distalSensitivity", ...
 						         "activationHomeostasis", ...
 						         "proximalInformationThreshold", ...
@@ -305,5 +305,7 @@ save (["./" folderName "/RegularLayerParameters_1.mat"], "enableLearning", ...
 						         "plasticity", ...
 						         "spikeTimeDependentSynapticPlasticity", ...
 						         "distalLearningRate");
-#}
+%}
+
 endfunction
+

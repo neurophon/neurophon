@@ -167,7 +167,7 @@ public:
 										// once the function returns, every process count on a complete
 										// cortical layer output
 
-	void	gatherConnections();						// gathers all connections in rank 0
+	connectionsSet	gatherConnections();					// gathers all connections in rank 0
 
 private:
 	std::vector<ComplexSelfOrganizingMap>		_encoderColumns;

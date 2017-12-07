@@ -281,5 +281,11 @@ struct	matlabData						// Specifies Matlab data information
 	std::vector<std::size_t>	column_indices;		// these are the columns indices of the non-zero elements in the sparce array
 };
 
-
+struct	connectionsSet						// Holds connections vectors of the model
+{
+	twodvector<std::size_t>		afferentConnections;
+	twodvector<std::size_t>		lateralProximalConnections;
+	twodvector<std::size_t>		lateralDistalConnections;
+	twodvector<std::size_t>		apicalConnections;
+};
 #endif

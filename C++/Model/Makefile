@@ -13,7 +13,8 @@ CFLAGS = -fopenmp -Wall -pedantic -std=c++14
 LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/Constants.h\
 	    ../Libraries/Model/DataTypes.h\
-	    ../Libraries/Model/OctaveInterface.h
+	    ../Libraries/Model/OctaveInterface.h\
+	    ../Libraries/Model/MatlabInterface.h
 
 # Linking compiled files
 Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\

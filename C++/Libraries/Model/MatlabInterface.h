@@ -33,39 +33,6 @@
 
 #include "../../Model/Structs.h"
 
-// this is for OS auto-detection
-std::string getOsName()
-{
-    #ifdef _WIN32
-    return "Windows 32-bit";
-    #elif _WIN64
-    return "Windows 64-bit";
-    #elif __unix || __unix__
-    return "Unix";
-    #elif __APPLE__ || __MACH__
-    return "Mac OSX";
-    #elif __linux__
-    return "Linux";
-    #elif __FreeBSD__
-    return "FreeBSD";
-    #else
-    return "Other";
-    #endif
-} 
-
-
-// this checkts if this machine is little endian
-int is_big_endian(void)
-{
-    union {
-        uint32_t i;
-        char c[4];
-    } bint = {0x01020304};
-
-    return bint.c[0] == 1; 
-}
-
-
 // reads count number of characters from stream into string
 template <typename V>
 bool	read_from_stm_to_str( std::string& str, V &stm, uint32_t count)
@@ -91,9 +58,9 @@ bool	read_from_stm_to_number( T& number, V &stm)
 {
         double read;
 
-	stm.read( reinterpret_cast<char*>( &read ), sizeof read);
+	stm.read(reinterpret_cast<char*>(&read), sizeof(read));
 
-	if ( stm.gcount() == sizeof read ) {
+	if ( stm.gcount() == sizeof(read) ) {
 		number = read;
 		return	true;
 	}
@@ -379,42 +346,43 @@ void	wirte_numeric_array_preamble( const std::string& name,
 		total_length = 6*8+array_size*8;
 	}
 
+	bool	big_endianness = is_big_endian();
 
 	// miMATRIX tag
-	write_size_t_as_ubinary_number(4, 14, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, total_length, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 14, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, total_length, stm, big_endianness);
 
 	// Array fags
-	write_size_t_as_ubinary_number(4, 6, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 8, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 6, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 0, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 6, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 6, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 0, stm, big_endianness);
 
 	// Dimensions array
-	write_size_t_as_ubinary_number(4, 5, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 8, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, size[0], stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, size[1], stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, size[0], stm, big_endianness);
+	write_size_t_as_ubinary_number(4, size[1], stm, big_endianness);
 
 	// Array name
 	if ( name.size() > 4 ) { // normal name format
-		write_size_t_as_ubinary_number(4, 1, stm, is_big_endian());
-		write_size_t_as_ubinary_number(4, name.size(), stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, 1, stm, big_endianness);
+		write_size_t_as_ubinary_number(4, name.size(), stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 	else { // compressed name format
 		std::size_t	code = name.size()*std::pow(2,16)+1;
-		write_size_t_as_ubinary_number(4, code, stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, code, stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 
 	// miDOUBLE numbers
-	write_size_t_as_ubinary_number(4, 9, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, array_size*8, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 9, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, array_size*8, stm, big_endianness);
 } // end template wirte_numeric_array_preamble
 
 
@@ -464,51 +432,53 @@ void	wirte_sparse_array_preamble( const std::string& name,
 				    +nnz*8;
 	}
 
+	bool	big_endianness = is_big_endian();
+
 	// miMATRIX tag
-	write_size_t_as_ubinary_number(4, 14, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, total_length, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 14, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, total_length, stm, big_endianness);
 
 	// Array fags
-	write_size_t_as_ubinary_number(4, 6, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 8, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 5, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, nnz, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 6, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, nnz, stm, big_endianness);
 
 	// Dimensions array
-	write_size_t_as_ubinary_number(4, 5, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 8, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, size[0], stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, size[1], stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, size[0], stm, big_endianness);
+	write_size_t_as_ubinary_number(4, size[1], stm, big_endianness);
 
 	// Array name
 	if ( name.size() > 4 ) { // normal name format
-		write_size_t_as_ubinary_number(4, 1, stm, is_big_endian());
-		write_size_t_as_ubinary_number(4, name.size(), stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, 1, stm, big_endianness);
+		write_size_t_as_ubinary_number(4, name.size(), stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 	else { // compressed name format
 		std::size_t	code = name.size()*std::pow(2,16)+1;
-		write_size_t_as_ubinary_number(4, code, stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, code, stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 	
 	// ir (row indices)
-	write_size_t_as_ubinary_number(4, 5, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, nnz*4, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, nnz*4, stm, big_endianness);
 	for ( std::size_t row = 0; row < rows.size(); row++ )
-		write_size_t_as_ubinary_number(4, rows[row], stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, rows[row], stm, big_endianness);
 		
 	for ( std::size_t i = 0; i < size_row_indices-rows.size()*4; i++ )
-		write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+		write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 
 	// jc (column indices)
-	write_size_t_as_ubinary_number(4, 5, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, (size[1]+1)*4, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 0, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, (size[1]+1)*4, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 0, stm, big_endianness);
 	std::size_t	last_column = 0;
 	std::size_t	column_accum = 0;
 	for ( std::size_t column = 0; column < columns.size(); column++ ) {
@@ -517,21 +487,21 @@ void	wirte_sparse_array_preamble( const std::string& name,
 		}
 		else {
 			for ( std::size_t i = 0; i < columns[column]-last_column; i++ )
-				write_size_t_as_ubinary_number(4, column_accum, stm, is_big_endian());
+				write_size_t_as_ubinary_number(4, column_accum, stm, big_endianness);
 
 			last_column = columns[column];
 			column_accum++;
 		}
 	}
 	for ( std::size_t i = 0; i < size[1]-last_column; i++ )
-		write_size_t_as_ubinary_number(4, column_accum, stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, column_accum, stm, big_endianness);
 	
 	for ( std::size_t i = 0; i < size_column_indices-(size[1]+1)*4; i++ )
-		write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+		write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	
 	// miDOUBLE numbers
-	write_size_t_as_ubinary_number(4, 9, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, nnz*8, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 9, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, nnz*8, stm, big_endianness);
 } // end template wirte_sparse_array_preamble
 
 
@@ -627,36 +597,38 @@ void	wirte_cell_array_preamble( const std::string& name,
 
 	std::size_t	total_length = get_length_of_multidimensional_vector_as_cell(name, matrix);
 
+	bool	big_endianness = is_big_endian();
+
 	// miMATRIX tag
-	write_size_t_as_ubinary_number(4, 14, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, total_length, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 14, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, total_length, stm, big_endianness);
 
 	// Array fags
-	write_size_t_as_ubinary_number(4, 6, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 8, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 1, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 0, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 6, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 1, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 0, stm, big_endianness);
 
 	// Dimensions array
-	write_size_t_as_ubinary_number(4, 5, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 8, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, matrix.size(), stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 1, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, matrix.size(), stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 1, stm, big_endianness);
 
 	// Array name
 	if ( name.size() > 4 ) { // normal name format
-		write_size_t_as_ubinary_number(4, 1, stm, is_big_endian());
-		write_size_t_as_ubinary_number(4, name.size(), stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, 1, stm, big_endianness);
+		write_size_t_as_ubinary_number(4, name.size(), stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 	else { // compressed name format
 		std::size_t	code = name.size()*std::pow(2,16)+1;
-		write_size_t_as_ubinary_number(4, code, stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, code, stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 } // end template wirte_cell_array_preamble
 
@@ -695,44 +667,46 @@ void	wirte_multidimensional_numeric_array_preamble( const std::string& name,
 		total_length = 4*8+8+size_size+array_size*8;
 	}
 
+	bool	big_endianness = is_big_endian();
+
 	// miMATRIX tag
-	write_size_t_as_ubinary_number(4, 14, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, total_length, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 14, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, total_length, stm, big_endianness);
 
 	// Array flags
-	write_size_t_as_ubinary_number(4, 6, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 8, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 6, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, 0, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 6, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 6, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, 0, stm, big_endianness);
 
 	// Dimensions array
-	write_size_t_as_ubinary_number(4, 5, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, size.size()*4, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, size.size()*4, stm, big_endianness);
 	for (const auto& s : size)
-		write_size_t_as_ubinary_number(4, s, stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, s, stm, big_endianness);
 
 	for ( std::size_t i = 0; i < size_size-(size.size()*4); i++ )
-		write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+		write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	
 	// Array name
 	if ( name.size() > 4 ) { // normal name format
-		write_size_t_as_ubinary_number(4, 1, stm, is_big_endian());
-		write_size_t_as_ubinary_number(4, name.size(), stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, 1, stm, big_endianness);
+		write_size_t_as_ubinary_number(4, name.size(), stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 	else { // compressed name format
 		std::size_t	code = name.size()*std::pow(2,16)+1;
-		write_size_t_as_ubinary_number(4, code, stm, is_big_endian());
+		write_size_t_as_ubinary_number(4, code, stm, big_endianness);
 		stm << name;
 		for ( std::size_t i = 0; i < name_size-name.size(); i++ )
-			write_size_t_as_ubinary_number(1, 0, stm, is_big_endian());
+			write_size_t_as_ubinary_number(1, 0, stm, big_endianness);
 	}
 
 	// miDOUBLE numbers
-	write_size_t_as_ubinary_number(4, 9, stm, is_big_endian());
-	write_size_t_as_ubinary_number(4, array_size*8, stm, is_big_endian());
+	write_size_t_as_ubinary_number(4, 9, stm, big_endianness);
+	write_size_t_as_ubinary_number(4, array_size*8, stm, big_endianness);
 } // end template wirte_multidimensional_numeric_array_preamble
 
 
@@ -766,8 +740,10 @@ void	save_the_header( T &stm )
 	stm_size = stm.tellp();
 	assert(stm_size == 116);
 
+	bool	big_endianness = is_big_endian();
+
 	// writes the Header Subsystem Data Offset Field	
-	write_size_t_as_ubinary_number(8, 0, stm, is_big_endian());
+	write_size_t_as_ubinary_number(8, 0, stm, big_endianness);
 	stm_size = stm.tellp();
 	assert(stm_size == 124);
 
@@ -777,7 +753,7 @@ void	save_the_header( T &stm )
 	assert(stm_size == 126);
 
 	// writes the Endian Indicator
-	if ( is_big_endian() ) {
+	if ( big_endianness ) {
 		stm << "MI";
 	}
 	else {
@@ -1384,36 +1360,6 @@ matlabData	check_next_data_structure( T &stm, const bool big_endianness )
 } // end template check_next_data_structure
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Saves scalar in binary Matlab (.mat) file.
 template <typename T, typename V>
 void	save_scalar_as_numeric_array( const std::string& name, const T scalar, V &stm )
@@ -1608,23 +1554,6 @@ void	load_numeric_array_to_vector_of_vectors( const matlabData& array_info,
 } // end template load_numeric_array_to_vector_of_vectors
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Save vector of vectors conditionally as a sparse array type in Matlab (.mat) file.
 // First, measures the array sparsity, if this is greather than sparsityThreshold,
 // array is saved as a sparse array in Matlab (.mat) format.
@@ -1644,6 +1573,27 @@ void	save_vector_of_vectors_conditionally_as_sparse_array( const std::string& na
 		save_vector_of_vectors_as_numeric_array(name,array,stm);
 	}
 } // end template save_vector_of_vectors_conditionally_as_sparse_array
+
+
+// Loads sparse matrix of elements conditionally from sparse array in binary Matlab (.mat) file.
+template <typename T, typename V>
+void	load_conditionally_sparse_array_to_vector_of_vectors( const matlabData& array_info,
+							     std::vector<std::vector<T>>& array, V &stm,
+							     const bool big_endianness )
+{
+	if ( array_info.array_type == 5 ) {
+		SparseMatrixElements<T>	s_matrix;
+		load_sparse_matrix_elements_as_sparse_array(array_info, s_matrix, stm, big_endianness);
+		array = from_sparse(s_matrix);
+	}
+	else if ( array_info.array_type == 6 ) {
+		load_numeric_array_to_vector_of_vectors(array_info, array, stm, big_endianness);
+	}
+	else {
+		std::cout << "\nIn function load_conditionaly_sparse_array_to_vector_of_vectors" << std::endl;
+		throw std::runtime_error ("Wrong Tag format (incorrect array_type)");
+	}
+} // end template load_conditionaly_sparse_array_to_vector_of_vectors
 
 
 // Saves sparse matrix of elements in binary Matlab (.mat) file.
@@ -1745,31 +1695,6 @@ void	load_sparse_matrix_elements_as_sparse_array( const matlabData& array_info,
 } // end template load_sparse_matrix_elements_as_sparse_array
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // This is a recursive system of overloaded templates which
 // saves a multidimensional vector as cell array type in Matlab (.mat) file.
 // multidimensional makes reference to more than one dimension, i. e.
@@ -1791,14 +1716,6 @@ void	save_multidimensional_vector_as_cell_array( const std::string& name,
 	for (std::size_t row = 0; row < rows; row++)
 		save_multidimensional_vector_as_cell_array("<cell-element>",matrix[row],stm);
 } // end template save_multidimensional_vector_as_cell
-
-
-
-
-
-
-
-
 
 
 // This is a recursive system of overloaded templates which
@@ -1847,35 +1764,6 @@ void	load_cell_array_to_multidimensional_vector( const matlabData& array_info,
 	}
 
 } // end template load_cell_array_to_multidimensional_vector
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // Saves multidimensional vector of elements in binary Matlab (.mat) file.
@@ -1952,32 +1840,6 @@ void	load_array_to_multidimensional_vector( const matlabData& array_info,
 	resize_multi_dimentional_vector(matrix,dimensions);
 	to_multi_dimentional_vector(matrix, aux);
 } // end template load_array_to_multidimensional_vector
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif

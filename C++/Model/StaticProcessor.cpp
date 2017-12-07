@@ -22,6 +22,8 @@
 #include "StaticProcessor.h"				// include definition of class StaticProcessor
 #include "../Libraries/Model/Utilities.h"
 #include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
+#include "../Libraries/Model/GlobalVariables.h"
 #include "../Libraries/Model/Templates.h"
 #include "../Libraries/Model/DataTypes.h"
 #include "../Libraries/Model/Random.h"
@@ -290,7 +292,7 @@ double	StaticProcessor::learningNeighborhood( const double widthParameter,
 
 	cout << "StaticProcessor object inconsistence: bad function option: " << str << ".\n" << endl;
 	exit( EXIT_FAILURE );
-} // end function learningNeighborhoodFunction
+} // end function learningNeighborhood
 
 
 // function to get the response information from the input
@@ -438,37 +440,70 @@ void	StaticProcessor::saveStaticProcessorStatus( const std::string& staticUnitsI
 	str += "_";
 
         // saves _inputDimensionality
-	save_as_scalar(str + "inputDimensionality", _inputDimensionality, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "inputDimensionality", _inputDimensionality, outfile);
+	else
+		save_as_scalar(str + "inputDimensionality", _inputDimensionality, outfile);
 
         // saves _unitsDimensionality
-	save_as_scalar(str + "unitsDimensionality", _unitsDimensionality, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "unitsDimensionality", _unitsDimensionality, outfile);
+	else
+		save_as_scalar(str + "unitsDimensionality", _unitsDimensionality, outfile);
 
         // saves _unitsArrayDimensionality
-	save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
+	else
+		save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
 
         // saves _weights
-	save_vector_of_vectors_conditionally_as_sparse_matrix(str + "weights",_weights,SPARSITY_THRESHOLD,outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_of_vectors_conditionally_as_sparse_array(str + "weights",_weights,SPARSITY_THRESHOLD,outfile);
+	else
+		save_vector_of_vectors_conditionally_as_sparse_matrix(str + "weights",_weights,SPARSITY_THRESHOLD,outfile);
 
         // saves _updateStep
-	save_as_scalar(str + "updateStep", _updateStep, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "updateStep", _updateStep, outfile);
+	else
+		save_as_scalar(str + "updateStep", _updateStep, outfile);
 
 	// saves _unitsActivity
-	save_vector_as_matrix(str + "unitsActivity", _unitsActivity, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "unitsActivity", _unitsActivity, outfile);
+	else
+		save_vector_as_matrix(str + "unitsActivity", _unitsActivity, outfile);
 
 	// saves _activationBoosting
-	save_vector_as_matrix(str + "activationBusting", _activationBoosting, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "activationBusting", _activationBoosting, outfile);
+	else
+		save_vector_as_matrix(str + "activationBusting", _activationBoosting, outfile);
 
 	// saves _weightsSparsity
-	save_vector_as_matrix(str + "weightsSparsity", _weightsSparsity, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "weightsSparsity", _weightsSparsity, outfile);
+	else
+		save_vector_as_matrix(str + "weightsSparsity", _weightsSparsity, outfile);
 
         // saves _potentialPercentage
-	save_as_scalar(str + "potentialPercentage", _potentialPercentage, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "potentialPercentage", _potentialPercentage, outfile);
+	else
+		save_as_scalar(str + "potentialPercentage", _potentialPercentage, outfile);
 
         // saves _potentialDimensionality
-	save_as_scalar(str + "potentialDimensionality", _potentialDimensionality, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "potentialDimensionality", _potentialDimensionality, outfile);
+	else
+		save_as_scalar(str + "potentialDimensionality", _potentialDimensionality, outfile);
 
 	// saves _potentialConnections
-	save_vector_of_vectors_as_matrix(str + "potentialConnections", _potentialConnections, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_of_vectors_as_numeric_array(str + "potentialConnections", _potentialConnections, outfile);
+	else
+		save_vector_of_vectors_as_matrix(str + "potentialConnections", _potentialConnections, outfile);
 
 } // end functiom saveStaticProcessorStatus
 
@@ -479,6 +514,7 @@ void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsI
 {
 	std::string	str;
 	std::string	STR = "StaticProcessor_";
+	std::string	auxiliary;
 	STR += staticUnitsIdentifier;
 	STR += "_";
 
@@ -494,80 +530,165 @@ void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsI
 	bool	check_potentialDimensionality = false;
 	bool	check_potentialConnections = false;
 
-	while ( std::getline(infile, str) ) {
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
 
-		auto	auxiliary = "# name: " + STR + "inputDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_inputDimensionality, infile);
-			check_inputDimensionality = true;
-		}
-
-		auxiliary = "# name: " + STR + "unitsDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_unitsDimensionality, infile);
-			check_unitsDimensionality = true;
-		}
-
-		auxiliary = "# name: " + STR + "unitsArrayDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_matrix_to_vector(_unitsArrayDimensionality, infile);
-			check_unitsArrayDimensionality = true;
-		}
-
-		auxiliary = "# name: " + STR + "weights";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_conditional_sparse_matrix_to_vector_of_vectors(_weights,infile);
-			check_weights = true;
-		}
-
-		auxiliary = "# name: " + STR + "updateStep";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_updateStep, infile);
-			check_updateStep = true;
-		}
-
-		auxiliary = "# name: " + STR + "unitsActivity";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_matrix_to_vector(_unitsActivity, infile);
-			check_unitsActivity = true;
-		}
-
-		auxiliary = "# name: " + STR + "activationBusting";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_matrix_to_vector(_activationBoosting, infile);
-			check_activationBusting = true;
-		}
-
-		auxiliary = "# name: " + STR + "weightsSparsity";
-		if ( str.compare(auxiliary) == 0 ) {
-			std::vector<std::size_t>	weightsSparsity;
-			load_matrix_to_vector(weightsSparsity, infile);
-			for (const auto& aux : weightsSparsity) {
-				if (aux == 0)
-					_weightsSparsity.push_back(false);
-				else
-					_weightsSparsity.push_back(true);
+			auxiliary = STR + "inputDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _inputDimensionality, infile, big_endianness);
+				check_inputDimensionality = true;
 			}
-			_weightsSparsity.shrink_to_fit();
-			check_weightsSparsity = true;
-		}
 
-		auxiliary = "# name: " + STR + "potentialPercentage";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_potentialPercentage, infile);
-			check_potentialPercentage = true;
-		}
+			auxiliary = STR + "unitsDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _unitsDimensionality, infile, big_endianness);
+				check_unitsDimensionality = true;
+			}
 
-		auxiliary = "# name: " + STR + "potentialDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_potentialDimensionality, infile);
-			check_potentialDimensionality = true;
-		}
+			auxiliary = STR + "unitsArrayDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _unitsArrayDimensionality, infile, big_endianness);
+				check_unitsArrayDimensionality = true;
+			}
 
-		auxiliary = "# name: " + STR + "potentialConnections";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_matrix_to_vector_of_vectors(_potentialConnections, infile);
-			check_potentialConnections = true;
+			auxiliary = STR + "weights";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_conditionally_sparse_array_to_vector_of_vectors(array_structure, _weights, infile, big_endianness);
+				check_weights = true;
+			}
+
+			auxiliary = STR + "updateStep";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _updateStep, infile, big_endianness);
+				check_updateStep = true;
+			}
+
+			auxiliary = STR + "unitsActivity";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _unitsActivity, infile, big_endianness);
+				check_unitsActivity = true;
+			}
+
+			auxiliary = STR + "activationBusting";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _activationBoosting, infile, big_endianness);
+				check_activationBusting = true;
+			}
+
+			auxiliary = STR + "weightsSparsity";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				std::vector<std::size_t>	weightsSparsity;
+				load_numeric_array_to_vector(array_structure, weightsSparsity, infile, big_endianness);
+				for (const auto& aux : weightsSparsity) {
+					if (aux == 0)
+						_weightsSparsity.push_back(false);
+					else
+						_weightsSparsity.push_back(true);
+				}
+				_weightsSparsity.shrink_to_fit();
+				check_weightsSparsity = true;
+			}
+
+			auxiliary = STR + "potentialPercentage";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _potentialPercentage, infile, big_endianness);
+				check_potentialPercentage = true;
+			}
+
+			auxiliary = STR + "potentialDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _potentialDimensionality, infile, big_endianness);
+				check_potentialDimensionality = true;
+			}
+
+			auxiliary = STR + "potentialConnections";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector_of_vectors(array_structure, _potentialConnections, infile, big_endianness);
+				check_potentialConnections = true;
+			}
+
+			array_structure = check_next_data_structure(infile,big_endianness);
+		}	
+
+
+	}
+	else {
+		while ( std::getline(infile, str) ) {
+
+			auxiliary = "# name: " + STR + "inputDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_inputDimensionality, infile);
+				check_inputDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "unitsDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_unitsDimensionality, infile);
+				check_unitsDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "unitsArrayDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector(_unitsArrayDimensionality, infile);
+				check_unitsArrayDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "weights";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_conditional_sparse_matrix_to_vector_of_vectors(_weights,infile);
+				check_weights = true;
+			}
+
+			auxiliary = "# name: " + STR + "updateStep";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_updateStep, infile);
+				check_updateStep = true;
+			}
+
+			auxiliary = "# name: " + STR + "unitsActivity";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector(_unitsActivity, infile);
+				check_unitsActivity = true;
+			}
+
+			auxiliary = "# name: " + STR + "activationBusting";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector(_activationBoosting, infile);
+				check_activationBusting = true;
+			}
+
+			auxiliary = "# name: " + STR + "weightsSparsity";
+			if ( str.compare(auxiliary) == 0 ) {
+				std::vector<std::size_t>	weightsSparsity;
+				load_matrix_to_vector(weightsSparsity, infile);
+				for (const auto& aux : weightsSparsity) {
+					if (aux == 0)
+						_weightsSparsity.push_back(false);
+					else
+						_weightsSparsity.push_back(true);
+				}
+				_weightsSparsity.shrink_to_fit();
+				check_weightsSparsity = true;
+			}
+
+			auxiliary = "# name: " + STR + "potentialPercentage";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_potentialPercentage, infile);
+				check_potentialPercentage = true;
+			}
+
+			auxiliary = "# name: " + STR + "potentialDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_potentialDimensionality, infile);
+				check_potentialDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "potentialConnections";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector_of_vectors(_potentialConnections, infile);
+				check_potentialConnections = true;
+			}
 		}
 	}
 
@@ -582,6 +703,7 @@ void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsI
 	assert(check_potentialPercentage == true);
 	assert(check_potentialDimensionality == true);
 	assert(check_potentialConnections == true);
+
 } // end functiom loadStaticProcessorStatus
 
 
