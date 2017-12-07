@@ -24,6 +24,8 @@
 #include "../Libraries/Model/Utilities.h"
 #include "../Libraries/Model/Constants.h"
 #include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
+#include "../Libraries/Model/GlobalVariables.h"
 
 using namespace std;
 
@@ -216,28 +218,48 @@ void	DynamicProcessor::saveDynamicProcessorStatus( const std::string dynamicProc
 	for ( std::size_t link = 0; link < _dynamicUnits.size(); link++ ) {
 		// saves _dynamicUnits
 		STR = "dynamicUnits_" + std::to_string(link);
-		save_vector_of_vectors_conditionally_as_sparse_matrix(str+STR,_dynamicUnits[link],SPARSITY_THRESHOLD,outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_of_vectors_conditionally_as_sparse_array(str+STR,_dynamicUnits[link],SPARSITY_THRESHOLD,outfile);
+		else
+			save_vector_of_vectors_conditionally_as_sparse_matrix(str+STR,_dynamicUnits[link],SPARSITY_THRESHOLD,outfile);
+
 		STR.clear();
 	}
 
 	for ( std::size_t link = 0; link < _potentialConnections.size(); link++ ) {
 		// saves _potentialConnections
 		STR = "potentialConnections_" + std::to_string(link);
-		save_vector_of_vectors_as_matrix(str+STR,_potentialConnections[link],outfile);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_of_vectors_as_numeric_array(str+STR,_potentialConnections[link],outfile);
+		else
+			save_vector_of_vectors_as_matrix(str+STR,_potentialConnections[link],outfile);
+
 		STR.clear();
 	}
 
         // saves _numberOfLinks
-	save_as_scalar(str + "numberOfLinks", _numberOfLinks, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "numberOfLinks", _numberOfLinks, outfile);
+	else
+		save_as_scalar(str + "numberOfLinks", _numberOfLinks, outfile);
 
         // saves _potentialDimensionality
-	save_vector_as_matrix(str + "potentialDimensionality", _potentialDimensionality, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "potentialDimensionality", _potentialDimensionality, outfile);
+	else
+		save_vector_as_matrix(str + "potentialDimensionality", _potentialDimensionality, outfile);
 
         // saves _potentialPercentage
-	save_as_scalar(str + "potentialPercentage", _potentialPercentage, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "potentialPercentage", _potentialPercentage, outfile);
+	else
+		save_as_scalar(str + "potentialPercentage", _potentialPercentage, outfile);
 
         // saves _updateStep
-	save_as_scalar(str + "updateStep", _updateStep, outfile);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "updateStep", _updateStep, outfile);
+	else
+		save_as_scalar(str + "updateStep", _updateStep, outfile);
 
 } // end functiom saveDynamicProcessorStatus
 
@@ -248,6 +270,7 @@ void	DynamicProcessor::loadDynamicProcessorStatus( const std::string dynamicProc
 {
 	std::string	str;
 	std::string	STR = "DynamicProcessor_";
+	std::string	auxiliary;
 	STR += dynamicProcessorIdentification;
 	STR += "_";
 
@@ -260,53 +283,110 @@ void	DynamicProcessor::loadDynamicProcessorStatus( const std::string dynamicProc
 
 	std::size_t	link1 = 0;
 	std::size_t	link2 = 0;
-	while ( std::getline(infile, str) ) {
-		auto	auxiliary = "# name: " + STR + "dynamicUnits_" + std::to_string(link1);
-		if ( str.compare(auxiliary) == 0 ) {
-			// load _dynamicUnits
-			twodvector<double>	dynamicUnits;
-			load_conditional_sparse_matrix_to_vector_of_vectors(dynamicUnits,infile);
-			_dynamicUnits.push_back(dynamicUnits);
 
-			link1++;
-			check_dynamicUnits++;
-		}
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
 
-		auxiliary = "# name: " + STR + "potentialConnections_" + std::to_string(link2);
-		if ( str.compare(auxiliary) == 0 ) {
-			// load _potentialConnections
-			twodvector<std::size_t>	potentialConnections;
-			load_matrix_to_vector_of_vectors(potentialConnections,infile);
-			_potentialConnections.push_back(potentialConnections);
+			auxiliary = STR + "dynamicUnits_" + std::to_string(link1);
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				// load _dynamicUnits
+				twodvector<double>	dynamicUnits;
+				load_conditionally_sparse_array_to_vector_of_vectors(array_structure, dynamicUnits, infile, big_endianness);
+				_dynamicUnits.push_back(dynamicUnits);
 
-			link2++;
-			check_potentialConnections++;
-		}
+				link1++;
+				check_dynamicUnits++;
+			}
 
-		auxiliary = "# name: " + STR + "numberOfLinks";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_numberOfLinks, infile);
-			check_numberOfLinks = true;
-		}
+			auxiliary = STR + "potentialConnections_" + std::to_string(link2);
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				// load _potentialConnections
+				twodvector<std::size_t>	potentialConnections;
+				load_numeric_array_to_vector_of_vectors(array_structure, potentialConnections, infile, big_endianness);
+				_potentialConnections.push_back(potentialConnections);
 
-		auxiliary = "# name: " + STR + "potentialDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_matrix_to_vector(_potentialDimensionality, infile);
-			check_potentialDimensionality = true;
-		}
+				link2++;
+				check_potentialConnections++;
+			}
 
-		auxiliary = "# name: " + STR + "potentialPercentage";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_potentialPercentage, infile);
-			check_potentialPercentage = true;
-		}
+			auxiliary = STR + "numberOfLinks";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _numberOfLinks, infile, big_endianness);
+				check_numberOfLinks = true;
+			}
 
-		auxiliary = "# name: " + STR + "updateStep";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_updateStep, infile);
-			check_updateStep = true;
+			auxiliary = STR + "potentialDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _potentialDimensionality, infile, big_endianness);
+				check_potentialDimensionality = true;
+			}
+
+			auxiliary = STR + "potentialPercentage";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _potentialPercentage, infile, big_endianness);
+				check_potentialPercentage = true;
+			}
+
+			auxiliary = STR + "updateStep";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _updateStep, infile, big_endianness);
+				check_updateStep = true;
+			}
+
+			array_structure = check_next_data_structure(infile,big_endianness);
+		}	
+	}
+	else {
+		while ( std::getline(infile, str) ) {
+			auxiliary = "# name: " + STR + "dynamicUnits_" + std::to_string(link1);
+			if ( str.compare(auxiliary) == 0 ) {
+				// load _dynamicUnits
+				twodvector<double>	dynamicUnits;
+				load_conditional_sparse_matrix_to_vector_of_vectors(dynamicUnits,infile);
+				_dynamicUnits.push_back(dynamicUnits);
+
+				link1++;
+				check_dynamicUnits++;
+			}
+
+			auxiliary = "# name: " + STR + "potentialConnections_" + std::to_string(link2);
+			if ( str.compare(auxiliary) == 0 ) {
+				// load _potentialConnections
+				twodvector<std::size_t>	potentialConnections;
+				load_matrix_to_vector_of_vectors(potentialConnections,infile);
+				_potentialConnections.push_back(potentialConnections);
+
+				link2++;
+				check_potentialConnections++;
+			}
+
+			auxiliary = "# name: " + STR + "numberOfLinks";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_numberOfLinks, infile);
+				check_numberOfLinks = true;
+			}
+
+			auxiliary = "# name: " + STR + "potentialDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector(_potentialDimensionality, infile);
+				check_potentialDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "potentialPercentage";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_potentialPercentage, infile);
+				check_potentialPercentage = true;
+			}
+
+			auxiliary = "# name: " + STR + "updateStep";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_updateStep, infile);
+				check_updateStep = true;
+			}
 		}
 	}
+
 	_dynamicUnits.shrink_to_fit();
 	_potentialConnections.shrink_to_fit();
 

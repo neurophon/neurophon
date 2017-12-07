@@ -243,3 +243,38 @@ double	truePercentage( const std::vector<bool>& v )
 	return	(double)(std::count(v.begin(), v.end(), true))/(double)v.size();
 } // end function truePercentage
 
+
+// this is for OS auto-detection
+std::string getOsName()
+{
+    #ifdef _WIN32
+    return "Windows 32-bit";
+    #elif _WIN64
+    return "Windows 64-bit";
+    #elif __unix || __unix__
+    return "Unix";
+    #elif __APPLE__ || __MACH__
+    return "Mac OSX";
+    #elif __linux__
+    return "Linux";
+    #elif __FreeBSD__
+    return "FreeBSD";
+    #else
+    return "Other";
+    #endif
+} 
+
+
+// this checkts if this machine is little endian
+int	is_big_endian()
+{
+	union {
+		uint32_t i;
+		char c[4];
+	} bint = {0x01020304};
+
+	return bint.c[0] == 1; 
+}
+
+
+

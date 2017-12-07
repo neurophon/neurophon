@@ -270,4 +270,22 @@ struct	modelStructure						// Specifies the complete model structure
 
 };
 
+struct	matlabData						// Specifies Matlab data information
+{
+	bool				more_data;		// true if there is more data arrays to read
+	std::string			name;			// this is the name of the Matlab data
+	std::size_t			array_type;		// this is the Matlab array type
+	std::vector<std::size_t>	dimensions;		// these are the dimensions of the array
+	std::size_t			nnz;			// this is the number of non-zero elements (used for sparse arrays)
+	std::vector<std::size_t>	row_indices;		// these are the row indices of the non-zero elements in the sparce array
+	std::vector<std::size_t>	column_indices;		// these are the columns indices of the non-zero elements in the sparce array
+};
+
+struct	connectionsSet						// Holds connections vectors of the model
+{
+	twodvector<std::size_t>		afferentConnections;
+	twodvector<std::size_t>		lateralProximalConnections;
+	twodvector<std::size_t>		lateralDistalConnections;
+	twodvector<std::size_t>		apicalConnections;
+};
 #endif

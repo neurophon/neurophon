@@ -28,6 +28,8 @@ File Description:	StaticSelfOrganizingMap member-function definitions. This file
 #include "StaticSelfOrganizingMap.h"				// include definition of class StaticSelfOrganizingMap
 #include "../Libraries/Model/Utilities.h"
 #include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
+#include "../Libraries/Model/GlobalVariables.h"
 #include "../Libraries/Model/Templates.h"
 #include "../Libraries/Model/DataTypes.h"
 #include "../Libraries/Model/Random.h"
@@ -301,7 +303,7 @@ double	StaticSelfOrganizingMap::learningNeighborhood( const double widthParamete
 
 	cout << "StaticSelfOrganizingMap object inconsistence: bad function option: " << str << ".\n" << endl;
 	exit( EXIT_FAILURE );
-} // end function learningNeighborhoodFunction
+} // end function learningNeighborhood
 
 
 //! function to get the response information from the input
@@ -362,19 +364,34 @@ void	StaticSelfOrganizingMap::saveStaticSelfOrganizingMapStatus( const std::stri
 	str += "_";
 
         // saves _inputDimensionality
-	save_as_scalar(str + "inputDimensionality", _inputDimensionality, outStream);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "inputDimensionality", _inputDimensionality, outStream);
+	else
+		save_as_scalar(str + "inputDimensionality", _inputDimensionality, outStream);
 
         // saves _unitsDimensionality
-	save_as_scalar(str + "unitsDimensionality", _unitsDimensionality, outStream);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "unitsDimensionality", _unitsDimensionality, outStream);
+	else
+		save_as_scalar(str + "unitsDimensionality", _unitsDimensionality, outStream);
 
         // saves _unitsArrayDimensionality
-	save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outStream);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outStream);
+	else
+		save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outStream);
 
         // saves _weights
-	save_vector_of_vectors_conditionally_as_sparse_matrix(str + "weights",_weights,SPARSITY_THRESHOLD,outStream);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_of_vectors_conditionally_as_sparse_array(str + "weights",_weights,SPARSITY_THRESHOLD,outStream);
+	else
+		save_vector_of_vectors_conditionally_as_sparse_matrix(str + "weights",_weights,SPARSITY_THRESHOLD,outStream);
 
         // saves _updateStep
-	save_as_scalar(str + "updateStep", _updateStep, outStream);
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_scalar_as_numeric_array(str + "updateStep", _updateStep, outStream);
+	else
+		save_as_scalar(str + "updateStep", _updateStep, outStream);
 } // end functiom saveStaticSelfOrganizingMapStatus
 
 
@@ -402,6 +419,7 @@ void	StaticSelfOrganizingMap::loadStaticSelfOrganizingMapStatus( const std::stri
 {
 	std::string	str;
 	std::string	STR = "StaticSelfOrganizingMap_";
+	std::string	auxiliary;
 	STR += selfOrganizingMapIdentifier;
 	STR += "_";
 
@@ -411,36 +429,77 @@ void	StaticSelfOrganizingMap::loadStaticSelfOrganizingMapStatus( const std::stri
 	bool	check_weights = false;
 	bool	check_updateStep = false;
 
-	while ( std::getline(infile, str) ) {
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
 
-		auto	auxiliary = "# name: " + STR + "inputDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_inputDimensionality, infile);
-			check_inputDimensionality = true;
-		}
+			auxiliary = STR + "inputDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _inputDimensionality, infile, big_endianness);
+				check_inputDimensionality = true;
+			}
 
-		auxiliary = "# name: " + STR + "unitsDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_unitsDimensionality, infile);
-			check_unitsDimensionality = true;
-		}
+			auxiliary = STR + "unitsDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _unitsDimensionality, infile, big_endianness);
+				check_unitsDimensionality = true;
+			}
 
-		auxiliary = "# name: " + STR + "unitsArrayDimensionality";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_matrix_to_vector(_unitsArrayDimensionality, infile);
-			check_unitsArrayDimensionality = true;
-		}
+			auxiliary = STR + "unitsArrayDimensionality";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _unitsArrayDimensionality, infile, big_endianness);
+				check_unitsArrayDimensionality = true;
+			}
 
-		auxiliary = "# name: " + STR + "weights";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_conditional_sparse_matrix_to_vector_of_vectors(_weights,infile);
-			check_weights = true;
-		}
+			auxiliary = STR + "weights";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_conditionally_sparse_array_to_vector_of_vectors(array_structure, _weights, infile, big_endianness);
+				check_weights = true;
+			}
 
-		auxiliary = "# name: " + STR + "updateStep";
-		if ( str.compare(auxiliary) == 0 ) {
-			load_scalar(_updateStep, infile);
-			check_updateStep = true;
+			auxiliary = STR + "updateStep";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _updateStep, infile, big_endianness);
+				check_updateStep = true;
+			}
+
+			array_structure = check_next_data_structure(infile,big_endianness);
+		}	
+
+
+	}
+	else {
+		while ( std::getline(infile, str) ) {
+
+			auxiliary = "# name: " + STR + "inputDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_inputDimensionality, infile);
+				check_inputDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "unitsDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_unitsDimensionality, infile);
+				check_unitsDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "unitsArrayDimensionality";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector(_unitsArrayDimensionality, infile);
+				check_unitsArrayDimensionality = true;
+			}
+
+			auxiliary = "# name: " + STR + "weights";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_conditional_sparse_matrix_to_vector_of_vectors(_weights,infile);
+				check_weights = true;
+			}
+
+			auxiliary = "# name: " + STR + "updateStep";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_scalar(_updateStep, infile);
+				check_updateStep = true;
+			}
 		}
 	}
 

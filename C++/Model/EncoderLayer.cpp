@@ -27,6 +27,8 @@
 #include "../Libraries/Model/Utilities.h"
 #include "../Libraries/Model/Templates.h"
 #include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
+#include "../Libraries/Model/GlobalVariables.h"
 #include "EncoderLayer.h"
 
 using namespace std;
@@ -1429,7 +1431,7 @@ std::size_t	EncoderLayer::getReceptiveFieldCenter( const std::size_t index,
 // function that saves the EncoderLayer's status in a file
 void	EncoderLayer::saveEncoderLayerStatus( const std::string& folderName )
 {
-	EncoderLayer::gatherConnections();
+	auto	auxiliaryConnections = EncoderLayer::gatherConnections();
 
 	// Get the rank of the process
 	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
@@ -1441,133 +1443,230 @@ void	EncoderLayer::saveEncoderLayerStatus( const std::string& folderName )
 
 	if ( world_rank == 0 ) {
 		// file preamble.
-		outputStream << "# This is a file created by saveEncoderLayerStatus member function in EncoderLayer class from," << endl;
-		outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-		outputStream << "# Author: Dematties Dario Jesus." << endl;
-
-		outputStream << "\n\n" << endl;
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			save_the_header(outputStream);
+		}
+		else {
+			outputStream << "# This is a file created by saveEncoderLayerStatus member function in EncoderLayer class from," << endl;
+			outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+			outputStream << "# Author: Dematties Dario Jesus." << endl;
+			outputStream << "\n\n" << endl;
+		}
 		
 		// saves afferentArrayDimensionality
-		save_vector_as_matrix("afferentArrayDimensionality", _afferentArrayDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("afferentArrayDimensionality", _afferentArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("afferentArrayDimensionality", _afferentArrayDimensionality, outputStream);
 
 		// saves afferentDimensionality
-		save_as_scalar("afferentDimensionality", _afferentDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("afferentDimensionality", _afferentDimensionality, outputStream);
+		else
+			save_as_scalar("afferentDimensionality", _afferentDimensionality, outputStream);
 
 		// saves afferentReceptiveField
 		if(_afferentReceptiveField.size() != 0) {
-			save_vector_as_matrix("afferentReceptiveField", _afferentReceptiveField, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("afferentReceptiveField", _afferentReceptiveField, outputStream);
+			else
+				save_vector_as_matrix("afferentReceptiveField", _afferentReceptiveField, outputStream);
 		}
 		else {
 			std::vector<int>	receptiveField(_afferentArrayDimensionality.size(),-1);
-			save_vector_as_matrix("afferentReceptiveField", receptiveField, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("afferentReceptiveField", receptiveField, outputStream);
+			else
+				save_vector_as_matrix("afferentReceptiveField", receptiveField, outputStream);
 		}
 
 		// saves afferentPercentage
-		save_as_scalar("afferentPercentage", _afferentPercentage, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("afferentPercentage", _afferentPercentage, outputStream);
+		else
+			save_as_scalar("afferentPercentage", _afferentPercentage, outputStream);
 
 		// saves afferentWrapAround
-		save_as_bool("afferentWrapAround", _afferentWrapAround, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			std::size_t	aux_bool;
+			if (_afferentWrapAround)
+				aux_bool = 1;
+			else
+				aux_bool = 0;
+
+			save_scalar_as_numeric_array("afferentWrapAround", aux_bool, outputStream);
+		}
+		else {
+			save_as_bool("afferentWrapAround", _afferentWrapAround, outputStream);
+		}
 
 
 
 		// saves apicalArrayDimensionality
-		save_vector_as_matrix("apicalArrayDimensionality", _apicalArrayDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("apicalArrayDimensionality", _apicalArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("apicalArrayDimensionality", _apicalArrayDimensionality, outputStream);
 
 		// saves apicalDimensionality
-		save_as_scalar("apicalDimensionality", _apicalDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("apicalDimensionality", _apicalDimensionality, outputStream);
+		else
+			save_as_scalar("apicalDimensionality", _apicalDimensionality, outputStream);
 
 		// saves apicalReceptiveField
 		if(_apicalReceptiveField.size() != 0) {
-			save_vector_as_matrix("apicalReceptiveField", _apicalReceptiveField, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("apicalReceptiveField", _apicalReceptiveField, outputStream);
+			else
+				save_vector_as_matrix("apicalReceptiveField", _apicalReceptiveField, outputStream);
 		}
 		else {
 			std::vector<int>	receptiveField(_apicalArrayDimensionality.size(),-1);
-			save_vector_as_matrix("apicalReceptiveField", receptiveField, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("apicalReceptiveField", receptiveField, outputStream);
+			else
+				save_vector_as_matrix("apicalReceptiveField", receptiveField, outputStream);
 		}
 
 		// saves apicalPercentage
-		save_as_scalar("apicalPercentage", _apicalPercentage, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("apicalPercentage", _apicalPercentage, outputStream);
+		else
+			save_as_scalar("apicalPercentage", _apicalPercentage, outputStream);
 
 		// saves apicalWrapAround
-		save_as_bool("apicalWrapAround", _apicalWrapAround, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			std::size_t	aux_bool;
+			if (_apicalWrapAround)
+				aux_bool = 1;
+			else
+				aux_bool = 0;
+
+			save_scalar_as_numeric_array("apicalWrapAround", aux_bool, outputStream);
+		}
+		else {
+			save_as_bool("apicalWrapAround", _apicalWrapAround, outputStream);
+		}
 
 
 
 		// saves columnsArrayDimensionality
-		save_vector_as_matrix("columnsArrayDimensionality", _columnsArrayDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("columnsArrayDimensionality", _columnsArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("columnsArrayDimensionality", _columnsArrayDimensionality, outputStream);
 
 		// saves columnsDimensionality
-		save_as_scalar("columnsDimensionality", _columnsDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("columnsDimensionality", _columnsDimensionality, outputStream);
+		else
+			save_as_scalar("columnsDimensionality", _columnsDimensionality, outputStream);
 
 
 
 		// saves lateralDistalReceptiveField
 		if(_lateralDistalReceptiveField.size() != 0) {
-			save_vector_as_matrix("lateralDistalReceptiveField", _lateralDistalReceptiveField, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("lateralDistalReceptiveField", _lateralDistalReceptiveField, outputStream);
+			else
+				save_vector_as_matrix("lateralDistalReceptiveField", _lateralDistalReceptiveField, outputStream);
 		}
 		else {
 			std::vector<int>	receptiveField(_columnsArrayDimensionality.size(),-1);
-			save_vector_as_matrix("lateralDistalReceptiveField", receptiveField, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("lateralDistalReceptiveField", receptiveField, outputStream);
+			else
+				save_vector_as_matrix("lateralDistalReceptiveField", receptiveField, outputStream);
 		}
 
 		// saves lateralDistalPercentage
-		save_as_scalar("lateralDistalPercentage", _lateralDistalPercentage, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("lateralDistalPercentage", _lateralDistalPercentage, outputStream);
+		else
+			save_as_scalar("lateralDistalPercentage", _lateralDistalPercentage, outputStream);
 
 		// saves lateralDistalWrapAround
-		save_as_bool("lateralDistalWrapAround", _lateralDistalWrapAround, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			std::size_t	aux_bool;
+			if (_lateralDistalWrapAround)
+				aux_bool = 1;
+			else
+				aux_bool = 0;
+
+			save_scalar_as_numeric_array("lateralDistalWrapAround", aux_bool, outputStream);
+		}
+		else {
+			save_as_bool("lateralDistalWrapAround", _lateralDistalWrapAround, outputStream);
+		}
 
 
-		if ( _afferentConnections.size() != 0 ) {
+		if ( auxiliaryConnections.afferentConnections.size() != 0 ) {
 			// saves afferentConnections
 			twodvector<bool>	afferentConnectionsBitMap;
 			afferentConnectionsBitMap.resize(_columnsDimensionality);
 			for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
 				afferentConnectionsBitMap[column].resize(_afferentDimensionality);
-				for ( std::size_t index = 0; index < _afferentConnections[column].size(); index++ )
-					afferentConnectionsBitMap[column][_afferentConnections[column][index]] = true;
+				for ( std::size_t index = 0; index < auxiliaryConnections.afferentConnections[column].size(); index++ )
+					afferentConnectionsBitMap[column][auxiliaryConnections.afferentConnections[column][index]] = true;
 			}
 
 			SparseMatrixElements<bool>	sparseAfferentConnectionsBitMap;
 			sparseAfferentConnectionsBitMap = to_sparse(afferentConnectionsBitMap);
-			save_sparse_matrix_elements_as_sparse_matrix("afferentConnections", sparseAfferentConnectionsBitMap, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_sparse_matrix_elements_as_sparse_array("afferentConnections", sparseAfferentConnectionsBitMap, outputStream);
+			else
+				save_sparse_matrix_elements_as_sparse_matrix("afferentConnections", sparseAfferentConnectionsBitMap, outputStream);
 		}
 
-		if ( _lateralDistalConnections.size() != 0 ) {
+		if ( auxiliaryConnections.lateralDistalConnections.size() != 0 ) {
 			// saves lateralDistalConnections
 			twodvector<bool>	lateralDistalConnectionsBitMap;
 			lateralDistalConnectionsBitMap.resize(_columnsDimensionality);
 			for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
 				lateralDistalConnectionsBitMap[column].resize(_columnsDimensionality);
-				for ( std::size_t index = 0; index < _lateralDistalConnections[column].size(); index++ )
-					lateralDistalConnectionsBitMap[column][_lateralDistalConnections[column][index]] = true;
+				for ( std::size_t index = 0; index < auxiliaryConnections.lateralDistalConnections[column].size(); index++ )
+					lateralDistalConnectionsBitMap[column][auxiliaryConnections.lateralDistalConnections[column][index]] = true;
 			}	
 
 			SparseMatrixElements<bool>	sparseLateralDistalConnectionsBitMap;
 			sparseLateralDistalConnectionsBitMap = to_sparse(lateralDistalConnectionsBitMap);
-			save_sparse_matrix_elements_as_sparse_matrix("lateralDistalConnections", sparseLateralDistalConnectionsBitMap, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_sparse_matrix_elements_as_sparse_array("lateralDistalConnections", sparseLateralDistalConnectionsBitMap, outputStream);
+			else
+				save_sparse_matrix_elements_as_sparse_matrix("lateralDistalConnections", sparseLateralDistalConnectionsBitMap, outputStream);
 		}
 
-		if ( _apicalConnections.size() != 0 ) {
+		if ( auxiliaryConnections.apicalConnections.size() != 0 ) {
 			// saves apicalConnections
 			twodvector<bool>	apicalConnectionsBitMap;
 			apicalConnectionsBitMap.resize(_columnsDimensionality);
 			for ( std::size_t column = 0; column < _columnsDimensionality; column++ ) {
 				apicalConnectionsBitMap[column].resize(_apicalDimensionality);
-				for ( std::size_t index = 0; index < _apicalConnections[column].size(); index++ )
-					apicalConnectionsBitMap[column][_apicalConnections[column][index]] = true;
+				for ( std::size_t index = 0; index < auxiliaryConnections.apicalConnections[column].size(); index++ )
+					apicalConnectionsBitMap[column][auxiliaryConnections.apicalConnections[column][index]] = true;
 			}	
 
 			SparseMatrixElements<bool>	sparseApicalConnectionsBitMap;
 			sparseApicalConnectionsBitMap = to_sparse(apicalConnectionsBitMap);
-			save_sparse_matrix_elements_as_sparse_matrix("apicalConnections", sparseApicalConnectionsBitMap, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_sparse_matrix_elements_as_sparse_array("apicalConnections", sparseApicalConnectionsBitMap, outputStream);
+			else
+				save_sparse_matrix_elements_as_sparse_matrix("apicalConnections", sparseApicalConnectionsBitMap, outputStream);
 		}
 
 
 		// saves populationsArrayDimensionality
-		save_vector_as_matrix("populationsArrayDimensionality", _populationsArrayDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("populationsArrayDimensionality", _populationsArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("populationsArrayDimensionality", _populationsArrayDimensionality, outputStream);
 
 		// saves apicalPopulationsArrayDimensionality
-		save_vector_as_matrix("apicalPopulationsArrayDimensionality", _apicalPopulationsArrayDimensionality, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("apicalPopulationsArrayDimensionality", _apicalPopulationsArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("apicalPopulationsArrayDimensionality", _apicalPopulationsArrayDimensionality, outputStream);
 
 		if ( _afferentConnections.size() != 0 ) {
 			std::vector<double>	lowerAfferentLimits, upperAfferentLimits;
@@ -1581,19 +1680,31 @@ void	EncoderLayer::saveEncoderLayerStatus( const std::string& folderName )
 					_proximalAfferentLimits[limit][1];
 			}
 			// saves proximalAfferentLowerLimits
-			save_vector_as_matrix("proximalAfferentLowerLimits", lowerAfferentLimits, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("proximalAfferentLowerLimits", lowerAfferentLimits, outputStream);
+			else
+				save_vector_as_matrix("proximalAfferentLowerLimits", lowerAfferentLimits, outputStream);
 
 			// saves proximalAfferentUpperLimits
-			save_vector_as_matrix("proximalAfferentUpperLimits", upperAfferentLimits, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_vector_as_numeric_array("proximalAfferentUpperLimits", upperAfferentLimits, outputStream);
+			else
+				save_vector_as_matrix("proximalAfferentUpperLimits", upperAfferentLimits, outputStream);
 		}
 
 		if ( _afferentConnections.size() != 0 ) {
 			// saves afferentUpdateStep
-			save_as_scalar("afferentUpdateStep", _afferentUpdateStep, outputStream);
+			if (ENABLE_MATLAB_COMPATIBILITY)
+				save_scalar_as_numeric_array("afferentUpdateStep", _afferentUpdateStep, outputStream);
+			else
+				save_as_scalar("afferentUpdateStep", _afferentUpdateStep, outputStream);
 		}
 
 		// saves potentialPercentage
-		save_as_scalar("potentialPercentage", _potentialPercentage, outputStream);
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("potentialPercentage", _potentialPercentage, outputStream);
+		else
+			save_as_scalar("potentialPercentage", _potentialPercentage, outputStream);
 	}
 
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
@@ -1624,8 +1735,10 @@ void	EncoderLayer::saveEncoderLayerStatus( const std::string& folderName )
 	}
 	//MPI_Barrier(MPI_COMM_WORLD);
 
+	std::string	name = "../../Octave/" + folderName + "/EncoderLayer.mat";
+	std::remove(&name[0]);
 	// open a file in write mode
-	MPI::File outfile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + folderName + "/EncoderLayer.mat").c_str(),
+	MPI::File outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
 					    MPI::MODE_CREATE | MPI::MODE_WRONLY,
 					    MPI::INFO_NULL);
 
@@ -1709,227 +1822,465 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 	std::string	str;
 	std::string	STR;
 
-	while ( std::getline(inputStream, str) ) {
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		big_endianness = load_the_header(inputStream);
+		auto	array_structure = check_next_data_structure(inputStream, big_endianness);
+		while ( array_structure.more_data ) {
 
-		STR = "# name: afferentArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_afferentArrayDimensionality, inputStream);
-			check_afferentArrayDimensionality = true;
-		}
-
-		STR = "# name: afferentDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_afferentDimensionality, inputStream);
-			check_afferentDimensionality = true;
-		}
-
-		STR = "# name: afferentReceptiveField";
-		if ( str.compare(STR) == 0 ) {
-			_afferentReceptiveField.clear();
-			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, inputStream);
-			for(const auto& s : receptiveField) {
-				if ( s > -1 )
-					_afferentReceptiveField.push_back(s);
+			STR = "afferentArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _afferentArrayDimensionality, inputStream, big_endianness);
+				check_afferentArrayDimensionality = true;
 			}
-			check_afferentReceptiveField = true;
-		}
 
-		STR = "# name: afferentPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_afferentPercentage, inputStream);
-			check_afferentPercentage = true;
-		}
-
-		STR = "# name: afferentWrapAround";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_afferentWrapAround, inputStream);
-			check_afferentWrapAround = true;
-		}
-
-
-
-		STR = "# name: apicalArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_apicalArrayDimensionality, inputStream);
-			check_apicalArrayDimensionality = true;
-		}
-
-		STR = "# name: apicalDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_apicalDimensionality, inputStream);
-			check_apicalDimensionality = true;
-		}
-
-		STR = "# name: apicalReceptiveField";
-		if ( str.compare(STR) == 0 ) {
-			_apicalReceptiveField.clear();
-			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, inputStream);
-			for(const auto& s : receptiveField) {
-				if ( s > -1 )
-					_apicalReceptiveField.push_back(s);
+			STR = "afferentDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _afferentDimensionality, inputStream, big_endianness);
+				check_afferentDimensionality = true;
 			}
-			check_apicalReceptiveField = true;
-		}
 
-		STR = "# name: apicalPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_apicalPercentage, inputStream);
-			check_apicalPercentage = true;
-		}
-
-		STR = "# name: apicalWrapAround";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_apicalWrapAround, inputStream);
-			check_apicalWrapAround = true;
-		}
-
-
-
-		STR = "# name: columnsArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_columnsArrayDimensionality, inputStream);
-			check_columnsArrayDimensionality = true;
-		}
-
-		STR = "# name: columnsDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_columnsDimensionality, inputStream);
-			check_columnsDimensionality = true;
-		}
-
-
-
-		STR = "# name: lateralDistalReceptiveField";
-		if ( str.compare(STR) == 0 ) {
-			_lateralDistalReceptiveField.clear();
-			std::vector<int>	receptiveField;
-			load_matrix_to_vector(receptiveField, inputStream);
-			for(const auto& s : receptiveField) {
-				if ( s > -1 )
-					_lateralDistalReceptiveField.push_back(s);
-			}
-			check_lateralDistalReceptiveField = true;
-		}
-
-		STR = "# name: lateralDistalPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_lateralDistalPercentage, inputStream);
-			check_lateralDistalPercentage = true;
-		}
-
-		STR = "# name: lateralDistalWrapAround";
-		if ( str.compare(STR) == 0 ) {
-			load_bool(_lateralDistalWrapAround, inputStream);
-			check_lateralDistalWrapAround = true;
-		}
-
-
-
-		STR = "# name: afferentConnections";
-		if ( str.compare(STR) == 0 ) {
-			check_afferentConnections = true;
-			SparseMatrixElements<bool>	sparseAfferentConnectionsBitMap;
-			load_sparse_matrix_to_sparse_matrix_elements(sparseAfferentConnectionsBitMap, inputStream);
-			twodvector<bool>	afferentConnectionsBitMap;
-			afferentConnectionsBitMap = from_sparse(sparseAfferentConnectionsBitMap);
-			for ( std::size_t column = world_rank; column < afferentConnectionsBitMap.size(); column=column+world_size ) {
-				std::vector<std::size_t>	auxiliaryConnections;
-				for ( std::size_t index = 0; index < afferentConnectionsBitMap[column].size(); index++ ) {
-					if ( afferentConnectionsBitMap[column][index] == true )
-						auxiliaryConnections.push_back(index);
+			STR = "afferentReceptiveField";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				_afferentReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_numeric_array_to_vector(array_structure, receptiveField, inputStream, big_endianness);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_afferentReceptiveField.push_back(s);
 				}
-
-				_afferentConnections.push_back(auxiliaryConnections);
+				check_afferentReceptiveField = true;
 			}
-			_afferentConnections.shrink_to_fit();
-		}
 
-		STR = "# name: lateralDistalConnections";
-		if ( str.compare(STR) == 0 ) {
-			check_lateralDistalConnections = true;
-			SparseMatrixElements<bool>	sparseLateralDistalConnectionsBitMap;
-			load_sparse_matrix_to_sparse_matrix_elements(sparseLateralDistalConnectionsBitMap, inputStream);
-			twodvector<bool>	lateralDistalConnectionsBitMap;
-			lateralDistalConnectionsBitMap = from_sparse(sparseLateralDistalConnectionsBitMap);
-			for ( std::size_t column = world_rank; column < lateralDistalConnectionsBitMap.size(); column=column+world_size ) {
-				std::vector<std::size_t>	auxiliaryConnections;
-				for ( std::size_t index = 0; index < lateralDistalConnectionsBitMap[column].size(); index++ ) {
-					if ( lateralDistalConnectionsBitMap[column][index] == true )
-						auxiliaryConnections.push_back(index);
+			STR = "afferentPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _afferentPercentage, inputStream, big_endianness);
+				check_afferentPercentage = true;
+			}
+
+			STR = "afferentWrapAround";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, inputStream, big_endianness);
+				if (aux_bool > 0)
+					_afferentWrapAround = true;
+				else
+					_afferentWrapAround = false;
+
+				check_afferentWrapAround = true;
+			}
+
+			STR = "apicalArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _apicalArrayDimensionality, inputStream, big_endianness);
+				check_apicalArrayDimensionality = true;
+			}
+
+			STR = "apicalDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _apicalDimensionality, inputStream, big_endianness);
+				check_apicalDimensionality = true;
+			}
+
+			STR = "apicalReceptiveField";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				_apicalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_numeric_array_to_vector(array_structure, receptiveField, inputStream, big_endianness);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_apicalReceptiveField.push_back(s);
 				}
-				_lateralDistalConnections.push_back(auxiliaryConnections);
+				check_apicalReceptiveField = true;
 			}
-			_lateralDistalConnections.shrink_to_fit();
-		}
 
-		STR = "# name: apicalConnections";
-		if ( str.compare(STR) == 0 ) {
-			check_apicalConnections = true;
-			SparseMatrixElements<bool>	sparseApicalConnectionsBitMap;
-			load_sparse_matrix_to_sparse_matrix_elements(sparseApicalConnectionsBitMap, inputStream);
-			twodvector<bool>	apicalConnectionsBitMap;
-			apicalConnectionsBitMap = from_sparse(sparseApicalConnectionsBitMap);
-			for ( std::size_t column = world_rank; column < apicalConnectionsBitMap.size(); column=column+world_size ) {
-				std::vector<std::size_t>	auxiliaryConnections;
-				for ( std::size_t index = 0; index < apicalConnectionsBitMap[column].size(); index++ ) {
-					if ( apicalConnectionsBitMap[column][index] == true )
-						auxiliaryConnections.push_back(index);
+			STR = "apicalPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _apicalPercentage, inputStream, big_endianness);
+				check_apicalPercentage = true;
+			}
+
+			STR = "apicalWrapAround";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, inputStream, big_endianness);
+				if (aux_bool > 0)
+					_apicalWrapAround = true;
+				else
+					_apicalWrapAround = false;
+
+				check_apicalWrapAround = true;
+			}
+
+			STR = "columnsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _columnsArrayDimensionality, inputStream, big_endianness);
+				check_columnsArrayDimensionality = true;
+			}
+
+			STR = "columnsDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _columnsDimensionality, inputStream, big_endianness);
+				check_columnsDimensionality = true;
+			}
+
+			STR = "lateralDistalReceptiveField";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				_lateralDistalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_numeric_array_to_vector(array_structure, receptiveField, inputStream, big_endianness);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_lateralDistalReceptiveField.push_back(s);
 				}
-				_apicalConnections.push_back(auxiliaryConnections);
+				check_lateralDistalReceptiveField = true;
 			}
-			_apicalConnections.shrink_to_fit();
+
+			STR = "lateralDistalPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _lateralDistalPercentage, inputStream, big_endianness);
+				check_lateralDistalPercentage = true;
+			}
+
+			STR = "lateralDistalWrapAround";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				std::size_t	aux_bool;
+				load_numeric_array_to_scalar(array_structure, aux_bool, inputStream, big_endianness);
+				if (aux_bool > 0)
+					_lateralDistalWrapAround = true;
+				else
+					_lateralDistalWrapAround = false;
+
+				check_lateralDistalWrapAround = true;
+			}
+
+			STR = "afferentConnections";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				check_afferentConnections = true;
+				SparseMatrixElements<bool>	sparseAfferentConnectionsBitMap;
+				load_sparse_matrix_elements_as_sparse_array(array_structure, sparseAfferentConnectionsBitMap, inputStream, big_endianness);
+				twodvector<bool>	afferentConnectionsBitMap;
+				afferentConnectionsBitMap = from_sparse(sparseAfferentConnectionsBitMap);
+				for ( std::size_t column = world_rank; column < afferentConnectionsBitMap.size(); column=column+world_size ) {
+					std::vector<std::size_t>	auxiliaryConnections;
+					for ( std::size_t index = 0; index < afferentConnectionsBitMap[column].size(); index++ ) {
+						if ( afferentConnectionsBitMap[column][index] == true )
+							auxiliaryConnections.push_back(index);
+					}
+
+					_afferentConnections.push_back(auxiliaryConnections);
+				}
+				_afferentConnections.shrink_to_fit();
+			}
+
+			STR = "lateralDistalConnections";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				check_lateralDistalConnections = true;
+				SparseMatrixElements<bool>	sparseLateralDistalConnectionsBitMap;
+				load_sparse_matrix_elements_as_sparse_array(array_structure, sparseLateralDistalConnectionsBitMap, inputStream, big_endianness);
+				twodvector<bool>	lateralDistalConnectionsBitMap;
+				lateralDistalConnectionsBitMap = from_sparse(sparseLateralDistalConnectionsBitMap);
+				for ( std::size_t column = world_rank; column < lateralDistalConnectionsBitMap.size(); column=column+world_size ) {
+					std::vector<std::size_t>	auxiliaryConnections;
+					for ( std::size_t index = 0; index < lateralDistalConnectionsBitMap[column].size(); index++ ) {
+						if ( lateralDistalConnectionsBitMap[column][index] == true )
+							auxiliaryConnections.push_back(index);
+					}
+					_lateralDistalConnections.push_back(auxiliaryConnections);
+				}
+				_lateralDistalConnections.shrink_to_fit();
+			}
+
+			STR = "apicalConnections";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				check_apicalConnections = true;
+				SparseMatrixElements<bool>	sparseApicalConnectionsBitMap;
+				load_sparse_matrix_elements_as_sparse_array(array_structure, sparseApicalConnectionsBitMap, inputStream, big_endianness);
+				twodvector<bool>	apicalConnectionsBitMap;
+				apicalConnectionsBitMap = from_sparse(sparseApicalConnectionsBitMap);
+				for ( std::size_t column = world_rank; column < apicalConnectionsBitMap.size(); column=column+world_size ) {
+					std::vector<std::size_t>	auxiliaryConnections;
+					for ( std::size_t index = 0; index < apicalConnectionsBitMap[column].size(); index++ ) {
+						if ( apicalConnectionsBitMap[column][index] == true )
+							auxiliaryConnections.push_back(index);
+					}
+					_apicalConnections.push_back(auxiliaryConnections);
+				}
+				_apicalConnections.shrink_to_fit();
+			}
+
+			STR = "populationsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _populationsArrayDimensionality, inputStream, big_endianness);
+				check_populationsArrayDimensionality = true;
+			}
+
+			STR = "apicalPopulationsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _apicalPopulationsArrayDimensionality, inputStream, big_endianness);
+				check_apicalPopulationsArrayDimensionality = true;
+			}
+
+			STR = "proximalAfferentLowerLimits";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				check_proximalAfferentLowerLimits = true;
+				std::vector<double>	lowerLimits;
+				load_numeric_array_to_vector(array_structure, lowerLimits, inputStream, big_endianness);
+				auto	numberOfLimits = lowerLimits.size();
+				_proximalAfferentLimits.resize(numberOfLimits);
+				for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
+					_proximalAfferentLimits[limit][0] = lowerLimits[limit];
+			}
+
+			STR = "proximalAfferentUpperLimits";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				check_proximalAfferentUpperLimits = true;
+				std::vector<double>	upperLimits;
+				load_numeric_array_to_vector(array_structure, upperLimits, inputStream, big_endianness);
+				auto	numberOfLimits = upperLimits.size();
+				_proximalAfferentLimits.resize(numberOfLimits);
+				for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
+					_proximalAfferentLimits[limit][1] = upperLimits[limit];
+			}
+
+			STR = "afferentUpdateStep";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _afferentUpdateStep, inputStream, big_endianness);
+				check_afferentUpdateStep = true;
+			}
+
+			STR = "potentialPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _potentialPercentage, inputStream, big_endianness);
+				check_potentialPercentage = true;
+			}
+
+			array_structure = check_next_data_structure(inputStream,big_endianness);
+		}	
+
+	}
+	else {
+		while ( std::getline(inputStream, str) ) {
+
+			STR = "# name: afferentArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_afferentArrayDimensionality, inputStream);
+				check_afferentArrayDimensionality = true;
+			}
+
+			STR = "# name: afferentDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_afferentDimensionality, inputStream);
+				check_afferentDimensionality = true;
+			}
+
+			STR = "# name: afferentReceptiveField";
+			if ( str.compare(STR) == 0 ) {
+				_afferentReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_matrix_to_vector(receptiveField, inputStream);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_afferentReceptiveField.push_back(s);
+				}
+				check_afferentReceptiveField = true;
+			}
+
+			STR = "# name: afferentPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_afferentPercentage, inputStream);
+				check_afferentPercentage = true;
+			}
+
+			STR = "# name: afferentWrapAround";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_afferentWrapAround, inputStream);
+				check_afferentWrapAround = true;
+			}
+
+
+
+			STR = "# name: apicalArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_apicalArrayDimensionality, inputStream);
+				check_apicalArrayDimensionality = true;
+			}
+
+			STR = "# name: apicalDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_apicalDimensionality, inputStream);
+				check_apicalDimensionality = true;
+			}
+
+			STR = "# name: apicalReceptiveField";
+			if ( str.compare(STR) == 0 ) {
+				_apicalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_matrix_to_vector(receptiveField, inputStream);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_apicalReceptiveField.push_back(s);
+				}
+				check_apicalReceptiveField = true;
+			}
+
+			STR = "# name: apicalPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_apicalPercentage, inputStream);
+				check_apicalPercentage = true;
+			}
+
+			STR = "# name: apicalWrapAround";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_apicalWrapAround, inputStream);
+				check_apicalWrapAround = true;
+			}
+
+
+
+			STR = "# name: columnsArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_columnsArrayDimensionality, inputStream);
+				check_columnsArrayDimensionality = true;
+			}
+
+			STR = "# name: columnsDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_columnsDimensionality, inputStream);
+				check_columnsDimensionality = true;
+			}
+
+
+
+			STR = "# name: lateralDistalReceptiveField";
+			if ( str.compare(STR) == 0 ) {
+				_lateralDistalReceptiveField.clear();
+				std::vector<int>	receptiveField;
+				load_matrix_to_vector(receptiveField, inputStream);
+				for(const auto& s : receptiveField) {
+					if ( s > -1 )
+						_lateralDistalReceptiveField.push_back(s);
+				}
+				check_lateralDistalReceptiveField = true;
+			}
+
+			STR = "# name: lateralDistalPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_lateralDistalPercentage, inputStream);
+				check_lateralDistalPercentage = true;
+			}
+
+			STR = "# name: lateralDistalWrapAround";
+			if ( str.compare(STR) == 0 ) {
+				load_bool(_lateralDistalWrapAround, inputStream);
+				check_lateralDistalWrapAround = true;
+			}
+
+
+
+			STR = "# name: afferentConnections";
+			if ( str.compare(STR) == 0 ) {
+				check_afferentConnections = true;
+				SparseMatrixElements<bool>	sparseAfferentConnectionsBitMap;
+				load_sparse_matrix_to_sparse_matrix_elements(sparseAfferentConnectionsBitMap, inputStream);
+				twodvector<bool>	afferentConnectionsBitMap;
+				afferentConnectionsBitMap = from_sparse(sparseAfferentConnectionsBitMap);
+				for ( std::size_t column = world_rank; column < afferentConnectionsBitMap.size(); column=column+world_size ) {
+					std::vector<std::size_t>	auxiliaryConnections;
+					for ( std::size_t index = 0; index < afferentConnectionsBitMap[column].size(); index++ ) {
+						if ( afferentConnectionsBitMap[column][index] == true )
+							auxiliaryConnections.push_back(index);
+					}
+
+					_afferentConnections.push_back(auxiliaryConnections);
+				}
+				_afferentConnections.shrink_to_fit();
+			}
+
+			STR = "# name: lateralDistalConnections";
+			if ( str.compare(STR) == 0 ) {
+				check_lateralDistalConnections = true;
+				SparseMatrixElements<bool>	sparseLateralDistalConnectionsBitMap;
+				load_sparse_matrix_to_sparse_matrix_elements(sparseLateralDistalConnectionsBitMap, inputStream);
+				twodvector<bool>	lateralDistalConnectionsBitMap;
+				lateralDistalConnectionsBitMap = from_sparse(sparseLateralDistalConnectionsBitMap);
+				for ( std::size_t column = world_rank; column < lateralDistalConnectionsBitMap.size(); column=column+world_size ) {
+					std::vector<std::size_t>	auxiliaryConnections;
+					for ( std::size_t index = 0; index < lateralDistalConnectionsBitMap[column].size(); index++ ) {
+						if ( lateralDistalConnectionsBitMap[column][index] == true )
+							auxiliaryConnections.push_back(index);
+					}
+					_lateralDistalConnections.push_back(auxiliaryConnections);
+				}
+				_lateralDistalConnections.shrink_to_fit();
+			}
+
+			STR = "# name: apicalConnections";
+			if ( str.compare(STR) == 0 ) {
+				check_apicalConnections = true;
+				SparseMatrixElements<bool>	sparseApicalConnectionsBitMap;
+				load_sparse_matrix_to_sparse_matrix_elements(sparseApicalConnectionsBitMap, inputStream);
+				twodvector<bool>	apicalConnectionsBitMap;
+				apicalConnectionsBitMap = from_sparse(sparseApicalConnectionsBitMap);
+				for ( std::size_t column = world_rank; column < apicalConnectionsBitMap.size(); column=column+world_size ) {
+					std::vector<std::size_t>	auxiliaryConnections;
+					for ( std::size_t index = 0; index < apicalConnectionsBitMap[column].size(); index++ ) {
+						if ( apicalConnectionsBitMap[column][index] == true )
+							auxiliaryConnections.push_back(index);
+					}
+					_apicalConnections.push_back(auxiliaryConnections);
+				}
+				_apicalConnections.shrink_to_fit();
+			}
+
+			STR = "# name: populationsArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_populationsArrayDimensionality, inputStream);
+				check_populationsArrayDimensionality = true;
+			}
+
+			STR = "# name: apicalPopulationsArrayDimensionality";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(_apicalPopulationsArrayDimensionality, inputStream);
+				check_apicalPopulationsArrayDimensionality = true;
+			}
+
+
+
+			STR = "# name: proximalAfferentLowerLimits";
+			if ( str.compare(STR) == 0 ) {
+				check_proximalAfferentLowerLimits = true;
+				std::vector<double>	lowerLimits;
+				load_matrix_to_vector(lowerLimits, inputStream);
+				auto	numberOfLimits = lowerLimits.size();
+				_proximalAfferentLimits.resize(numberOfLimits);
+				for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
+					_proximalAfferentLimits[limit][0] = lowerLimits[limit];
+			}
+
+			STR = "# name: proximalAfferentUpperLimits";
+			if ( str.compare(STR) == 0 ) {
+				check_proximalAfferentUpperLimits = true;
+				std::vector<double>	upperLimits;
+				load_matrix_to_vector(upperLimits, inputStream);
+				auto	numberOfLimits = upperLimits.size();
+				_proximalAfferentLimits.resize(numberOfLimits);
+				for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
+					_proximalAfferentLimits[limit][1] = upperLimits[limit];
+			}
+
+			STR = "# name: afferentUpdateStep";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_afferentUpdateStep, inputStream);
+				check_afferentUpdateStep = true;
+			}
+
+			STR = "# name: potentialPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_potentialPercentage, inputStream);
+				check_potentialPercentage = true;
+			}
+
 		}
-
-		STR = "# name: populationsArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_populationsArrayDimensionality, inputStream);
-			check_populationsArrayDimensionality = true;
-		}
-
-		STR = "# name: apicalPopulationsArrayDimensionality";
-		if ( str.compare(STR) == 0 ) {
-			load_matrix_to_vector(_apicalPopulationsArrayDimensionality, inputStream);
-			check_apicalPopulationsArrayDimensionality = true;
-		}
-
-
-
-		STR = "# name: proximalAfferentLowerLimits";
-		if ( str.compare(STR) == 0 ) {
-			check_proximalAfferentLowerLimits = true;
-			std::vector<double>	lowerLimits;
-			load_matrix_to_vector(lowerLimits, inputStream);
-			auto	numberOfLimits = lowerLimits.size();
-			_proximalAfferentLimits.resize(numberOfLimits);
-			for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
-				_proximalAfferentLimits[limit][0] = lowerLimits[limit];
-		}
-
-		STR = "# name: proximalAfferentUpperLimits";
-		if ( str.compare(STR) == 0 ) {
-			check_proximalAfferentUpperLimits = true;
-			std::vector<double>	upperLimits;
-			load_matrix_to_vector(upperLimits, inputStream);
-			auto	numberOfLimits = upperLimits.size();
-			_proximalAfferentLimits.resize(numberOfLimits);
-			for ( std::size_t limit = 0; limit < numberOfLimits; limit++ )
-				_proximalAfferentLimits[limit][1] = upperLimits[limit];
-		}
-
-		STR = "# name: afferentUpdateStep";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_afferentUpdateStep, inputStream);
-			check_afferentUpdateStep = true;
-		}
-
-		STR = "# name: potentialPercentage";
-		if ( str.compare(STR) == 0 ) {
-			load_scalar(_potentialPercentage, inputStream);
-			check_potentialPercentage = true;
-		}
-
 	}
 
 	assert(check_afferentArrayDimensionality == true);
@@ -2149,8 +2500,9 @@ void	EncoderLayer::mergeOutputs( regularLayerResponse& output )
 
 
 // merges all connections in rank 0
-void	EncoderLayer::gatherConnections()
+connectionsSet	EncoderLayer::gatherConnections()
 {
+	connectionsSet	auxiliaryConnections;
 	// Get the number of processes
 	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
 
@@ -2165,34 +2517,28 @@ void	EncoderLayer::gatherConnections()
 			int	number_amount;
 			MPI_Status status;
 
-			twodvector<std::size_t>		afferentConnections;
-
 			if ( _afferentConnections.size() != 0 ) {
 				// Allocate memory for afferent connections
-				afferentConnections.resize(_columnsDimensionality);
+				auxiliaryConnections.afferentConnections.resize(_columnsDimensionality);
 				// Collects rank 0 afferent connections
 				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
-					afferentConnections[column] = _afferentConnections[column/world_size];
+					auxiliaryConnections.afferentConnections[column] = _afferentConnections[column/world_size];
 			}
-
-			twodvector<std::size_t>		lateralDistalConnections;
 
 			if ( _lateralDistalConnections.size() != 0 ) {
 				// Allocate memory for lateral distal connections
-				lateralDistalConnections.resize(_columnsDimensionality);
+				auxiliaryConnections.lateralDistalConnections.resize(_columnsDimensionality);
 				// Collects rank 0 lateral distal connections
 				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
-					lateralDistalConnections[column] = _lateralDistalConnections[column/world_size];
+					auxiliaryConnections.lateralDistalConnections[column] = _lateralDistalConnections[column/world_size];
 			}
-
-			twodvector<std::size_t>		apicalConnections;
 
 			if ( _apicalConnections.size() != 0 ) {
 				// Allocate memory for apical connections
-				apicalConnections.resize(_columnsDimensionality);
+				auxiliaryConnections.apicalConnections.resize(_columnsDimensionality);
 				// Collects rank 0 apical connections
 				for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
-					apicalConnections[column] = _apicalConnections[column/world_size];
+					auxiliaryConnections.apicalConnections[column] = _apicalConnections[column/world_size];
 			}
 
 			// Receives connections from other processes
@@ -2239,15 +2585,15 @@ void	EncoderLayer::gatherConnections()
 
 					// Collects in rank 0 afferent connections from process
 					for ( std::size_t column = process; column < _columnsDimensionality; column=column+world_size ) {
-						if ( afferentConnections[column].size() != 0 ) {
+						if ( auxiliaryConnections.afferentConnections[column].size() != 0 ) {
 							std::cout << "\nIn process " << world_rank << "\n"; 
 							std::cout << "\nmergeConnections inconsistence:\n"; 
 							std::cout << "\nafferentConnections[column].size() != 0\n"; 
 							MPI_Abort(MPI_COMM_WORLD,1);
 						}
-						afferentConnections[column].insert(afferentConnections[column].end(),
-										   connections.begin(),
-										   connections.begin()+connectionsStructure[column/world_size]);
+						auxiliaryConnections.afferentConnections[column].insert(auxiliaryConnections.afferentConnections[column].end(),
+												   	connections.begin(),
+												   	connections.begin()+connectionsStructure[column/world_size]);
 
 						connections.erase(connections.begin(), connections.begin()+connectionsStructure[column/world_size]);
 					}
@@ -2300,15 +2646,15 @@ void	EncoderLayer::gatherConnections()
 
 					// Collects in rank 0 lateral distal connections from process
 					for ( std::size_t column = process; column < _columnsDimensionality; column=column+world_size ) {
-						if ( lateralDistalConnections[column].size() != 0 ) {
+						if ( auxiliaryConnections.lateralDistalConnections[column].size() != 0 ) {
 							std::cout << "\nIn process " << world_rank << "\n"; 
 							std::cout << "\nmergeConnections inconsistence:\n"; 
 							std::cout << "\nlateralDistalConnections[column].size() != 0\n"; 
 							MPI_Abort(MPI_COMM_WORLD,1);
 						}
-						lateralDistalConnections[column].insert(lateralDistalConnections[column].end(),
-										   connections.begin(),
-										   connections.begin()+connectionsStructure[column/world_size]);
+						auxiliaryConnections.lateralDistalConnections[column].insert(auxiliaryConnections.lateralDistalConnections[column].end(),
+													     connections.begin(),
+													     connections.begin()+connectionsStructure[column/world_size]);
 
 						connections.erase(connections.begin(), connections.begin()+connectionsStructure[column/world_size]);
 					}
@@ -2361,13 +2707,13 @@ void	EncoderLayer::gatherConnections()
 
 					// Collects in rank 0 apical connections from process
 					for ( std::size_t column = process; column < _columnsDimensionality; column=column+world_size ) {
-						if ( apicalConnections[column].size() != 0 ) {
+						if ( auxiliaryConnections.apicalConnections[column].size() != 0 ) {
 							std::cout << "\nIn process " << world_rank << "\n"; 
 							std::cout << "\nmergeConnections inconsistence:\n"; 
 							std::cout << "\napicalConnections[column].size() != 0\n"; 
 							MPI_Abort(MPI_COMM_WORLD,1);
 						}
-						apicalConnections[column].insert(apicalConnections[column].end(),
+						auxiliaryConnections.apicalConnections[column].insert(auxiliaryConnections.apicalConnections[column].end(),
 										 connections.begin(),
 										 connections.begin()+connectionsStructure[column/world_size]);
 
@@ -2380,14 +2726,7 @@ void	EncoderLayer::gatherConnections()
 				}
 			}
 
-			// rank 0 merges all connections in its connections members
-			_afferentConnections.clear();
-			_afferentConnections = afferentConnections;
-			_lateralDistalConnections.clear();
-			_lateralDistalConnections = lateralDistalConnections;
-			_apicalConnections.clear();
-			_apicalConnections = apicalConnections;
-
+			// rank 0 merges all connections in auxiliaryConnections
 		}
 		else { // If this is not rank 0, then it sends its connections to rank 0
 			if ( _afferentConnections.size() != 0 ) {
@@ -2451,4 +2790,11 @@ void	EncoderLayer::gatherConnections()
 			}
 		}
 	}
+	else { // if there is just one process
+		auxiliaryConnections.afferentConnections = _afferentConnections;
+		auxiliaryConnections.lateralDistalConnections = _lateralDistalConnections;
+		auxiliaryConnections.apicalConnections = _apicalConnections;
+	}
+
+	return	auxiliaryConnections;
 } // end function gatherConnections
