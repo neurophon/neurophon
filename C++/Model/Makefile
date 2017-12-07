@@ -1,19 +1,24 @@
 # Set the compilers you want to use
 
 # Use g++-5 gcc version 4.8.5 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
-CC = g++-5
+#CC = g++-5
+CC = g++
 
 # Use mpic++ for MPICH version 3.2 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
-MPI = mpic++
+MPI = mpic++ -cxx=
+#MPI = mpicc -cc=
 
 # Use the following Compile-time flags
-CFLAGS = -fopenmp -Wall -pedantic -std=c++14
+#CFLAGS = -fopenmp -Wall -pedantic -std=c++14
+CFLAGS = -O3 -fopenmp -Wall -pedantic -std=c++14
 
 # Use the following libraries
 LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/Constants.h\
 	    ../Libraries/Model/DataTypes.h\
-	    ../Libraries/Model/OctaveInterface.h
+	    ../Libraries/Model/OctaveInterface.h\
+	    ../Libraries/Model/MatalabInterface.h\
+	    ../Libraries/Model/GlobalVariables.h
 
 # Linking compiled files
 Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
@@ -22,17 +27,17 @@ Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 	     EncoderLayer.o RegularLayer.o\
 	     Model.o\
 	     Utilities.o Random.o Topology.o
-	$(MPI) -cxx=$(CC) $(CFLAGS) main.o StaticSelfOrganizingMap.o StaticProcessor.o\
-					   DynamicSelfOrganizingMap.o DynamicProcessor.o\
-					   ComplexSelfOrganizingMap.o ComplexProcessor.o\
-					   EncoderLayer.o RegularLayer.o\
-					   Model.o\
-					   Utilities.o Random.o Topology.o\
-					   -o Test
+	$(MPI) $(CC) $(CFLAGS) main.o StaticSelfOrganizingMap.o StaticProcessor.o\
+				      DynamicSelfOrganizingMap.o DynamicProcessor.o\
+				      ComplexSelfOrganizingMap.o ComplexProcessor.o\
+				      EncoderLayer.o RegularLayer.o\
+				      Model.o\
+				      Utilities.o Random.o Topology.o\
+				      -o Test
 
 # Compiling main
 main.o: main.cpp
-	$(MPI) -cxx=$(CC) -c $(CFLAGS) main.cpp
+	$(MPI) $(CC) -c $(CFLAGS) main.cpp
 
 # Compiling Static self organizing map class
 StaticSelfOrganizingMap.o: StaticSelfOrganizingMap.cpp StaticSelfOrganizingMap.h $(LIBRARIES)
@@ -60,15 +65,15 @@ ComplexProcessor.o: ComplexProcessor.cpp ComplexProcessor.h $(LIBRARIES)
 
 # Compiling encoder layer class
 EncoderLayer.o: EncoderLayer.cpp EncoderLayer.h $(LIBRARIES)
-	$(MPI) -cxx=$(CC) -c $(CFLAGS) EncoderLayer.cpp
+	$(MPI) $(CC) -c $(CFLAGS) EncoderLayer.cpp
 
 # Compiling regular layer class
 RegularLayer.o: RegularLayer.cpp RegularLayer.h $(LIBRARIES)
-	$(MPI) -cxx=$(CC) -c $(CFLAGS) RegularLayer.cpp
+	$(MPI) $(CC) -c $(CFLAGS) RegularLayer.cpp
 	
 # Compiling model class
 Model.o: Model.cpp Model.h $(LIBRARIES)
-	$(MPI) -cxx=$(CC) -c $(CFLAGS) Model.cpp
+	$(MPI) $(CC) -c $(CFLAGS) Model.cpp
 
 # Compiling utilities library
 Utilities.o: ../Libraries/Model/Utilities.cpp ../Libraries/Model/Utilities.h $(LIBRARIES)
