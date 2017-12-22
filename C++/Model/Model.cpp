@@ -1327,7 +1327,7 @@ void	Model::loadModelStatus( const std::string& folderName, const bool training 
 			for ( std::size_t layerNumber = _modelStructure.newLayerAt+1;
 					  layerNumber < _modelStructure.numberOfLayers;
 					  layerNumber++ ) {
-				if ( world_rank == 0 ) {
+				if ( world_rank == 0 && layerNumber == _modelStructure.newLayerAt+1) {
 					std::cout << "\nCreating new regular layers "
 					          << "from regular layer number "
 						  << _modelStructure.newLayerAt+1
@@ -1337,7 +1337,7 @@ void	Model::loadModelStatus( const std::string& folderName, const bool training 
 				}
 				_regularLayers[layerNumber].layerInitializer(_regularLayerStructures[layerNumber]);
 
-				if ( world_rank == 0 )
+				if ( world_rank == 0 && layerNumber == _modelStructure.newLayerAt+1)
 					std::cout << "\nNew regular layers created." << std::endl;
 
 			}
@@ -1531,24 +1531,24 @@ void	Model::loadModelStructure( const std::string& folderName )
 
 			STR = "encoderIncorporation";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_modelStructure.encoderIncorporation = true;
-				else
+				if (aux_bool < 1)
 					_modelStructure.encoderIncorporation = false;
+				else
+					_modelStructure.encoderIncorporation = true;
 
 				check_encoderIncorporation = true;
 			}
 
 			STR = "newEncoder";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_modelStructure.newEncoder = true;
-				else
+				if (aux_bool < 1)
 					_modelStructure.newEncoder = false;
+				else
+					_modelStructure.newEncoder = true;
 
 				check_newEncoder = true;
 			}
@@ -1922,12 +1922,12 @@ void	Model::loadEncoderLayerStructure( const std::string& folderName )
 
 			STR = "afferentWrapAround";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerStructure.afferentWrapAround = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerStructure.afferentWrapAround = false;
+				else
+					_encoderLayerStructure.afferentWrapAround = true;
 
 				check_afferentWrapAround = true;
 			}
@@ -1952,12 +1952,12 @@ void	Model::loadEncoderLayerStructure( const std::string& folderName )
 
 			STR = "lateralDistalWrapAround";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerStructure.lateralDistalWrapAround = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerStructure.lateralDistalWrapAround = false;
+				else
+					_encoderLayerStructure.lateralDistalWrapAround = true;
 
 				check_lateralDistalWrapAround = true;
 			}
@@ -1982,12 +1982,12 @@ void	Model::loadEncoderLayerStructure( const std::string& folderName )
 
 			STR = "apicalWrapAround";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerStructure.apicalWrapAround = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerStructure.apicalWrapAround = false;
+				else
+					_encoderLayerStructure.apicalWrapAround = true;
 
 				check_apicalWrapAround = true;
 			}
@@ -2376,12 +2376,12 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 
 				STR = "afferentWrapAround";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerStructures[layerNumber].afferentWrapAround = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerStructures[layerNumber].afferentWrapAround = false;
+					else
+						_regularLayerStructures[layerNumber].afferentWrapAround = true;
 
 					check_afferentWrapAround = true;
 				}
@@ -2408,12 +2408,12 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 
 				STR = "lateralProximalWrapAround";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerStructures[layerNumber].lateralProximalWrapAround = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerStructures[layerNumber].lateralProximalWrapAround = false;
+					else
+						_regularLayerStructures[layerNumber].lateralProximalWrapAround = true;
 
 					check_lateralProximalWrapAround = true;
 				}
@@ -2440,12 +2440,12 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 
 				STR = "lateralDistalWrapAround";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerStructures[layerNumber].lateralDistalWrapAround = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerStructures[layerNumber].lateralDistalWrapAround = false;
+					else
+						_regularLayerStructures[layerNumber].lateralDistalWrapAround = true;
 
 					check_lateralDistalWrapAround = true;
 				}
@@ -2472,12 +2472,12 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 
 				STR = "apicalWrapAround";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerStructures[layerNumber].apicalWrapAround = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerStructures[layerNumber].apicalWrapAround = false;
+					else
+						_regularLayerStructures[layerNumber].apicalWrapAround = true;
 
 					check_apicalWrapAround = true;
 				}
@@ -2900,24 +2900,24 @@ void	Model::loadEncoderLayerParameters( const std::string& folderName )
 
 			STR = "enableLearning";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerParameters.enableLearning = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerParameters.enableLearning = false;
+				else
+					_encoderLayerParameters.enableLearning = true;
 
 				check_enableLearning = true;
 			}
 
 			STR = "distalSensitivity";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerParameters.distalSensitivity = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerParameters.distalSensitivity = false;
+				else
+					_encoderLayerParameters.distalSensitivity = true;
 
 				check_distalSensitivity = true;
 			}
@@ -2948,24 +2948,24 @@ void	Model::loadEncoderLayerParameters( const std::string& folderName )
 
 			STR = "enableProximalLearning";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerParameters.learning.enableProximalLearning = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerParameters.learning.enableProximalLearning = false;
+				else
+					_encoderLayerParameters.learning.enableProximalLearning = true;
 
 				check_enableProximalLearning = true;
 			}
 
 			STR = "enableDistalLearning";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerParameters.learning.enableDistalLearning = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerParameters.learning.enableDistalLearning = false;
+				else
+					_encoderLayerParameters.learning.enableDistalLearning = true;
 
 				check_enableDistalLearning = true;
 			}
@@ -2984,12 +2984,12 @@ void	Model::loadEncoderLayerParameters( const std::string& folderName )
 
 			STR = "spikeTimeDependentSynapticPlasticity";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux_bool;
+				double	aux_bool;
 				load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-				if (aux_bool > 0)
-					_encoderLayerParameters.learning.spikeTimeDependentSynapticPlasticity = true;
-				else
+				if (aux_bool < 1)
 					_encoderLayerParameters.learning.spikeTimeDependentSynapticPlasticity = false;
+				else
+					_encoderLayerParameters.learning.spikeTimeDependentSynapticPlasticity = true;
 
 				check_spikeTimeDependentSynapticPlasticity = true;
 			}
@@ -3243,36 +3243,36 @@ void	Model::loadRegularLayerParameters( const std::string& folderName )
 
 				STR = "enableLearning";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerParameters[layerNumber].enableLearning = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerParameters[layerNumber].enableLearning = false;
+					else
+						_regularLayerParameters[layerNumber].enableLearning = true;
 
 					check_enableLearning = true;
 				}
 
 				STR = "distalSensitivity";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerParameters[layerNumber].distalSensitivity = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerParameters[layerNumber].distalSensitivity = false;
+					else
+						_regularLayerParameters[layerNumber].distalSensitivity = true;
 
 					check_distalSensitivity = true;
 				}
 
 				STR = "activationHomeostasis";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerParameters[layerNumber].activationHomeostasis = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerParameters[layerNumber].activationHomeostasis = false;
+					else
+						_regularLayerParameters[layerNumber].activationHomeostasis = true;
 
 					check_activationHomeostasis = true;
 				}
@@ -3303,36 +3303,36 @@ void	Model::loadRegularLayerParameters( const std::string& folderName )
 
 				STR = "enableProximalLearning";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerParameters[layerNumber].learning.enableProximalLearning = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerParameters[layerNumber].learning.enableProximalLearning = false;
+					else
+						_regularLayerParameters[layerNumber].learning.enableProximalLearning = true;
 
 					check_enableProximalLearning = true;
 				}
 
 				STR = "enableDistalLearning";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerParameters[layerNumber].learning.enableDistalLearning = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerParameters[layerNumber].learning.enableDistalLearning = false;
+					else
+						_regularLayerParameters[layerNumber].learning.enableDistalLearning = true;
 
 					check_enableDistalLearning = true;
 				}
 
 				STR = "synapticHomeostasis";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerParameters[layerNumber].learning.synapticHomeostasis = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerParameters[layerNumber].learning.synapticHomeostasis = false;
+					else
+						_regularLayerParameters[layerNumber].learning.synapticHomeostasis = true;
 
 					check_synapticHomeostasis = true;
 				}
@@ -3363,12 +3363,12 @@ void	Model::loadRegularLayerParameters( const std::string& folderName )
 
 				STR = "spikeTimeDependentSynapticPlasticity";
 				if ( array_structure.name.compare(STR) == 0 ) {
-					std::size_t	aux_bool;
+					double	aux_bool;
 					load_numeric_array_to_scalar(array_structure, aux_bool, infile, big_endianness);
-					if (aux_bool > 0)
-						_regularLayerParameters[layerNumber].learning.spikeTimeDependentSynapticPlasticity = true;
-					else
+					if (aux_bool < 1)
 						_regularLayerParameters[layerNumber].learning.spikeTimeDependentSynapticPlasticity = false;
+					else
+						_regularLayerParameters[layerNumber].learning.spikeTimeDependentSynapticPlasticity = true;
 
 					check_spikeTimeDependentSynapticPlasticity = true;
 				}
