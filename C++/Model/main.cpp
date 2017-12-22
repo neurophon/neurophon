@@ -10,13 +10,14 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	if (system("CLS")) system("clear");
-
 	// Initialize the MPI environment.
 	MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
 
 	// Get the rank of the process
 	int	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if (world_rank == 0)
+		if (system("CLS")) system("clear");
 
 	srand(time(NULL) + world_rank);
 
