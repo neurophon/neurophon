@@ -52,4 +52,8 @@ octave-workspace
 # Festival: SABLE markup files
 *.sable
 
+# cobaltlog error and output files
+*.cobaltlog
+*.error
+*.output
 
