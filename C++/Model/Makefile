@@ -3,6 +3,7 @@
 # Use g++-5 gcc version 4.8.5 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
 #CC = g++-5
 CC = g++
+#CC = icpc
 
 # Use mpic++ for MPICH version 3.2 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
 MPI = mpic++ -cxx=
@@ -10,14 +11,15 @@ MPI = mpic++ -cxx=
 
 # Use the following Compile-time flags
 #CFLAGS = -fopenmp -Wall -pedantic -std=c++14
-CFLAGS = -O3 -fopenmp -Wall -pedantic -std=c++14
+#CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
+CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
 
 # Use the following libraries
 LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/Constants.h\
 	    ../Libraries/Model/DataTypes.h\
 	    ../Libraries/Model/OctaveInterface.h\
-	    ../Libraries/Model/MatalabInterface.h\
+	    ../Libraries/Model/MatlabInterface.h\
 	    ../Libraries/Model/GlobalVariables.h
 
 # Linking compiled files
