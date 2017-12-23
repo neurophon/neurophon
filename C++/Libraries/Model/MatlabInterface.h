@@ -442,7 +442,10 @@ void	wirte_sparse_array_preamble( const std::string& name,
 	write_size_t_as_ubinary_number(4, 6, stm, big_endianness);
 	write_size_t_as_ubinary_number(4, 8, stm, big_endianness);
 	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
-	write_size_t_as_ubinary_number(4, nnz, stm, big_endianness);
+	if (nnz == 0)
+		write_size_t_as_ubinary_number(4, 1, stm, big_endianness);
+	else
+		write_size_t_as_ubinary_number(4, nnz, stm, big_endianness);
 
 	// Dimensions array
 	write_size_t_as_ubinary_number(4, 5, stm, big_endianness);
@@ -1231,8 +1234,18 @@ matlabData	check_next_data_structure( T &stm, const bool big_endianness )
 			}
 
  			// checks if total_number_of_bytes is correct
-			if (total_number_of_bytes-8-8*total_number_of_elements != 0) {
-				goto	miMATRIX;
+			if(total_number_of_elements == 1) {
+				if (total_number_of_bytes-8-8*1 != 0 && 
+				    total_number_of_bytes-8-8*0 != 0) {
+					goto	miMATRIX;
+				}
+				if (total_number_of_bytes-8-8*0 == 0)
+					output.nnz = 0;
+			}
+			else {
+				if (total_number_of_bytes-8-8*total_number_of_elements != 0) {
+					goto	miMATRIX;
+				}
 			}
 		break;
 		case 1: 
