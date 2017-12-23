@@ -2183,6 +2183,8 @@ void	RegularLayer::saveRegularLayerStatus( const std::string& folderName, const 
 
 	std::string	name = "../../Octave/" + folderName + "/RegularLayer_" + std::to_string(identifyer) + ".mat";
 	std::remove(&name[0]);
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	// open a file in write mode
 	MPI::File outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
 					    MPI::MODE_CREATE | MPI::MODE_WRONLY,

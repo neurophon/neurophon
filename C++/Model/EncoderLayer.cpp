@@ -1737,6 +1737,8 @@ void	EncoderLayer::saveEncoderLayerStatus( const std::string& folderName )
 
 	std::string	name = "../../Octave/" + folderName + "/EncoderLayer.mat";
 	std::remove(&name[0]);
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	// open a file in write mode
 	MPI::File outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
 					    MPI::MODE_CREATE | MPI::MODE_WRONLY,
