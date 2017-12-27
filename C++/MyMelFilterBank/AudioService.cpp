@@ -33,9 +33,11 @@
 
 using namespace std;
 
-#include "../Libraries/Constants.h"
-#include "../Libraries/DataTypes.h"
-#include "../Libraries/OctaveInterface.h"
+#include "../Libraries/Model/Constants.h"
+#include "../Libraries/Model/DataTypes.h"
+#include "../Libraries/Model/Utilities.h"
+#include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
 
 // function to filter AudioVector.mat through a Mel Filter Bank.
 void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWindow, int persistenceValue, double leakyCoefficient,
@@ -300,143 +302,86 @@ void	filterAudioVector( int numberOfFilters, double sampleRate, double sampleWin
 // function to read "AudioVector.mat" file
 audioVector	loadAudioVectorFile()
 {
-	int	i, j;
-	int	rows, columns;
-
-	char	pathFile[100];
-
-	char	vectorName[11];
-	char	vectorType[16];
-	char	vectorRows[8];
-	char	vectorColumns[11];
-
-	char	scalarName[12];
-	char	scalarType[16];
-
 	int	Fs;
-	double	*X;
+	twodvector<double>	X;
 
 	audioVector audio;
 
-	FILE *filePointer; 								// ConnectomeNode.conn file pointer
-
-	strcpy(pathFile, "../../Octave/AudioVector.mat");
-
+	std::ifstream	file( "../../Octave/AudioVector.mat" );
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( pathFile, "r" ) ) == NULL ) {
+	if ( !file ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
-	} // end if
+	}
 	else {
-		passNewLine(filePointer);
 
-		/////////////////////////// reads the vector name
-		fgets(vectorName, 11, filePointer);
-		if ( strcmp(vectorName, "# name: X\n") != 0)
-		{
-			printf("File corrupted; read: %s\nwhen it must have been: # name: X\n", vectorName);
-			exit( EXIT_FAILURE );
-		}
+		std::stringstream buffer;
 
-		/////////////////////////// reads the vector type
-		fgets(vectorType, 16, filePointer);
-		if ( strcmp(vectorType, "# type: matrix\n") != 0)
-		{
-			printf("File corrupted; read: %s\nwhen it must have been: # type: matrix\n", vectorType);
-			exit( EXIT_FAILURE );
-		}
+		buffer << file.rdbuf();
 
-		/////////////////////////// reads the vector rows
-		fgets(vectorRows, 8, filePointer);
-		if ( strcmp(vectorRows, "# rows:") != 0)
-		{
-			printf("File corrupted; read: %s\nwhen it must have been: # rows: \n", vectorRows);
-			exit( EXIT_FAILURE );
-		}
-		fscanf(filePointer, "%d", &rows);
-		passNewLine(filePointer);
+		file.close();
 
-		/////////////////////////// reads the vector columns
-		fgets(vectorColumns, 11, filePointer);
-		if ( strcmp(vectorColumns, "# columns:") != 0)
-		{
-			printf("File corrupted; read: %s\nwhen it must have been: # columns: \n", vectorColumns);
-			exit( EXIT_FAILURE );
-		}
-		fscanf(filePointer, "%d", &columns);
-		passNewLine(filePointer);
+		auto	big_endianness = is_big_endian();
+		std::string	str, auxiliary;
 
-		X = (double*)calloc(rows*columns, sizeof(double));	// reserves space for vector
-		for (i = 0; i < rows; i++)
-		{
-				for (j = 0; j < columns; j++)
-				{
-					fscanf(filePointer, " %lf", ((X + i*columns) + j) );
+		bool	check_X = false;
+		bool	check_Fs = false;
+
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			auto	array_structure = check_next_data_structure(buffer, big_endianness);
+			while ( array_structure.more_data ) {
+
+				auxiliary = "Fs";
+				if ( array_structure.name.compare(auxiliary) == 0 ) {
+					load_numeric_array_to_scalar(array_structure, Fs, buffer, big_endianness);
+					check_Fs = true;
 				}
-				passNewLine(filePointer);
+
+				auxiliary = "X";
+				if ( array_structure.name.compare(auxiliary) == 0 ) {
+					load_numeric_array_to_vector_of_vectors(array_structure, X, buffer, big_endianness);
+					check_X = true;
+				}
+
+				array_structure = check_next_data_structure(buffer,big_endianness);
+			}	
+
+
 		}
-		passNewLine(filePointer);
-		passNewLine(filePointer);
+		else {
+			while ( std::getline(buffer, str) ) {
 
-		/////////////////////////// reads the scalar name
-		fgets(scalarName, 12, filePointer);
-		if ( strcmp(scalarName, "# name: Fs\n") != 0)
-		{
-			printf("File corrupted; read: %s\nwhen it must have been: # name: Fs\n", scalarName);
-			exit( EXIT_FAILURE );
-		}
+				auxiliary = "# name: Fs";
+				if ( str.compare(auxiliary) == 0 ) {
+					load_scalar(Fs, buffer);
+					check_Fs = true;
+				}
 
-		/////////////////////////// reads the vector type
-		fgets(scalarType, 16, filePointer);
-		if ( strcmp(scalarType, "# type: scalar\n") != 0)
-		{
-			printf("File corrupted; read: %s\nwhen it must have been: # type: scalar\n", scalarType);
-			exit( EXIT_FAILURE );
-		}
+				auxiliary = "# name: X";
+				if ( str.compare(auxiliary) == 0 ) {
+					load_matrix_to_vector_of_vectors(X, buffer);
+					check_X = true;
+				}
 
-		fscanf(filePointer, "%d", &Fs);
-
-		audio.X = X;
-		audio.rows = rows;
-		audio.columns = columns;
-		audio.Fs = Fs;
-
-/////////////////////////////////////////////////////////////////// Shows the connectome arrays on screen
-
-		char	option;
-
-		//printf("\nDo you want to show the audio vector X and the sample frequency Fs on screen? (Y) for yes and any key for no\n\n");
-		//scanf(" %c", &option);
-
-		option = 'n';
-
-		if ( option == 'Y')
-		{
-			/////////////////////////// Shows audio vector X on screen
-
-			printf("\n\n%s\n\n", vectorName);
-			printf("\n\n%s\n\n", vectorType);
-			printf("rows: %d\n\n", rows);
-			printf("columns: %d\n\n", columns);
-			for (i = 0; i < rows; i++)
-			{
-					for (j = 0; j < columns; j++)
-					{
-						printf(" %lf", *((X + i*columns) + j) );
-					}
-					printf("\n");
 			}
-			printf("\n\n");
-
-			/////////////////////////// Shows audio scalar sample frequency Fs on screen
-
-			printf("\n\n%s\n\n", scalarName);
-			printf("%s\n\n", scalarType);
-
-			printf(" %d", Fs);
-			printf("\n\n");
 		}
-	fclose( filePointer );								// fclose closes file
+
+		assert(check_X == true);
+		assert(check_Fs == true);
+
+		auto	dimensions = get_dimensionality(X);
+		assert(dimensions.size() == 2);
+
+		audio.rows = dimensions[0];
+		audio.columns = dimensions[1];
+		audio.X = (double*)calloc(dimensions[0]*dimensions[1], sizeof(double));					// reserves space for vector
+
+		for(std::size_t i = 0; i < dimensions[0]; i++) {
+			for(std::size_t j = 0; j < dimensions[1]; j++) {
+				*((audio.X + i*dimensions[1]) + j) = X[i][j];
+			}
+		}
+		audio.Fs = Fs;
 	}										// end else
 
 	return audio;
