@@ -307,19 +307,19 @@ audioVector	loadAudioVectorFile()
 
 	audioVector audio;
 
-	std::ifstream	file( "../../Octave/AudioVector.mat" );
-	// fopen opens file. Exit program if unable to create file
-	if ( !file ) {
-		printf( "File could not be opened\n" );
+	std::ifstream	inputFile( "../../Octave/AudioVector.mat", ios::in | ios::binary );
+	// fopen opens inputFile. Exit program if unable to create inputFile
+	if ( !inputFile ) {
+		printf( "inputFile could not be opened\n" );
 		exit( EXIT_FAILURE );
 	}
 	else {
 
 		std::stringstream buffer;
 
-		buffer << file.rdbuf();
+		buffer << inputFile.rdbuf();
 
-		file.close();
+		inputFile.close();
 
 		auto	big_endianness = is_big_endian();
 		std::string	str, auxiliary;
@@ -991,82 +991,74 @@ deltaArray	deltasDeltaDeltas( melArray Array, int N )
 // function to save the MFCC in a Octave format file
 void	saveMFCC( melArray mel, std::string name )
 {
-	int	i, j, k;
+	std::stringstream	outputStream;
 
-	FILE *filePointer; 								// "name".mat file pointer
+	// file preamble.
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		save_the_header(outputStream);
+	}
+	else {
+		outputStream << "# This is a file created by saveMFCC member function in AudioService from," << endl;
+		outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+		outputStream << "# Author: Dematties Dario Jesus." << endl;
+		outputStream << "\n\n" << endl;
+	}
+
+
+	for (int i = 0; i < mel.channels; i++) {
+		std::string	variableName = "MFCC";
+		if ( i+1 > 4 || i+1 < 1 ) {
+			printf( "Incorrect option in saveMFCC function. Incorrect channel number %d.\n", i+1 );
+			exit( EXIT_FAILURE );
+		}
+		else {
+			variableName += std::to_string(i+1);
+		}
+
+		twodvector<double>	MFCC;
+		MFCC.resize(mel.chunks);
+		for (int j = 0; j < mel.chunks; j++) {
+			MFCC[j].resize(mel.filters);
+			for (int k = 0; k < mel.filters; k++)
+				MFCC[j][k] = *((mel.channel[i] + j*(mel.filters)) + k);
+		}
+
+		// saves MFCC channel
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_of_vectors_as_numeric_array(variableName, MFCC, outputStream);
+		else
+			save_vector_of_vectors_as_matrix(variableName, MFCC, outputStream);
+
+	}
+
+	std::string	variableName = "Filters";
+	twodvector<double>	filter;
+	filter.resize(mel.filters);
+	for (int j = 0; j < mel.filters; j++) {
+		filter[j].resize(mel.fourierWindowLength/2+1);
+		for (int k = 0; k < mel.fourierWindowLength/2+1; k++)
+			filter[j][k] = *((mel.filter + j*(mel.fourierWindowLength/2+1)) + k);
+	}
+
+	// saves the Filters
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_of_vectors_as_numeric_array(variableName, filter, outputStream);
+	else
+		save_vector_of_vectors_as_matrix(variableName, filter, outputStream);
+
 	std::string	path = "../../Octave/";
 	std::string	extension = ".mat";
-	name = path + name + extension;
-
-	// fopen opens file. Exit program if unable to create file
-	const char * c_name = name.c_str();
-	if ( ( filePointer = fopen( c_name, "w" ) ) == NULL ) {
-		printf( "File could not be opened\n" );
+	std::string	fileName = path + name + extension;
+	ofstream	outputFile;
+	outputFile.open(fileName, ios::out | ios::binary | ios::trunc);
+	if (!outputFile) {
+		printf( "outputFile could not be opened\n" );
 		exit( EXIT_FAILURE );
-	} // end if
+	}
 	else {
-		fprintf( filePointer, "# This is a file created by saveMFCC function.\n" );
-
-		/////////////////////////// writes the MFCC data into file with fprintf
-
-		for (i = 0; i < mel.channels; i++)
-		{
-			switch ( i+1 )
-			{
-				case 1:
-					fprintf( filePointer, "# name: MFCC1\n" );
-				break;
-
-				case 2:
-					fprintf( filePointer, "# name: MFCC2\n" );
-				break;
-
-				case 3:
-					fprintf( filePointer, "# name: MFCC3\n" );
-				break;
-
-				case 4:
-					fprintf( filePointer, "# name: MFCC4\n" );
-				break;
-
-				default:
-					printf( "Incorrect option in saveMFCC function. Incorrect channel number %d.\n", i+1 );
-					exit( EXIT_FAILURE );
-				break;
-			}
-
-			fprintf( filePointer, "# type: matrix\n" );
-			fprintf( filePointer, "# rows: %d\n", mel.chunks );
-			fprintf( filePointer, "# columns: %d\n", mel.filters );
-			for (j = 0; j < mel.chunks; j++)
-			{
-					for (k = 0; k < mel.filters; k++)
-					{
-						fprintf( filePointer, " %lf", *((mel.channel[i] + j*(mel.filters)) + k) );
-					}
-					fprintf( filePointer, "\n" );
-			}
-			fprintf( filePointer, "\n\n" );
-		}
-
-		/////////////////////////// writes the MFCC filters configuration into file with fprintf
-
-		fprintf( filePointer, "# name: Filters\n" );
-		fprintf( filePointer, "# type: matrix\n" );
-		fprintf( filePointer, "# rows: %d\n", mel.filters );
-		fprintf( filePointer, "# columns: %d\n", mel.fourierWindowLength/2+1 );
-		for (j = 0; j < mel.filters; j++)
-		{
-				for (k = 0; k < mel.fourierWindowLength/2+1; k++)
-				{
-					fprintf( filePointer, " %lf", *((mel.filter + j*(mel.fourierWindowLength/2+1)) + k) );
-				}
-				fprintf( filePointer, "\n" );
-		}
-		fprintf( filePointer, "\n\n" );
-
-		fclose( filePointer );							// fclose closes file
-	}										// end else
+		outputFile << outputStream.rdbuf();
+		outputFile.close();
+	}
 } // end function saveMFCC
 
 
