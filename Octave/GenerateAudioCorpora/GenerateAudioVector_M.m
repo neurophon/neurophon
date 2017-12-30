@@ -19,9 +19,11 @@
 % Load the audio file 'audio.wav' from this folther. The data is saved in X and Fs is the sampling frequency with which the audio wave has been sampled.
 [X,Fs] = audioread('../../Audio/Corpus.wav');
 
-
+Residue = 1*10^(-10);
+X = X + Residue;
+Fs = Fs + Residue;
 % Saves vector X and scalar Fs in 'AudioVector.mat' file
-save ../AudioVector.mat X Fs;
+save ../AudioVector.mat X Fs -v6;
 
 
 
