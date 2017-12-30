@@ -10,9 +10,9 @@ MPI = mpic++ -cxx=
 #MPI = mpicc -cc=
 
 # Use the following Compile-time flags
-#CFLAGS = -fopenmp -Wall -pedantic -std=c++14
-#CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
-CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
+# IMPORTANT!!! DO NOT APPLY OPTIMIZATION
+#CFLAGS = -Wall -pedantic -std=c++14
+CFLAGS = -fopenmp -Wall -pedantic -std=c++14
 
 # Use the following libraries
 LIBRARIES = ../Libraries/Model/Templates.h\
