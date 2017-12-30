@@ -20,6 +20,8 @@
 
 #include "AudioService.h"
 
+bool	big_endianness;
+
 // starts the program GenerateCorticalNode
 int main()
 {

@@ -33,6 +33,7 @@
 
 using namespace std;
 
+#include "../Libraries/Model/GlobalVariables.h"
 #include "../Libraries/Model/Constants.h"
 #include "../Libraries/Model/DataTypes.h"
 #include "../Libraries/Model/Utilities.h"
@@ -321,13 +322,13 @@ audioVector	loadAudioVectorFile()
 
 		inputFile.close();
 
-		auto	big_endianness = is_big_endian();
 		std::string	str, auxiliary;
 
 		bool	check_X = false;
 		bool	check_Fs = false;
 
 		if (ENABLE_MATLAB_COMPATIBILITY) {
+			big_endianness = load_the_header(buffer);
 			auto	array_structure = check_next_data_structure(buffer, big_endianness);
 			while ( array_structure.more_data ) {
 
@@ -1390,18 +1391,42 @@ melArray	applyKernelConvolution( melArray Array, std::string kernelName, bool fr
 	std::string	str;
 	std::string	STR;
 
+	bool	check_Aux = false;
+
 	kernelName = "../../Octave/" + kernelName + ".mat";
 	// open a file in read mode.
 	ifstream infile; 
 	infile.open(kernelName, ios::in | std::ifstream::binary);
 
-	while ( std::getline(infile, str) )
-	{
-		STR = "# name: Aux";
-		if ( str.compare(STR) == 0 )
-			load_matrix_to_vector(AuxiliaryKernel, infile);
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		big_endianness = load_the_header(infile);
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
+			STR = "Aux";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, AuxiliaryKernel, infile, big_endianness);
+				check_Aux = true;
+			}
+
+			array_structure = check_next_data_structure(infile,big_endianness);
+		}	
+
+
+
 	}
+	else {
+		while ( std::getline(infile, str) )
+		{
+			STR = "# name: Aux";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(AuxiliaryKernel, infile);
+				check_Aux = true;
+			}
+		}
+	}
+
 	infile.close();
+	assert(check_Aux == true);
 
 	for (k = 0; k < Array.filters; k++)
 	{
