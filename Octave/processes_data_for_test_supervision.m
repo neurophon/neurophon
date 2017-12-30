@@ -38,39 +38,39 @@ cd ..
 if ( finishProcessingAt >= 1 )
 	# Loads the output form hierarchy 1 layer 4 of the model
 	load EncoderLayerOutput.mat
-	columnsArrayDimensionality_H1_L4 = columnsArrayDimensionality;
-	populationsArrayDimensionality_H1_L4 = populationsArrayDimensionality;
-	layerOutput_H1_L4 = encoderLayerOutput;
-	load outputs_H1_L4_scale_parameters_libsvm.mat
-	outputs_H1_L4_slopes = slopes;
-	outputs_H1_L4_intercept = intercept;
+	columnsArrayDimensionality_EL = columnsArrayDimensionality;
+	populationsArrayDimensionality_EL = populationsArrayDimensionality;
+	layerOutput_EL = encoderLayerOutput;
+	load outputs_EL_scale_parameters_libsvm.mat
+	outputs_EL_slopes = slopes;
+	outputs_EL_intercept = intercept;
 endif
 
 if ( finishProcessingAt >= 2 )
 	# Loads the output form hierarchy 1 layer 23 of the model
 	load RegularLayerOutput_0.mat
-	columnsArrayDimensionality_H1_L23 = columnsArrayDimensionality;
-	populationsArrayDimensionality_H1_L23 = populationsArrayDimensionality;
-	layerOutput_H1_L23 = regularLayerOutput;
-	load outputs_H1_L23_scale_parameters_libsvm.mat
-	outputs_H1_L23_slopes = slopes;
-	outputs_H1_L23_intercept = intercept;
+	columnsArrayDimensionality_RL_0 = columnsArrayDimensionality;
+	populationsArrayDimensionality_RL_0 = populationsArrayDimensionality;
+	layerOutput_RL_0 = regularLayerOutput;
+	load outputs_RL_0_scale_parameters_libsvm.mat
+	outputs_RL_0_slopes = slopes;
+	outputs_RL_0_intercept = intercept;
 endif
 
 if ( finishProcessingAt >= 3 )
 	# Loads the output form hierarchy 2 layer 4 of the model
 	load RegularLayerOutput_1.mat
-	columnsArrayDimensionality_H2_L4 = columnsArrayDimensionality;
-	populationsArrayDimensionality_H2_L4 = populationsArrayDimensionality;
-	layerOutput_H2_L4 = regularLayerOutput;
-	load outputs_H2_L4_scale_parameters_libsvm.mat
-	outputs_H2_L4_slopes = slopes;
-	outputs_H2_L4_intercept = intercept;
+	columnsArrayDimensionality_RL_1 = columnsArrayDimensionality;
+	populationsArrayDimensionality_RL_1 = populationsArrayDimensionality;
+	layerOutput_RL_1 = regularLayerOutput;
+	load outputs_RL_1_scale_parameters_libsvm.mat
+	outputs_RL_1_slopes = slopes;
+	outputs_RL_1_intercept = intercept;
 endif
 
 if ( finishProcessingAt == 1 )
 	# Checks if all the arrays have the same number of time steps
-	if ( rows(inputs) != rows(layerOutput_H1_L4) )
+	if ( rows(inputs) != rows(layerOutput_EL) )
 		string = ["Input data inconsistence in script processes_data_for_supervision: different time steps\n"];
 		string = [string "input and outputs from the model have to have the same time steps"];
 		error(string);
@@ -79,8 +79,8 @@ endif
 
 if ( finishProcessingAt == 2 )
 	# Checks if all the arrays have the same number of time steps
-	if ( rows(inputs) != rows(layerOutput_H1_L4) || ...
-	     rows(inputs) != rows(layerOutput_H1_L23) )
+	if ( rows(inputs) != rows(layerOutput_EL) || ...
+	     rows(inputs) != rows(layerOutput_RL_0) )
 		string = ["Input data inconsistence in script processes_data_for_supervision: different time steps\n"];
 		string = [string "input and outputs from the model have to have the same time steps"];
 		error(string);
@@ -89,9 +89,9 @@ endif
 
 if ( finishProcessingAt == 3 )
 	# Checks if all the arrays have the same number of time steps
-	if ( rows(inputs) != rows(layerOutput_H1_L4) || ...
-	     rows(inputs) != rows(layerOutput_H1_L23) || ...
-	     rows(inputs) != rows(layerOutput_H2_L4) )
+	if ( rows(inputs) != rows(layerOutput_EL) || ...
+	     rows(inputs) != rows(layerOutput_RL_0) || ...
+	     rows(inputs) != rows(layerOutput_RL_1) )
 		string = "Input data inconsistence in script processes_data_for_supervision: different time steps\n";
 		string += "input and outputs from the model have to have the same time steps";
 		error(string);
@@ -115,32 +115,32 @@ save inputs_libsvm.mat	scaled wordsSequence
 
 if ( finishProcessingAt >= 1 )
 	# this is for the outputs from layer 4 in hierarchy 1 of the model
-	outputs_libsvm = outputs_to_libsvm(layerOutput_H1_L4,wordsSequence,start_marks,end_marks, ...
-					   populationsArrayDimensionality_H1_L4, ...
-					   columnsArrayDimensionality_H1_L4 );
-	outputs_H1_L4_scale_parameters = struct("slopes", outputs_H1_L4_slopes, "intercept", outputs_H1_L4_intercept);
-	scaled = scale_for_libsvm(outputs_libsvm,outputs_H1_L4_scale_parameters);
-	save outputs_H1_L4_libsvm.mat scaled wordsSequence
+	outputs_libsvm = outputs_to_libsvm(layerOutput_EL,wordsSequence,start_marks,end_marks, ...
+					   populationsArrayDimensionality_EL, ...
+					   columnsArrayDimensionality_EL );
+	outputs_EL_scale_parameters = struct("slopes", outputs_EL_slopes, "intercept", outputs_EL_intercept);
+	scaled = scale_for_libsvm(outputs_libsvm,outputs_EL_scale_parameters);
+	save outputs_EL_libsvm.mat scaled wordsSequence
 endif
 
 if ( finishProcessingAt >= 2 )
 	# this is for the outputs from layer 23 in hierarchy 1 of the model
-	outputs_libsvm = outputs_to_libsvm(layerOutput_H1_L23,wordsSequence,start_marks,end_marks, ...
-					   populationsArrayDimensionality_H1_L23, ...
-					   columnsArrayDimensionality_H1_L23 );
-	outputs_H1_L23_scale_parameters = struct("slopes", outputs_H1_L23_slopes, "intercept", outputs_H1_L23_intercept);
-	scaled = scale_for_libsvm(outputs_libsvm,outputs_H1_L23_scale_parameters);
-	save outputs_H1_L23_libsvm.mat scaled wordsSequence
+	outputs_libsvm = outputs_to_libsvm(layerOutput_RL_0,wordsSequence,start_marks,end_marks, ...
+					   populationsArrayDimensionality_RL_0, ...
+					   columnsArrayDimensionality_RL_0 );
+	outputs_RL_0_scale_parameters = struct("slopes", outputs_RL_0_slopes, "intercept", outputs_RL_0_intercept);
+	scaled = scale_for_libsvm(outputs_libsvm,outputs_RL_0_scale_parameters);
+	save outputs_RL_0_libsvm.mat scaled wordsSequence
 endif
 
 if ( finishProcessingAt >= 3 )
 	# this is for the outputs from layer 4 in hierarchy 2 of the model
-	outputs_libsvm = outputs_to_libsvm(layerOutput_H2_L4,wordsSequence,start_marks,end_marks, ...
-					   populationsArrayDimensionality_H2_L4, ...
-					   columnsArrayDimensionality_H2_L4 );
-	outputs_H2_L4_scale_parameters = struct("slopes", outputs_H2_L4_slopes, "intercept", outputs_H2_L4_intercept);
-	scaled = scale_for_libsvm(outputs_libsvm,outputs_H2_L4_scale_parameters);
-	save outputs_H2_L4_libsvm.mat scaled wordsSequence
+	outputs_libsvm = outputs_to_libsvm(layerOutput_RL_1,wordsSequence,start_marks,end_marks, ...
+					   populationsArrayDimensionality_RL_1, ...
+					   columnsArrayDimensionality_RL_1 );
+	outputs_RL_1_scale_parameters = struct("slopes", outputs_RL_1_slopes, "intercept", outputs_RL_1_intercept);
+	scaled = scale_for_libsvm(outputs_libsvm,outputs_RL_1_scale_parameters);
+	save outputs_RL_1_libsvm.mat scaled wordsSequence
 endif
 
 ##{
