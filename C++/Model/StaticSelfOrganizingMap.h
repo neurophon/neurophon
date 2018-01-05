@@ -21,10 +21,13 @@ File Description:	StaticSelfOrganizingMap class definition. This file presents S
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Class Description: This is a Self Organizing Map structure
-(SOM).
+Class Description: This is a
+<a href="https://en.wikipedia.org/wiki/Self-organizing_map">Self Organizing Map</a>
+structure (SOM).
 A SOM is an unsupervised clustering algorithm.
-This is a bunch of units arranged in an n-dimensional array.
+This is a bunch of units arranged in an n-dimensional array
+whose responses are tunned to react to inputs vectors located in
+certain regions in the input space.
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
@@ -80,23 +83,36 @@ public:
 protected:
         std::vector<std::size_t>		_unitsArrayDimensionality;	/*!< This is a vector of natural numbers
 										     that defines the dimensionality
-										     of an array of units in this class. */	
+										     of an array of units in this class.
+										     For example a vector \f$[30,15]\f$
+										     makes reference to a bi-dimensional
+										     array of 30 by 15 units, while a vector
+										      \f$[25,15,30]\f$ makes reference to a
+										     three-dimensional array of 25 by
+										     15 by 30 units */	
 	std::size_t				_unitsDimensionality;		/*!< This is a natural number that defines
 										     the number of units in an instance
-										     of this class. */		
+										     of this class.
+										     For example, if _unitsArrayDimensionality
+										     is \f$[30,15]\f$, this means that this member
+										     is equal to \f$30 15\f$, indicating an amount
+										     of 450 units */		
 private:
 	std::size_t				_inputDimensionality;		/**< This is a natural number that
 										     defines the number of real values
-										     in the input to an instance of this class. */			
+										     in the input to an instance of this class.
+										     The input to an instance of this class is a vector
+										     whose components are real numbers. */			
 	std::size_t				_updateStep;			/**< This is a natural number which counts
 										     the time steps in the execution of an
 										     instance of this class. */				
-	twodvector<double>			_weights;			/**< This is a bidimensional vector of real numbers.
+	twodvector<double>			_weights;			/**< This is a bi-dimensional vector of real numbers.
 										     Each real value defines the strength of a
-										     link between an input value and an unit in an
-										     array of units in an instance of this class.
-										     This vector has a row per each unit and
-										     a column per each input member. */				
+										     link between a component in the input vector
+										     and an unit in the array of units in an instance
+										     of this class.
+										     This bi-dimensional vector has a row per each unit and
+										     a column per each component of the input vector. */				
 }; // end class StaticSelfOrganizingMap
 
 #endif
