@@ -1756,7 +1756,7 @@ void	Model::validateModelStructure( const bool training )
         // if the model is in training mode
 	// it has to have something to train
 	// then if it is completely trained, it throws an error
-	if ( training ) {
+	if ( training && _modelStructure.numberOfLayers > 0 ) {
 		if ( !(_modelStructure.newLayerAt < _modelStructure.numberOfLayers) ) {
 			if ( world_rank == 0 )
 				std::cout << "\nThis model is in training mode, "
