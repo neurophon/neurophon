@@ -72,6 +72,6 @@ L_E = abs(RE+i*LIE);
 inputs =  [L_A(1:Columns,:)'; L_B(1:Columns,:)'; L_C(1:Columns,:)'; L_D(1:Columns,:)'; L_E(1:Columns,:)']';
 %inputs =  [R_A(1:Columns,:)'; R_B(1:Columns,:)'; R_C(1:Columns,:)'; R_D(1:Columns,:)'; R_E(1:Columns,:)']';
 
-save inputs.mat inputs;
+save inputs.mat inputs -v6;
 
 end
