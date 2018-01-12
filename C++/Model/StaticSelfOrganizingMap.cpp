@@ -36,7 +36,7 @@ File Description:	StaticSelfOrganizingMap member-function definitions. This file
 
 using namespace std;
 
-//! Constructor that initializes _weights at random
+//! Constructor that initializes StaticSelfOrganizingMap::_weights at random
 
 /*!
 This function construct an object of class StaticSelfOrganizingMap.
@@ -83,7 +83,7 @@ StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>
 } // end StaticSelfOrganizingMap constructor
 
 
-//! Constructor that initializes _weights at random between weight limits
+//! Constructor that initializes StaticSelfOrganizingMap::_weights at random between weight limits
 
 /*!
 This function construct an object of class StaticSelfOrganizingMap.
@@ -133,7 +133,7 @@ StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>
 } // end StaticSelfOrganizingMap constructor
 
 
-//! Constructor that initializes _weights with previous values from file
+//! Constructor that initializes StaticSelfOrganizingMap::_weights with previous values from file
 
 /*!
 This function construct an object of class StaticSelfOrganizingMap.
@@ -214,7 +214,7 @@ void	StaticSelfOrganizingMap::validateObject()
 } // end function validateObject
 
 
-//! Function to modify the _weights vector throught the use of the Kohonen's learning rule
+//! Function to modify the StaticSelfOrganizingMap::_weights vector throught the use of the Kohonen's learning rule
 
 /*!
 This function updates
@@ -362,7 +362,7 @@ in ascending order.
 For example, if \f$ distances = [4.3, 2.2, 5, 3.1, 12]\f$ , then
 \f$ ranking = [1,3,0,2,4]\f$ .
 This function returns a structure called somResponseInfo.
-(see Structs)
+(see Structs.h)
 */
 somResponseInfo	StaticSelfOrganizingMap::getResponse( const std::vector<double>& input /**< [in] A vector of real numbers that
 												 holds the input to an object

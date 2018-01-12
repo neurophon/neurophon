@@ -33,7 +33,9 @@ File Description:	Structs definition.
 
 /*!
 This structure specifies the predisposition of every unit
-in a Self Organizing Map to be in active state.
+in a
+<a href="https://en.wikipedia.org/wiki/Self-organizing_map">Self Organizing Map</a>
+to be in active state.
 It also gives a ranking with the units ordered
 in accordance with its predisposition 
 to be in active state.
@@ -47,8 +49,8 @@ struct	somResponseInfo
 	std::vector<double>		distances;	/**< A vector of positive real numbers that
 							     specifies the predisposition of a unit
 							     -in a self organizing map- to be in active
-							     state (see StaticSelfOrganizingMap.cpp,
-							     DynamicSelfOrganizingMap.cpp and ComplexSelfOrganizingMap.cpp).
+							     state (see StaticSelfOrganizingMap,
+							     DynamicSelfOrganizingMap and ComplexSelfOrganizingMap).
 							     The smaller the distance element value
 							     the more predisposed is the unit to be active. */
 };
