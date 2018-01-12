@@ -33,6 +33,7 @@
 
 # Output executable
 Test
+S_SOM_Test
 
 # swp files
 *.swp

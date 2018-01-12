@@ -22,6 +22,8 @@ LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/MatlabInterface.h\
 	    ../Libraries/Model/GlobalVariables.h
 
+all: Test S_SOM_Test
+
 # Linking compiled files
 Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 	     DynamicSelfOrganizingMap.o DynamicProcessor.o\
@@ -37,9 +39,20 @@ Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 				      Utilities.o Random.o Topology.o\
 				      -o Test
 
+# Linking compiled files
+S_SOM_Test: StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
+						Utilities.o Random.o Topology.o
+	$(CC) $(CFLAGS) StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
+							Utilities.o Random.o Topology.o\
+							-o S_SOM_Test
+
 # Compiling main
 main.o: main.cpp
 	$(MPI) $(CC) -c $(CFLAGS) main.cpp
+
+# Compiling StaticSelfOrganizingMapTest
+StaticSelfOrganizingMapTest.o: StaticSelfOrganizingMapTest.cpp $(LIBRARIES)
+	$(CC) -c $(CFLAGS) StaticSelfOrganizingMapTest.cpp
 
 # Compiling Static self organizing map class
 StaticSelfOrganizingMap.o: StaticSelfOrganizingMap.cpp StaticSelfOrganizingMap.h $(LIBRARIES)
@@ -90,4 +103,4 @@ Topology.o: ../Libraries/Model/Topology.cpp ../Libraries/Model/Topology.h $(LIBR
 	$(CC) -c $(CFLAGS) ../Libraries/Model/Topology.cpp
 
 clean:
-	rm *.o Test
+	rm *.o Test S_SOM_Test
