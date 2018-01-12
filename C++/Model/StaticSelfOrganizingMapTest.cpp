@@ -9,12 +9,15 @@
 #include "StaticSelfOrganizingMap.h"				// include definition of class StaticSelfOrganizingMap
 #include "../Libraries/Model/Utilities.h"
 #include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
 #include "../Libraries/Model/Templates.h"
 #include "../Libraries/Model/DataTypes.h"
 #include "../Libraries/Model/Constants.h"
 #include "../Libraries/Model/Random.h"
 
 using namespace std;
+
+bool	big_endianness;
 
 int main()
 {
@@ -26,13 +29,26 @@ std::vector<std::size_t> dimensions = {dim,dim,dim};
 twodvector<double>	input;
 
 ifstream infile; 
-infile.open("../../Octave/Input.mat", ios::in | std::ifstream::binary);
+infile.open("../../Octave/inputs.mat", ios::in | std::ifstream::binary);
 
-while ( std::getline(infile, str) ) {
-        STR = "# name: inputVector";
-        if ( str.compare(STR) == 0 )
-                load_matrix_to_vector_of_vectors(input, infile);
+if (ENABLE_MATLAB_COMPATIBILITY) {
+	big_endianness = load_the_header(infile);
+	auto	array_structure = check_next_data_structure(infile, big_endianness);
+	while ( array_structure.more_data ) {
+		STR = "inputVector";
+		if ( array_structure.name.compare(STR) == 0 )
+			load_numeric_array_to_vector_of_vectors(array_structure, input, infile, big_endianness);
 
+		array_structure = check_next_data_structure(infile,big_endianness);
+	}
+}
+else {
+	while ( std::getline(infile, str) ) {
+		STR = "# name: inputVector";
+		if ( str.compare(STR) == 0 )
+			load_matrix_to_vector_of_vectors(input, infile);
+
+	}
 }
 
 std::cout << "Input loaded.\n";
@@ -72,11 +88,16 @@ std::string	selfOrganizingMapIdentifier = "SOM", fileName = "SOM_Status";
 std::stringstream	outstream;
 
 // file preamble.
-outstream << "# This is a file created by saveLayerStatus member function in Layer class from," << endl;
-outstream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
-outstream << "# Author: Dematties Dario Jesus." << endl;
+if (ENABLE_MATLAB_COMPATIBILITY) {
+	save_the_header(outstream);
+}
+else {
+	outstream << "# This is a file created by saveLayerStatus member function in Layer class from," << endl;
+	outstream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+	outstream << "# Author: Dematties Dario Jesus." << endl;
 
-outstream << "\n\n" << endl;
+	outstream << "\n\n" << endl;
+}
 	
 SOM.saveStaticSelfOrganizingMapStatus(selfOrganizingMapIdentifier,outstream);
 

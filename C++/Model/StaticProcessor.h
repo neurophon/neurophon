@@ -1,24 +1,27 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//				Author:		Dematties Dario Jesus						//
-//				Contact:	dariodematties@hotmail.com.ar					//
-//						dariodematties@yahoo.com.ar					//
-//						dario.dematties@frm.utn.edu.ar					//
-//				Project:	Engineering PhD Project						//
-//				Institution:	Universidad de Buenos Aires					//
-//						Facultad de Ingeniería (FIUBA)					//
-//				Workplace:	Instituto de Ingeniería						//
-//						Biomédica FIUBA	&						//
-//						CCT CONICET Mendoza INCIHUSA					//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*!
 
-// File Name:		StaticProcessor.h
-// File Description:	StaticProcessor class definition. This file presents StaticProcessor's public
-//			interface without revealing the implementations of StaticProcessor's member functions,
-//			which are defined in StaticProcessor.cpp.
+Author:		Dematties Dario Jesus<br>					
+Contact:	dariodematties@hotmail.com.ar<br>					
+		dariodematties@yahoo.com.ar<br>					
+		dario.dematties@frm.utn.edu.ar<br>					
+Project:	Engineering PhD Project<br>						
+Institution:	Universidad de Buenos Aires<br>					
+		Facultad de Ingeniería (FIUBA)<br>					
+Workplace:	Instituto de Ingeniería<br>						
+		Biomédica FIUBA	&<br>						
+		CCT CONICET Mendoza INCIHUSA<br>					
 
 
-// Class Description: This is a Self Organizing Map class. It is a bunch of units arranged in an d-dimensional array.
-// All these units have a learning capacity by means of the modifications of the synaptic weights.
+File Name:		StaticProcessor.h<br>
+File Description:	StaticProcessor class definition.<br> This file presents StaticProcessor's public<br>
+			interface without revealing the implementations of StaticProcessor's member functions,<br>
+			which are defined in StaticProcessor.cpp.<br>
+
+
+Class Description:
+...
+*/
+
 #ifndef STATIC_PROCESSOR_H
 #define STATIC_PROCESSOR_H
 
@@ -82,21 +85,102 @@ public:
 					   std::stringstream& );			// function to load the Self Organizing Map's status from a file
 
 protected:
-        std::vector<std::size_t>		_unitsArrayDimensionality;		// vector with the dimensions of the array of units
-	std::size_t				_unitsDimensionality;			// flat dimensionality of the units vector
+        std::vector<std::size_t>		_unitsArrayDimensionality;	/*!< This is a vector of natural numbers
+										     that defines the dimensionality
+										     of an array of units in this class.
+										     For example a vector \f$[30,15]\f$
+										     makes reference to a bi-dimensional
+										     array of 30 by 15 units, while a vector
+										      \f$[25,15,30]\f$ makes reference to a
+										     three-dimensional array of 25 by
+										     15 by 30 units */	
 
+	std::size_t				_unitsDimensionality;		/*!< This is a natural number that defines
+										     the number of units in an instance
+										     of this class.
+										     For example, if 
+										     StaticProcessor::_unitsArrayDimensionality
+										     is \f$[30,15]\f$, this means that this member
+										     is equal to \f$30~15\f$, indicating an amount
+										     of 450 units */		
 private:
-	std::size_t				_updateStep;				// accumulates the steps elapsed until now in order to check UPDATE_PERIOD
+	std::size_t				_updateStep;			/**< This is a natural number which counts
+										     the time steps in the execution of an
+										     instance of this class. */				
 
-	std::size_t				_inputDimensionality;			// flat dimensionality of the input vector
-	double					_potentialPercentage;			// this is the percentage of potential connections to the inputs
-	std::size_t				_potentialDimensionality;		// dimensionality of the potential connections
-	twodvector<std::size_t>			_potentialConnections;			// matrix with the potential connections to the inputs
+	std::size_t				_inputDimensionality;		/**< This is a natural number that
+										     defines the number of binary values
+										     in the input to an instance of this class.
+										     The input to an instance of this class is a vector
+										     whose components are binary numbers. */			
 
-	std::vector<bool>			_weightsSparsity;			// indicates if the weights array for each unit is sparse
-	twodvector<double>			_weights;				// matrix of the weights produced by the algorithm
+	double					_potentialPercentage;		/**< Only a percentage of the binary components
+										     in the input vector can be potentially connected
+										     with every unit in an instance of this class.
+										     This real number specifies such percentage. */	  
+
+	std::size_t				_potentialDimensionality;	/**< This is a natural number which specifies the
+       										     number of potential connections between each
+									     	     unit in an instance of this class and the binary
+										     components in the input vector.
+										     This natural number is the result of the product
+										     batween
+										     StaticProcessor::_potentialPercentage and
+										     StaticProcessor::_inputDimensionality */
+
+	twodvector<std::size_t>			_potentialConnections;		/**< This is a bi-dimensional vector of natural numbers.
+       										     This vector has
+									     	     StaticProcessor::_unitsDimensionality number of rows
+										     and
+										     StaticProcessor::_potentialDimensionality number of
+										     columns.
+										     Each row of this vector corresponds to
+										     a unit in an object of this class.
+										     Each natural number in a row of this vector identifies
+										     a potential connection between the corresponding unit in
+										     such row and a binary element in the input vector.
+										     For example:
+										     Let's suppose that the input is a vector of 10 binary components,
+										     that is,
+										     StaticProcessor::_inputDimensionality is equal to 10.
+										     Also, let's suppose that
+										     StaticProcessor::_potentialPercentage is 0.5,
+										     this means that each unit in the object is potentially
+										     connected with half of the binary components in the input
+										     vector.
+										     Then suppose that the row number 8 in
+										     StaticProcessor::_potentialConnections
+										     is \f$[1,4,2,8,7]\f$.
+										     This means that the unit number 8 in such object instance of
+										     this class is portentially connected with binary components
+										     number 1, 2, 4, 7 and 8 in the input vector, and that the stregth
+										     of such potential connections can growth
+										     as a result of learning */	
+
+	std::vector<bool>			_weightsSparsity;		/**< This is a vector of binary values.
+										     The number of components in this vector is equal to
+										     the number of units in an instance of this class.
+										     Each component in this vector indicates if the corresponding
+										     row of
+										     StaticProcessor::_weights
+										     is sparse or not sparse.
+										     If such component is 1, that means that the corresponding
+										     row in
+										     StaticProcessor::_weights
+										     is sparse. */
+
+	twodvector<double>			_weights;			/**< This is a bi-dimensional vector of real numbers.
+										     Each real value defines the strength of a
+										     link between a component in the
+										     StaticProcessor::_potentialConnections vector
+										     and an unit in the array of units in an instance
+										     of this class.
+										     This bi-dimensional vector has one row per each unit and
+										     one column per each component of the
+										     StaticProcessor::_potentialConnections. */
 
 	std::vector<std::size_t>		_unitsActivity;				// registers the count of the unit's activity
+
 	std::vector<double>			_activationBoosting;			// units activation busting
 }; // end class SelfOrganizingMap
 

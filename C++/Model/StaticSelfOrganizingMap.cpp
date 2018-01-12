@@ -36,24 +36,27 @@ File Description:	StaticSelfOrganizingMap member-function definitions. This file
 
 using namespace std;
 
-//! constructor that initializes _weights at random
+//! Constructor that initializes StaticSelfOrganizingMap::_weights at random
 
 /*!
-This function construct an object of class StaticSelfOrganizingMap
-Initializes _unitsArrayDimensionality,
-_inputDimensionality, _unitsDimensionality,
-_updateStep and
-_weights.
-The bidimensional vector of real numbers _weights
+This function construct an object of class StaticSelfOrganizingMap.
+It nitializes
+StaticSelfOrganizingMap::_unitsArrayDimensionality,
+StaticSelfOrganizingMap::_inputDimensionality,
+StaticSelfOrganizingMap::_unitsDimensionality,
+StaticSelfOrganizingMap::_updateStep and
+StaticSelfOrganizingMap::_weights.
+The bi-dimensional vector of real numbers
+StaticSelfOrganizingMap::_weights
 is initialized at random with real numbers between
 0 and 1.
 */
 StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>& unitsArrayDimensionality,	/**< [in] This is a vector of natural numbers.
 															  This vector initializes
-															  _unitsArrayDimensionality. */
+															  StaticSelfOrganizingMap::_unitsArrayDimensionality. */
 						  const std::size_t inputDimensionality 			/**< [in] This is a natural number
 															  that initializes
-															  _inputDimensionality.*/ )
+															  StaticSelfOrganizingMap::_inputDimensionality.*/ )
 {
 	_updateStep = 0;
 	_inputDimensionality = inputDimensionality;
@@ -80,28 +83,34 @@ StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>
 } // end StaticSelfOrganizingMap constructor
 
 
-//! constructor that initializes _weights at random between weight limits
+//! Constructor that initializes StaticSelfOrganizingMap::_weights at random between weight limits
 
 /*!
-Initializes _unitsArrayDimensionality,
-_inputDimensionality, _unitsDimensionality,
-_updateStep and
-_weights.
-The bidimensional vector of real numbers _weights
+This function construct an object of class StaticSelfOrganizingMap.
+It initializes
+StaticSelfOrganizingMap::_unitsArrayDimensionality,
+StaticSelfOrganizingMap::_inputDimensionality,
+StaticSelfOrganizingMap::_unitsDimensionality,
+StaticSelfOrganizingMap::_updateStep and
+StaticSelfOrganizingMap::_weights.
+The bi-dimensional vector of real numbers
+StaticSelfOrganizingMap::_weights
 is initialized at random with real numbers between
 the limits imposed by weightLimits.
 */
 StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>& unitsArrayDimensionality,	/**< [in] This is a vector of natural numbers.
 															  This vector initializes
-															  _unitsArrayDimensionality. */
+															  StaticSelfOrganizingMap::_unitsArrayDimensionality. */
 	       					  const std::size_t inputDimensionality, 			/**< [in] This is a natural number
 															  that initializes
-															  _inputDimensionality.*/
+															  StaticSelfOrganizingMap::_inputDimensionality.*/
 	       			      		  const std::array<double,2>& weightLimits			/**< [in] This is a bidimensional array
 														          of real numbers which specifies
-															  the boundaries in the initialization
+															  the boundaries in the random
+															  initialization
 															  of the bidimensional
-															  vector _weights.*/ )
+															  vector 
+															  StaticSelfOrganizingMap::_weights.*/ )
 {
 	_updateStep = 0;
 	_inputDimensionality = inputDimensionality;
@@ -124,21 +133,35 @@ StaticSelfOrganizingMap::StaticSelfOrganizingMap( const std::vector<std::size_t>
 } // end StaticSelfOrganizingMap constructor
 
 
-//! constructor that initializes _weights with previous values from file
+//! Constructor that initializes StaticSelfOrganizingMap::_weights with previous values from file
 
 /*!
-Initializes _unitsArrayDimensionality,
-_inputDimensionality, _unitsDimensionality,
-_updateStep and
-_weights from a stream of characters.
+This function construct an object of class StaticSelfOrganizingMap.
+It initializes 
+StaticSelfOrganizingMap::_unitsArrayDimensionality,
+StaticSelfOrganizingMap::_inputDimensionality,
+StaticSelfOrganizingMap::_unitsDimensionality,
+StaticSelfOrganizingMap::_updateStep and
+StaticSelfOrganizingMap::_weights
+from a stream of characters.
 */
 StaticSelfOrganizingMap::StaticSelfOrganizingMap( std::stringstream& inputStream,			/**< [in] A stream of characters
-														  with all the data from a file. */
+														  with all the data from a file
+														  which contains all the necesary
+														  information to construct an instance
+														  of this class. */
 						  const std::string& selfOrganizingMapIdentifier	/**< [in] A string of characters which
 														  allows to identify the data
-														  corresponding to a certain
+														  corresponding to certain
 														  instance of this class in a
-														  stream of characters. */ )
+														  stream.
+														  That is, in the stream
+														  there could be information which
+														  corresponds to a more than one instance of
+														  this class.
+														  This string is necesary to identify the information
+														  that corresponds to a particular instance of
+														  this class. */ )
 {
 	inputStream.clear();
 	inputStream.str(inputStream.str());
@@ -146,12 +169,12 @@ StaticSelfOrganizingMap::StaticSelfOrganizingMap( std::stringstream& inputStream
 } // end StaticSelfOrganizingMap explicit constructor
 
 
-//! function to validate the object created of this class
+//! Function to validate the object created of this class
 
 /*!
 Validates the object.
 This function specifies certain rules which cannot be violated
-in order to construct a correct object instance of this class.
+in order to construct a correct object of this class.
 */
 void	StaticSelfOrganizingMap::validateObject()
 {
@@ -191,39 +214,52 @@ void	StaticSelfOrganizingMap::validateObject()
 } // end function validateObject
 
 
-//! function to modify the _weights vector throught the use of the Kohonen's learning rule
+//! Function to modify the StaticSelfOrganizingMap::_weights vector throught the use of the Kohonen's learning rule
 
 /*!
-This function updates _weights
-according to the input vector.
+This function updates
+StaticSelfOrganizingMap::_weights
+according to the input vector and
+aplying the
+<a href="https://en.wikipedia.org/wiki/Self-organizing_map">Self Organizing Map</a>
+algorithm.
 
+@code
 for(every unit){
 
 	Calls learningNeighborhood with the arguments
-	neighborParameter, unitsWinnerPosition,
-	unit number, specifies gaussian neighborhood.
+	neighborParameter,
+       	unitsWinnerPosition,
+	unit number, and
+	specifies gaussian neighborhood.
+
 	Puts the returned value in neighborhoodValue.
 
-	\f[
-	\Delta Weights(unit,:) = Input - Weights(unit,:)
-	\f]
-	\f[
-	\Delta Weights(unit,:) = learningRate~ neighborhoodValue~ \Delta Weights(unit,:)
-	\f]
-	\f[
-	Weights(unit,:) = Weights(unit,:) + \Delta Weights(unit,:)
-	\f]
-
+	Then, runs the equations below.
 }
+@endcode
+
+\f[
+\Delta Weights(unit,:) = Input - Weights(unit,:)
+\f]
+\f[
+\Delta Weights(unit,:) = learningRate~ neighborhoodValue~ \Delta Weights(unit,:)
+\f]
+\f[
+Weights(unit,:) = Weights(unit,:) + \Delta Weights(unit,:)
+\f]
+
 */
 void	StaticSelfOrganizingMap::learningRule( const double learningRate,		/**< [in] A real number that specifies
 												  the speed of learning.
 												  This variable modulates the
-												  modification of the members of the
-												  bidimensional vector _weights. */
+												  magnitude of the
+												  modification of the members in the
+												  bi-dimensional vector 
+												  StaticSelfOrganizingMap::_weights. */
 	       				       const double neighborParameter,		/**< [in] A real number that specifies
-												  the interaction
-												  between units in an object
+												  the interaction strength
+												  among units in an object
 												  instance of this class. */
 					       const std::size_t unitsWinnerPosition,	/**< [in] A natural value which specifies
 												  the position of the winner unit
@@ -250,27 +286,34 @@ void	StaticSelfOrganizingMap::learningRule( const double learningRate,		/**< [in
 } // end function learningRule
 
 
-//! function to computes the neighborhood value in the interaction between units in the array for learning process
+//! Function to compute the neighborhood value for the interaction between units in the array for learning process.
 
 /*!
 This function computes the Manhattan distance between 
 winnerPosition and otherPosition
 in the topology of the array of units
 and then uses this distance to compute
-the interaction strength between such unit positions.
+the interaction strength between such unit positions
+by means of certain function that is chosen
+from the arguments.
 This function returns a real value that represents
-the interaction between
-the winner unit and the other unit.
+the interaction strength between
+the winner unit and other unit.
 */
 double	StaticSelfOrganizingMap::learningNeighborhood( const double widthParameter,		/**< [in] A real number that specifies
 													  the width of the function
-													  is this Mexican hat, Gaussian, etc. */
+													  -is this Mexican hat, Gaussian, etc-
+													  which is used to compute the
+													  interaction strencth among units. */
 	       					       const std::size_t winnerPosition,	/**< [in] A natural number that specifies
 													  the position of the winner unit. */
 						       const std::size_t otherPosition,		/**< [in] Any other unit position in the
 													  array of units. */
 						       const std::string& str 			/**< [in] A string of characters that
-													  specifies which function to use. */ )
+													  specifies which function to use
+													  for the computation of the
+													  interaction strength among unist
+													  in the array. */ )
 {
 	assert(winnerPosition < _unitsDimensionality && otherPosition < _unitsDimensionality);
 	std::vector<std::size_t>	winnerPositionArray, otherPositionArray, auxiliary;
@@ -306,7 +349,7 @@ double	StaticSelfOrganizingMap::learningNeighborhood( const double widthParamete
 } // end function learningNeighborhood
 
 
-//! function to get the response information from the input
+//! Function to get the response information from the input
 
 /*!
 This function computes the euclidean distances between
@@ -319,7 +362,7 @@ in ascending order.
 For example, if \f$ distances = [4.3, 2.2, 5, 3.1, 12]\f$ , then
 \f$ ranking = [1,3,0,2,4]\f$ .
 This function returns a structure called somResponseInfo.
-(see Structs)
+(see Structs.h)
 */
 somResponseInfo	StaticSelfOrganizingMap::getResponse( const std::vector<double>& input /**< [in] A vector of real numbers that
 												 holds the input to an object
@@ -340,20 +383,28 @@ somResponseInfo	StaticSelfOrganizingMap::getResponse( const std::vector<double>&
 } // end function getResponse
 
 
-//! function to save the Self Organizing Map's status
+//! Function to save the Self Organizing Map's status
 
 /*!
-This function puts all the necesary information
+This function puts all the necessary information
 about an object instance of this class
 in a stream with format compatible to
 Octave/Matlab (.mat) softs.
 */
-void	StaticSelfOrganizingMap::saveStaticSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier,	/**< [in] A string of charaters
+void	StaticSelfOrganizingMap::saveStaticSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier,	/**< [in] A string of characters
 																  which allows the identification
 																  of the necessary information
 																  that corresponds to an object
-																  instance in this class. */ 
-	       							    std::stringstream& outStream			/**< [in] A stream in wich all the
+																  instance in this class.
+																  That is, data which corresponds
+																  to more than one instance of this
+																  class could live together
+																  in a same stream.
+																  Then, it is necessary to individualize
+																  the information that corresponds
+																  to a particular instance of this
+																  class in the stream. */ 
+	       							    std::stringstream& outStream			/**< [in] A stream in which all the
 																  data will be collected
 																  with the final format
 																  to be saved in a file. */ )
@@ -395,23 +446,31 @@ void	StaticSelfOrganizingMap::saveStaticSelfOrganizingMapStatus( const std::stri
 } // end functiom saveStaticSelfOrganizingMapStatus
 
 
-//! function to load the Self Organizing Map's status
+//! Function to load the Self Organizing Map's status
 
 /*!
-This function extracts all the necesary information
+This function extracts all the necessary information
 about an object instance of this class
 from a stream with format compatible to
 Octave/Matlab (.mat) softs and uses that
 data to initialize such object.
 */
-void	StaticSelfOrganizingMap::loadStaticSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier,	/**< [in] A string of charaters
-																   which allows the
-																   identification of the
-																   necessary information
-																   that corresponds to an
-																   object instance in
-																   this class. */
-	       							    std::stringstream& infile				/**< [out] A stream from wich all
+void	StaticSelfOrganizingMap::loadStaticSelfOrganizingMapStatus( const std::string& selfOrganizingMapIdentifier,	/**< [in] A string of characters
+																  which allows the
+																  identification of the
+																  necessary information
+																  that corresponds to a
+																  particular object instance in
+																  this class.
+																  That is, data which corresponds
+																  to more than one instance of this
+																  class could live together
+																  in a same stream.
+																  Then, it is necessary to identify
+																  the information that corresponds
+																  to a particular instance of this
+																  class in the stream. */ 
+	       							    std::stringstream& infile				/**< [out] A stream from which all
 															 	   the data will be
 																   collected to initialize
 																   an object instance of
