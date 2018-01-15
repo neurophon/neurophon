@@ -34,6 +34,7 @@
 # Output executable
 Test
 S_SOM_Test
+S_Proc_Test
 
 # swp files
 *.swp
@@ -57,4 +58,9 @@ octave-workspace
 *.cobaltlog
 *.error
 *.output
+
+# Doxygen documentation output files
+Doxyfile
+html
+latex
 
