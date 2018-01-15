@@ -1,8 +1,8 @@
 # Set the compilers you want to use
 
 # Use g++-5 gcc version 4.8.5 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
-#CC = g++-5
-CC = g++
+CC = g++-5
+#CC = g++
 #CC = icpc
 
 # Use mpic++ for MPICH version 3.2 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
@@ -22,9 +22,9 @@ LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/MatlabInterface.h\
 	    ../Libraries/Model/GlobalVariables.h
 
-all: Test S_SOM_Test
+all: Test S_SOM_Test S_Proc_Test
 
-# Linking compiled files
+# Linking compiled files for Test
 Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 	     DynamicSelfOrganizingMap.o DynamicProcessor.o\
 	     ComplexSelfOrganizingMap.o ComplexProcessor.o\
@@ -39,7 +39,13 @@ Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 				      Utilities.o Random.o Topology.o\
 				      -o Test
 
-# Linking compiled files
+# Linking compiled files S_Proc_Test
+S_Proc_Test: StaticProcessorTest.o	StaticProcessor.o\
+					Utilities.o Random.o Topology.o
+	$(CC) $(CFLAGS) StaticProcessorTest.o	StaticProcessor.o\
+						Utilities.o Random.o Topology.o\
+						-o S_Proc_Test
+# Linking compiled files S_SOM_Test
 S_SOM_Test: StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
 						Utilities.o Random.o Topology.o
 	$(CC) $(CFLAGS) StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
@@ -49,6 +55,10 @@ S_SOM_Test: StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
 # Compiling main
 main.o: main.cpp
 	$(MPI) $(CC) -c $(CFLAGS) main.cpp
+
+# Compiling StaticProcessorTest
+StaticProcessorTest.o: StaticProcessorTest.cpp $(LIBRARIES)
+	$(CC) -c $(CFLAGS) StaticProcessorTest.cpp
 
 # Compiling StaticSelfOrganizingMapTest
 StaticSelfOrganizingMapTest.o: StaticSelfOrganizingMapTest.cpp $(LIBRARIES)
