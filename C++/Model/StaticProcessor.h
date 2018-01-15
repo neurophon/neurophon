@@ -179,9 +179,28 @@ private:
 										     one column per each component of the
 										     StaticProcessor::_potentialConnections. */
 
-	std::vector<std::size_t>		_unitsActivity;				// registers the count of the unit's activity
+	std::vector<std::size_t>		_unitsActivity;			/**< This is a vector of natural numbers.
+										     Each component of this vector corresponds to a unit
+										     in an instance of this class and measures number of
+										     times such unit has been in active stated */
 
-	std::vector<double>			_activationBoosting;			// units activation busting
+	std::vector<double>			_activationBoosting;		/**< This is a vector of real numbers.
+										     Each component in this vector corresponds to a unit
+										     in an instance of this class and modulates the predisposition
+										     of such unit to be in active state in response to the input.
+
+										     This vector works in tandem with StaticProcessor::_unitsActivity
+										     vector by means of the following formula
+
+										     \f[
+										     activationBoosting(row) = 
+										     e^{-boostingFactor*(unitsActivity(row)-averageActivity)/updateStep}.
+										     \f]
+
+										     Where boostingFactor is a constant and
+										     averageActivity is a vector of real numbers, each component in this vector
+										     corresponds to a unit in an instance of this class and express the average
+										     activity of such unit with respect to all units in the instance. */
 }; // end class SelfOrganizingMap
 
 #endif
