@@ -1,19 +1,25 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//				Author:		Dematties Dario Jesus						//
-//				Contact:	dariodematties@hotmail.com.ar					//
-//						dariodematties@yahoo.com.ar					//
-//						dario.dematties@frm.utn.edu.ar					//
-//				Project:	Engineering PhD Project						//
-//				Institution:	Universidad de Buenos Aires					//
-//						Facultad de Ingeniería (FIUBA)					//
-//				Workplace:	Instituto de Ingeniería						//
-//						Biomédica FIUBA	&						//
-//						CCT CONICET Mendoza INCIHUSA					//
+/*
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// File Name:		StaticProcessor.cpp
-// File Description:	StaticProcessor member-function definitions. This file contains implementations of the
-//			member functions prototyped in StaticProcessor.h.
+				Author:		Dematties Dario Jesus						
+				Contact:	dariodematties@hotmail.com.ar					
+						dariodematties@yahoo.com.ar					
+						dario.dematties@frm.utn.edu.ar					
+				Project:	Engineering PhD Project						
+				Institution:	Universidad de Buenos Aires					
+						Facultad de Ingeniería (FIUBA)					
+				Workplace:	Instituto de Ingeniería						
+						Biomédica FIUBA	&						
+						CCT CONICET Mendoza INCIHUSA					
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+File Name:		StaticProcessor.cpp
+File Description:	StaticProcessor member-function definitions. This file contains implementations of the
+			member functions prototyped in StaticProcessor.h.
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
 
 #include <iostream>
 #include <algorithm>
