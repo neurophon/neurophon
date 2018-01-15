@@ -92,7 +92,7 @@ if (ENABLE_MATLAB_COMPATIBILITY) {
 	save_the_header(outstream);
 }
 else {
-	outstream << "# This is a file created by saveLayerStatus member function in Layer class from," << endl;
+	outstream << "# This is a file created by StaticSelfOrganizingMapTest function from," << endl;
 	outstream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
 	outstream << "# Author: Dematties Dario Jesus." << endl;
 
