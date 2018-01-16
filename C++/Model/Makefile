@@ -1,8 +1,8 @@
 # Set the compilers you want to use
 
 # Use g++-5 gcc version 4.8.5 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
-CC = g++-5
-#CC = g++
+#CC = g++-5
+CC = g++
 #CC = icpc
 
 # Use mpic++ for MPICH version 3.2 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
@@ -60,35 +60,35 @@ main.o: main.cpp
 
 # Compiling StaticProcessorTest
 StaticProcessorTest.o: StaticProcessorTest.cpp $(LIBRARIES)
-	$(CC) -c $(CFLAGS) StaticProcessorTest.cpp
+	$(MPI) $(CC) -c $(CFLAGS) StaticProcessorTest.cpp
 
 # Compiling StaticSelfOrganizingMapTest
 StaticSelfOrganizingMapTest.o: StaticSelfOrganizingMapTest.cpp $(LIBRARIES)
-	$(CC) -c $(CFLAGS) StaticSelfOrganizingMapTest.cpp
+	$(MPI) $(CC) -c $(CFLAGS) StaticSelfOrganizingMapTest.cpp
 
 # Compiling Static self organizing map class
 StaticSelfOrganizingMap.o: StaticSelfOrganizingMap.cpp StaticSelfOrganizingMap.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) StaticSelfOrganizingMap.cpp
+	$(MPI) $(CC) -c $(CFLAGS) StaticSelfOrganizingMap.cpp
 
 # Compiling Static processor class
 StaticProcessor.o: StaticProcessor.cpp StaticProcessor.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) StaticProcessor.cpp
+	$(MPI) $(CC) -c $(CFLAGS) StaticProcessor.cpp
 
 # Compiling Dynamic self organizing map class
 DynamicSelfOrganizingMap.o: DynamicSelfOrganizingMap.cpp DynamicSelfOrganizingMap.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) DynamicSelfOrganizingMap.cpp
+	$(MPI) $(CC) -c $(CFLAGS) DynamicSelfOrganizingMap.cpp
 
 # Compiling Dynamic processor class
 DynamicProcessor.o: DynamicProcessor.cpp DynamicProcessor.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) DynamicProcessor.cpp
+	$(MPI) $(CC) -c $(CFLAGS) DynamicProcessor.cpp
 
 # Compiling Complex self organizing map class
 ComplexSelfOrganizingMap.o: ComplexSelfOrganizingMap.cpp ComplexSelfOrganizingMap.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) ComplexSelfOrganizingMap.cpp
+	$(MPI) $(CC) -c $(CFLAGS) ComplexSelfOrganizingMap.cpp
 
 # Compiling Complex processor class
 ComplexProcessor.o: ComplexProcessor.cpp ComplexProcessor.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) ComplexProcessor.cpp
+	$(MPI) $(CC) -c $(CFLAGS) ComplexProcessor.cpp
 
 # Compiling encoder layer class
 EncoderLayer.o: EncoderLayer.cpp EncoderLayer.h $(LIBRARIES)
@@ -104,15 +104,15 @@ Model.o: Model.cpp Model.h $(LIBRARIES)
 
 # Compiling utilities library
 Utilities.o: ../Libraries/Model/Utilities.cpp ../Libraries/Model/Utilities.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) ../Libraries/Model/Utilities.cpp
+	$(MPI) $(CC) -c $(CFLAGS) ../Libraries/Model/Utilities.cpp
 
 # Compiling random library
 Random.o: ../Libraries/Model/Random.cpp ../Libraries/Model/Random.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) ../Libraries/Model/Random.cpp
+	$(MPI) $(CC) -c $(CFLAGS) ../Libraries/Model/Random.cpp
 
 # Compiling topology library
 Topology.o: ../Libraries/Model/Topology.cpp ../Libraries/Model/Topology.h $(LIBRARIES)
-	$(CC) -c $(CFLAGS) ../Libraries/Model/Topology.cpp
+	$(MPI) $(CC) -c $(CFLAGS) ../Libraries/Model/Topology.cpp
 
 # Compiling Timer library
 Timer.o: ../Libraries/Model/Timer.cxx $(LIBRARIES)
