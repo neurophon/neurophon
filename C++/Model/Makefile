@@ -20,7 +20,9 @@ LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/DataTypes.h\
 	    ../Libraries/Model/OctaveInterface.h\
 	    ../Libraries/Model/MatlabInterface.h\
-	    ../Libraries/Model/GlobalVariables.h
+	    ../Libraries/Model/GlobalVariables.h\
+	    ../Libraries/Model/Timer.h\
+	    ../Libraries/Model/TimerC.h
 
 all: Test S_SOM_Test S_Proc_Test
 
@@ -30,27 +32,27 @@ Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 	     ComplexSelfOrganizingMap.o ComplexProcessor.o\
 	     EncoderLayer.o RegularLayer.o\
 	     Model.o\
-	     Utilities.o Random.o Topology.o
+	     Utilities.o Random.o Topology.o Timer.o
 	$(MPI) $(CC) $(CFLAGS) main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 				      DynamicSelfOrganizingMap.o DynamicProcessor.o\
 				      ComplexSelfOrganizingMap.o ComplexProcessor.o\
 				      EncoderLayer.o RegularLayer.o\
 				      Model.o\
-				      Utilities.o Random.o Topology.o\
+				      Utilities.o Random.o Topology.o Timer.o\
 				      -o Test
 
 # Linking compiled files S_Proc_Test
 S_Proc_Test: StaticProcessorTest.o	StaticProcessor.o\
-					Utilities.o Random.o Topology.o
-	$(CC) $(CFLAGS) StaticProcessorTest.o	StaticProcessor.o\
-						Utilities.o Random.o Topology.o\
-						-o S_Proc_Test
+					Utilities.o Random.o Topology.o Timer.o
+	$(MPI) $(CC) $(CFLAGS) StaticProcessorTest.o	StaticProcessor.o\
+							Utilities.o Random.o Topology.o Timer.o\
+							-o S_Proc_Test
 # Linking compiled files S_SOM_Test
 S_SOM_Test: StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
-						Utilities.o Random.o Topology.o
-	$(CC) $(CFLAGS) StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
-							Utilities.o Random.o Topology.o\
-							-o S_SOM_Test
+						Utilities.o Random.o Topology.o Timer.o
+	$(MPI) $(CC) $(CFLAGS) StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
+								Utilities.o Random.o Topology.o Timer.o\
+								-o S_SOM_Test
 
 # Compiling main
 main.o: main.cpp
@@ -111,6 +113,10 @@ Random.o: ../Libraries/Model/Random.cpp ../Libraries/Model/Random.h $(LIBRARIES)
 # Compiling topology library
 Topology.o: ../Libraries/Model/Topology.cpp ../Libraries/Model/Topology.h $(LIBRARIES)
 	$(CC) -c $(CFLAGS) ../Libraries/Model/Topology.cpp
+
+# Compiling Timer library
+Timer.o: ../Libraries/Model/Timer.cxx $(LIBRARIES)
+	$(MPI) $(CC) -c $(CFLAGS) ../Libraries/Model/Timer.cxx
 
 clean:
 	rm *.o Test S_SOM_Test

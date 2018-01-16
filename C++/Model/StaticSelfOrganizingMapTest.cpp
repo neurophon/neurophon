@@ -14,6 +14,7 @@
 #include "../Libraries/Model/DataTypes.h"
 #include "../Libraries/Model/Constants.h"
 #include "../Libraries/Model/Random.h"
+#include "../Libraries/Model/Timer.h"
 
 using namespace std;
 
@@ -21,6 +22,8 @@ bool	big_endianness;
 
 int main()
 {
+// Initialize the MPI environment.
+MPI::Init_thread(MPI_THREAD_MULTIPLE);
 std::size_t	numberOfInputs, inputDim = 3, dim = 10;
 double learningRate = 0.1, neighborParameter = 0.05;
 std::string     str;
@@ -60,6 +63,7 @@ StaticSelfOrganizingMap SOM(dimensions, inputDim);
 std::cout << "SOM object created.\n";
 
 std::cout << "Processing data.\n";
+timer::MarkStartEvent("StaticSelfOrganizingMap Test");
 for ( std::size_t row = 0; row < numberOfInputs; row++ ) {
 	learningRate = 0.9 * std::pow((0.01/0.9),(double)row/(double)numberOfInputs);
 	neighborParameter = 5 *	std::pow(0.01,(double)row/(double)numberOfInputs);
@@ -80,6 +84,7 @@ for ( std::size_t row = 0; row < numberOfInputs; row++ ) {
 	auto	unitsWinnerPosition = SOM.getResponse(input[row]).ranking[0];
 	SOM.learningRule(learningRate, neighborParameter, unitsWinnerPosition, input[row]);
 }
+timer::MarkEndEvent("StaticSelfOrganizingMap Test");
 
 std::cout << "Saving Object.\n";
 std::string	selfOrganizingMapIdentifier = "SOM", fileName = "SOM_Status";
@@ -114,5 +119,9 @@ outfile << outstream.rdbuf();
 outfile.close();
 std::cout << "Object saved.\n";
 
+// Print time statistics
+timer::PrintLog(std::cout, MPI_COMM_WORLD);
+
+MPI::Finalize();
 return	0;
 }

@@ -14,6 +14,7 @@
 #include "../Libraries/Model/DataTypes.h"
 #include "../Libraries/Model/Constants.h"
 #include "../Libraries/Model/Random.h"
+#include "../Libraries/Model/Timer.h"
 
 using namespace std;
 
@@ -21,6 +22,8 @@ bool	big_endianness;
 
 int main()
 {
+// Initialize the MPI environment.
+MPI::Init_thread(MPI_THREAD_MULTIPLE);
 std::size_t	 iterations = 50, numberOfInputs, inputDim = 135*135, dim = 15;
 double learningRate = 0.1, neighborParameter = 0.05, plasticity = 0.01, sparsity = 0.01;
 std::string     str;
@@ -68,6 +71,7 @@ std::cout << "CorticalColumn object created.\n";
 
 std::cout << "Processing data.\n";
 std::vector<std::vector<std::size_t>>	output;
+timer::MarkStartEvent("StaticProcessor Test");
 for ( std::size_t iteration = 0; iteration < iterations; iteration++ ) {
 	for ( std::size_t row = 0; row < numberOfInputs; row++ ) {
 		learningRate = 0.9 * std::pow((0.01/0.9),(row+numberOfInputs*iteration)/(numberOfInputs*iterations));
@@ -118,6 +122,7 @@ for ( std::size_t iteration = 0; iteration < iterations; iteration++ ) {
 		output.push_back(auxiliary);
 	}
 }
+timer::MarkEndEvent("StaticProcessor Test");
 
 std::cout << "Saving Object.\n";
 std::string	selfOrganizingMapIdentifier = "CorticalColumn", fileName = "CorticalColumn_Status";
@@ -183,5 +188,8 @@ else {
 outfile.close();
 std::cout << "Output saved.\n";
 
+// Print time statistics
+timer::PrintLog(std::cout, MPI_COMM_WORLD);
+MPI::Finalize();
 return	0;
 }
