@@ -1,8 +1,8 @@
 # Set the compilers you want to use
 
 # Use g++-5 gcc version 4.8.5 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
-#CC = g++-5
-CC = g++
+CC = g++-5
+#CC = g++
 #CC = icpc
 
 # Use mpic++ for MPICH version 3.2 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
@@ -24,7 +24,7 @@ LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/Timer.h\
 	    ../Libraries/Model/TimerC.h
 
-all: Test S_SOM_Test S_Proc_Test
+all: Test S_SOM_Test S_Proc_Test C_SOM_Test
 
 # Linking compiled files for Test
 Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
@@ -41,13 +41,24 @@ Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 				      Utilities.o Random.o Topology.o Timer.o\
 				      -o Test
 
-# Linking compiled files S_Proc_Test
+# Linking compiled files for C_SOM_Test
+C_SOM_Test: ComplexSelfOrganizingMapTest.o	ComplexSelfOrganizingMap.o\
+						DynamicSelfOrganizingMap.o\
+						StaticSelfOrganizingMap.o\
+						Utilities.o Random.o Topology.o Timer.o
+	$(MPI) $(CC) $(CFLAGS) ComplexSelfOrganizingMapTest.o	ComplexSelfOrganizingMap.o\
+								DynamicSelfOrganizingMap.o\
+								StaticSelfOrganizingMap.o\
+								Utilities.o Random.o Topology.o Timer.o\
+								-o C_SOM_Test
+
+# Linking compiled files for S_Proc_Test
 S_Proc_Test: StaticProcessorTest.o	StaticProcessor.o\
 					Utilities.o Random.o Topology.o Timer.o
 	$(MPI) $(CC) $(CFLAGS) StaticProcessorTest.o	StaticProcessor.o\
 							Utilities.o Random.o Topology.o Timer.o\
 							-o S_Proc_Test
-# Linking compiled files S_SOM_Test
+# Linking compiled files for S_SOM_Test
 S_SOM_Test: StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
 						Utilities.o Random.o Topology.o Timer.o
 	$(MPI) $(CC) $(CFLAGS) StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
@@ -57,6 +68,10 @@ S_SOM_Test: StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
 # Compiling main
 main.o: main.cpp
 	$(MPI) $(CC) -c $(CFLAGS) main.cpp
+
+# Compiling ComplexSelfOrganizingMapTest
+ComplexSelfOrganizingMapTest.o: ComplexSelfOrganizingMapTest.cpp $(LIBRARIES)
+	$(MPI) $(CC) -c $(CFLAGS) ComplexSelfOrganizingMapTest.cpp
 
 # Compiling StaticProcessorTest
 StaticProcessorTest.o: StaticProcessorTest.cpp $(LIBRARIES)
@@ -119,4 +134,4 @@ Timer.o: ../Libraries/Model/Timer.cxx $(LIBRARIES)
 	$(MPI) $(CC) -c $(CFLAGS) ../Libraries/Model/Timer.cxx
 
 clean:
-	rm *.o Test S_SOM_Test
+	rm *.o Test S_SOM_Test S_Proc_Test C_SOM_Test
