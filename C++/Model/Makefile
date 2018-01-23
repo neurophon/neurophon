@@ -10,7 +10,7 @@ MPI = mpic++ -cxx=
 #MPI = mpicc -cc=
 
 # Use the following Compile-time flags
-#CFLAGS = -fopenmp -Wall -pedantic -std=c++14
+#CFLAGS = -ggdb -fopenmp -Wall -pedantic -std=c++14
 #CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
 CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
 
