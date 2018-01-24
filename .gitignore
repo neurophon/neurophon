@@ -36,6 +36,7 @@ Test
 S_SOM_Test
 S_Proc_Test
 C_SOM_Test
+C_Proc_Test
 
 # swp files
 *.swp

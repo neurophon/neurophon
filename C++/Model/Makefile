@@ -24,7 +24,7 @@ LIBRARIES = ../Libraries/Model/Templates.h\
 	    ../Libraries/Model/Timer.h\
 	    ../Libraries/Model/TimerC.h
 
-all: Test S_SOM_Test S_Proc_Test C_SOM_Test
+all: Test S_SOM_Test S_Proc_Test C_SOM_Test C_Proc_Test
 
 # Linking compiled files for Test
 Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
@@ -40,6 +40,17 @@ Test: main.o StaticSelfOrganizingMap.o StaticProcessor.o\
 				      Model.o\
 				      Utilities.o Random.o Topology.o Timer.o\
 				      -o Test
+
+# Linking compiled files for C_SOM_Test
+C_Proc_Test: ComplexProcessorTest.o	ComplexProcessor.o\
+					DynamicProcessor.o\
+					StaticProcessor.o\
+					Utilities.o Random.o Topology.o Timer.o
+	$(MPI) $(CC) $(CFLAGS) ComplexProcessorTest.o	ComplexProcessor.o\
+							DynamicProcessor.o\
+							StaticProcessor.o\
+							Utilities.o Random.o Topology.o Timer.o\
+							-o C_Proc_Test
 
 # Linking compiled files for C_SOM_Test
 C_SOM_Test: ComplexSelfOrganizingMapTest.o	ComplexSelfOrganizingMap.o\
@@ -68,6 +79,10 @@ S_SOM_Test: StaticSelfOrganizingMapTest.o	StaticSelfOrganizingMap.o\
 # Compiling main
 main.o: main.cpp
 	$(MPI) $(CC) -c $(CFLAGS) main.cpp
+
+# Compiling ComplexProcessorTest
+ComplexProcessorTest.o: ComplexProcessorTest.cpp $(LIBRARIES)
+	$(MPI) $(CC) -c $(CFLAGS) ComplexProcessorTest.cpp
 
 # Compiling ComplexSelfOrganizingMapTest
 ComplexSelfOrganizingMapTest.o: ComplexSelfOrganizingMapTest.cpp $(LIBRARIES)
@@ -134,4 +149,4 @@ Timer.o: ../Libraries/Model/Timer.cxx $(LIBRARIES)
 	$(MPI) $(CC) -c $(CFLAGS) ../Libraries/Model/Timer.cxx
 
 clean:
-	rm *.o Test S_SOM_Test S_Proc_Test C_SOM_Test
+	rm *.o Test S_SOM_Test S_Proc_Test C_SOM_Test C_Proc_Test
