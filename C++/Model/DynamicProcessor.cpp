@@ -180,9 +180,9 @@ responseInfo	DynamicProcessor::getDynamicResponse( const responseInfo& response,
 	newResponse = response;
 
 	#pragma omp parallel for default(none) shared(linkingUnits,totalDynamicProcessor)
-	for( std::size_t link = 0; link < _numberOfLinks; link++) {
-		for( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
-			double	auxiliary = 0.0;
+	for( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
+		double	auxiliary = 0.0;
+		for( std::size_t link = 0; link < _numberOfLinks; link++) {
 			for ( std::size_t connection = 0; connection < linkingUnits[link].size(); connection++ ) {
 				auto	potentialIndex =
 					find_first_coincident_index(_potentialConnections[link][row],
@@ -192,9 +192,8 @@ responseInfo	DynamicProcessor::getDynamicResponse( const responseInfo& response,
 					auxiliary += _dynamicUnits[link][row][potentialIndex];
 
 			}
-			#pragma omp critical
-			totalDynamicProcessor[row] += auxiliary;
 		}
+		totalDynamicProcessor[row] += auxiliary;
 	}
 
 	std::transform(newResponse.excitation.begin(), newResponse.excitation.end(),
