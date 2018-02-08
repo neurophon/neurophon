@@ -25,6 +25,7 @@
 #include "../Libraries/Model/OctaveInterface.h"
 #include "../Libraries/Model/MatlabInterface.h"
 #include "../Libraries/Model/GlobalVariables.h"
+#include "../Libraries/Model/Timer.h"
 #include "Model.h"
 
 using namespace std;
@@ -315,6 +316,7 @@ void	Model::train( const std::string& folderName )
 	// Get the rank of the process
 	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
 
+	//timer::SetTrackSummariesOverTime(true);
 	if ( world_rank == 0 ) {
 		std::cout << "\n\n-----------------------------------------------------" << std::endl;
 		std::cout << "\n              STARTING TRAINING PROCESS " << std::endl;
@@ -397,7 +399,9 @@ void	Model::train( const std::string& folderName )
 							auxiliaryEncoderParameters.learning.distalLearningRate =
 							_encoderLayerParameters.learning.distalLearningRate;
 						}
-
+						
+						//timer::MarkStartTimeStep((int)timeStep, time(0));
+						//timer::MarkStartEvent("EncoderLayer Test");
 						if ( timeStep == 0 && iteration == 0 ) // for the first iteration there is no lateral information
 							encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep], // afferent
 								       					   auxiliaryEncoderParameters);
@@ -406,6 +410,8 @@ void	Model::train( const std::string& folderName )
 								       					   encoderLayerOutput, 		// lateral
 													   auxiliaryEncoderParameters);
 
+						//timer::MarkEndEvent("EncoderLayer Test");
+						//timer::MarkEndTimeStep();
 					}
 				}
 				// increments _modelStructure.initialStageAt and
@@ -551,6 +557,8 @@ void	Model::train( const std::string& folderName )
 
 							// regular layers processes the data in turns
 							// until the training layer is reached
+							//timer::MarkStartTimeStep((int)timeStep, time(0));
+							//timer::MarkStartEvent("RegularLayer Test");
 							for ( std::size_t layer = 0;
 									  layer <= trainingLayer;
 									  layer++ ) {
@@ -610,8 +618,11 @@ void	Model::train( const std::string& folderName )
 									}
 								}
 							}
+							//timer::MarkEndEvent("RegularLayer Test");
+							//timer::MarkEndTimeStep();
 						}
 					}
+
 					// increments _modelStructure.initialStageAt and
 					// saves the model status for every iteration
 					_modelStructure.initialStageAt = (_modelStructure.initialStageAt+1) % (_modelStructure.stages+2);
@@ -765,6 +776,8 @@ void	Model::train( const std::string& folderName )
 
 						// every regular layer processes the data by turns
 						// until the training layer is reached
+						//timer::MarkStartTimeStep((int)timeStep, time(0));
+						//timer::MarkStartEvent("RegularLayer Test");
 						for ( std::size_t layer = 0;
 								  layer <= trainingLayer;
 								  layer++ ) {
@@ -824,8 +837,11 @@ void	Model::train( const std::string& folderName )
 								}
 							}
 						}
+						//timer::MarkEndEvent("RegularLayer Test");
+						//timer::MarkEndTimeStep();
 					}
 				}
+
 				// increments _modelStructure.initialStageAt and
 				// saves the model status for every iteration
 				_modelStructure.initialStageAt = (_modelStructure.initialStageAt+1) % (_modelStructure.stages+2);
@@ -855,6 +871,8 @@ void	Model::train( const std::string& folderName )
 		std::cout << "\n              TRAINING PROCESS FINISHED  " << std::endl;
 		std::cout << "\n-----------------------------------------------------" << std::endl;
 	}
+
+	//timer::PrintLog(std::cout, MPI_COMM_WORLD);
 } // end function train 
 
 
@@ -1699,12 +1717,12 @@ void	Model::validateModelStructure( const bool training )
 	if ( _modelStructure.newLayerAt > _modelStructure.numberOfLayers ) {
 		if ( world_rank == 0 ) {
 			std::cout << "_modelStructure.newLayerAt cannot be grater than ";
-		        std::cout << "_modelStructure.numberOfLayers" << std::endl;
+			std::cout << "_modelStructure.numberOfLayers" << std::endl;
 		}
 		MPI_Abort(MPI::COMM_WORLD,1);
 	}
 
-	// if thre is not encoder in this model, there must be -at laest-
+	// if there is not encoder in this model, there must be -at laest-
 	// one regular layer
 	if ( !_modelStructure.encoderIncorporation &&
 	     !(_modelStructure.numberOfLayers > 0) ) {
@@ -1753,7 +1771,8 @@ void	Model::validateModelStructure( const bool training )
 		}
 	}
 
-        // if the model is in training mode
+	// if the model is in training mode
+	// and it has -at least- one regular layer,
 	// it has to have something to train
 	// then if it is completely trained, it throws an error
 	if ( training && _modelStructure.numberOfLayers > 0 ) {
@@ -1766,7 +1785,36 @@ void	Model::validateModelStructure( const bool training )
 
 			MPI_Abort(MPI::COMM_WORLD,1);
 		}
-       }
+	}
+
+	// if the model does not have regular layers
+	// it must have encoder
+	if ( _modelStructure.numberOfLayers == 0 ) {
+		if ( !_modelStructure.encoderIncorporation ) {
+			if ( world_rank == 0 )
+				std::cout << "\nThis model does not have regular layers, "
+					  << "but this does not have encoder either.\n"
+					  << "Then, the model is empty." << std::endl;
+
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+	}
+
+	// if the model is in training mode
+	// and it has not regular layer,
+	// it has to have something to train
+	// then if it is completely trained, it throws an error
+	if ( training && _modelStructure.numberOfLayers == 0 ) {
+		if ( !(_modelStructure.newEncoder) ) {
+			if ( world_rank == 0 )
+				std::cout << "\nThis model is in training mode, "
+					  << "but this is completely trained.\n"
+					  << "In order to be in training mode, "
+					  << "the model must not be completely trained." << std::endl;
+
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+	}
 } // end function validateModelStructure
 
 
