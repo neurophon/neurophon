@@ -31,7 +31,7 @@ The phonetic features extracted by the model have the function of improving
 the performance of standardized supervised pattern classification techniques
 whose main objective is to test the level of invariance achieved by the model layers.
 
-The algorithms in our hierarchical cortical memory (HCM) are \CC14 compliant,
+The algorithms in our hierarchical cortical memory (HCM) are C++14 compliant,
 they are composed by a set of classes interrelated by inheritance and composition.
 The classes in the algorithms are parallelized by means of OpenMP
 -for the classes located at the bottom of the inheritance hierarchy-
