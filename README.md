@@ -42,7 +42,7 @@ and it is suitable for the use of parallel I/O file systems.
 Currently, this project is receiving High Performance Computing (HPC) mentoring
 from Silvio Rizzi (HPC assistant at ALCF) and George K. Thiruvathukal
 (Professor of Computer Science, Loyola University Chicago).
-I have been provided with an Argonne Leadership Computing Facility
+We have been provided with an Argonne Leadership Computing Facility
 Allocation whose project name is *neurophon* and all the code is
 allocated in a GitLab repository at Argonne. 
 By means of Argonne staff assistance, we are performing strong and weak
@@ -59,7 +59,7 @@ Unlike current deep learning architectures, our model uses Sparse Distributed Re
 (SDRs) in order to process information.
 SDRs have surprising mathematical properties which give them high noise rejection
 and fault tolerance.
-Those are typical characteristics in cortical tissue where individual cells are far from 100\%
+Those are typical characteristics in cortical tissue where individual cells are far from 100 percent
 reliable and they die and regenerate continuously.
 According to recent findings in neuroscience,
 the brain uses SDRs to process information.
