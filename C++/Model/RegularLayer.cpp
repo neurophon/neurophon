@@ -751,7 +751,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size)
+	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size) num_threads(8)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
@@ -965,7 +965,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size)
+	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size) num_threads(8)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
@@ -1180,7 +1180,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size)
+	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(8)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {

@@ -624,7 +624,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size)
+	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size) num_threads(8)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
 		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, _apical, _lateral);
@@ -824,7 +824,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size)
+	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size) num_threads(8)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
 		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, _apical, lateral);
@@ -1025,7 +1025,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size)
+	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(8)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
 		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, apical, lateral);

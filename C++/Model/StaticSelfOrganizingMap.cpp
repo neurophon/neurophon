@@ -274,7 +274,7 @@ void	StaticSelfOrganizingMap::learningRule( const double learningRate,		/**< [in
 
 	deltaWeights.resize(_unitsDimensionality);
 	std::string	gaussian = "gaussian";
-	#pragma omp parallel for default(none) shared(deltaWeights, input, gaussian)
+	#pragma omp parallel for default(none) shared(deltaWeights, input, gaussian) num_threads(1)
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) { // the index row corresponds to the unit
 		auto	neighborhoodValue = StaticSelfOrganizingMap::learningNeighborhood(neighborParameter, unitsWinnerPosition, row, gaussian);
 		// This is the Kohonen learning rule to update the synaptic weights
@@ -373,7 +373,7 @@ somResponseInfo	StaticSelfOrganizingMap::getResponse( const std::vector<double>&
 
 	response.distances.resize(_unitsDimensionality);
 
-	#pragma omp parallel for default(none) shared(response, input)
+	#pragma omp parallel for default(none) shared(response, input) num_threads(1)
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ )						// the index row corresponds to the units
 		response.distances[row] = vectors_distance(_weights[row], input);
 

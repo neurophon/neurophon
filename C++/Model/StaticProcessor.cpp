@@ -201,7 +201,7 @@ responseInfo	StaticProcessor::learningRule( const double learningRate,
 	std::string	gaussian = "gaussian";
 	for (const auto& unitsWinnerPosition : unitsWinnerPositions) { 
 		assert(unitsWinnerPosition < _unitsDimensionality);
-		#pragma omp parallel for default(none) shared(unitsWinnerPosition, inputIndexes, gaussian)
+		#pragma omp parallel for default(none) shared(unitsWinnerPosition, inputIndexes, gaussian) num_threads(1)
 		for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {	// the index row corresponds to the unit
 			auto	neighborhoodValue = StaticProcessor::learningNeighborhood(neighborParameter, unitsWinnerPosition, row, gaussian);
 			if ( neighborhoodValue > PROXIMAL_SYNAPTIC_THRESHOLD ) {  
@@ -311,7 +311,7 @@ responseInfo	StaticProcessor::getResponse( const std::vector<std::size_t>& input
 			throw std::runtime_error ("inputIndex >= _inputDimensionality");
 
 	response.excitation.resize(_unitsDimensionality);
-	#pragma omp parallel for default(none) shared(response, inputIndexes)
+	#pragma omp parallel for default(none) shared(response, inputIndexes) num_threads(1)
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {					// the index row corresponds to the units
 		double	innerProduct = 0.0;
 		for (const auto& inputIndex : inputIndexes) {
@@ -353,7 +353,7 @@ void	StaticProcessor::homeostasis( const bool learning,
 		transform(_unitsActivity.begin(), _unitsActivity.end(), _unitsActivity.begin(),
 			  bind2nd(std::minus<std::size_t>(), minimum));
 
-		#pragma omp parallel for default(none)
+		#pragma omp parallel for default(none) num_threads(1)
 		for ( std::size_t row = 0; row < _unitsDimensionality; row++ )
 			_weightsSparsity[row] = (get_rectangular_sparsity(_weights[row]) > SPARSITY_THRESHOLD);
 
@@ -405,7 +405,7 @@ void	StaticProcessor::synapticHomeostasis( const double synapticThreshold )
 // computes synaptic growth limitation over the weights
 void	StaticProcessor::synapticGrowthLimitation( const double synapticThreshold )
 {
-	#pragma omp parallel for default(none)
+	#pragma omp parallel for default(none) num_threads(1)
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 		auto	sum = std::accumulate(_weights[row].begin(), _weights[row].end(), 0.0);
 		if ( sum > 1.0 ) {
@@ -426,7 +426,7 @@ void	StaticProcessor::activationHomeostasis( const double boostingFactor )
 	auto	averageActivity = (double)std::accumulate(_unitsActivity.begin(), _unitsActivity.end(),0)/(double)_unitsActivity.size();
 
 	assert(averageActivity > 0.0);
-	#pragma omp parallel for default(none) shared(averageActivity)
+	#pragma omp parallel for default(none) shared(averageActivity) num_threads(1)
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 		if (_updateStep > 0)
 			_activationBoosting[row] = exp(-boostingFactor*((double)_unitsActivity[row]-(double)averageActivity)/(double)_updateStep);

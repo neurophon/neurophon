@@ -144,7 +144,7 @@ void	DynamicSelfOrganizingMap::Update( const std::vector<std::size_t>& indexes,
 			if ( index > _unitsDimensionality )
 				throw std::runtime_error ("index > _unitsDimensionality");
 
-			#pragma omp parallel for default(none) shared(index, links, linkingUnits)
+			#pragma omp parallel for default(none) shared(index, links, linkingUnits) num_threads(1)
 			for ( std::size_t link = 0; link < links; link++ ) {
 				for ( std::size_t connection = 0; connection < linkingUnits[link].size(); connection++ ) {
 					auto	potentialIndex =
@@ -164,7 +164,7 @@ void	DynamicSelfOrganizingMap::Update( const std::vector<std::size_t>& indexes,
 			if ( index > _unitsDimensionality )
 				throw std::runtime_error ("index > _unitsDimensionality");
 
-			#pragma omp parallel for default(none) shared(index, links, linkingUnits)
+			#pragma omp parallel for default(none) shared(index, links, linkingUnits) num_threads(1)
 			for ( std::size_t link = 0; link < links; link++ ) {
 				for ( std::size_t connection = 0; connection < linkingUnits[link].size(); connection++ ) {
 					auto	potentialIndex =
@@ -187,7 +187,7 @@ void	DynamicSelfOrganizingMap::Update( const std::vector<std::size_t>& indexes,
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		#pragma omp parallel for default(none) shared(links)
+		#pragma omp parallel for default(none) shared(links) num_threads(1)
 		for ( std::size_t link = 0; link < links; link++ ) {
 			for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 				auto	sum = std::accumulate(_dynamicUnits[link][row].begin(), _dynamicUnits[link][row].end(), 0.0);
@@ -219,7 +219,7 @@ somResponseInfo	DynamicSelfOrganizingMap::getDynamicResponse( const somResponseI
 	totalDynamicSelfOrganizingMap.resize(_unitsDimensionality);
 	newResponse = response;
 
-	#pragma omp parallel for default(none) shared(linkingUnits,totalDynamicSelfOrganizingMap)
+	#pragma omp parallel for default(none) shared(linkingUnits,totalDynamicSelfOrganizingMap) num_threads(1)
 	for( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 		double	auxiliary = 0.0;
 		for( std::size_t link = 0; link < _numberOfLinks; link++) {
