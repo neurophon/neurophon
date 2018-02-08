@@ -14,7 +14,7 @@ In our research project we seek for those principles by means of the elaboration
 of the neocortex.
 On the one hand, the simpler the rules, the more repetitions of such rules are needed in order to get
 interesting -human like- behaviours from our models -such as perception invariance.
-The mammalian brain -with its possible connections going far beyond the number of atoms in the known universe-
+The mammalian brain -with its possible combinatorial states going beyond the number of atoms in the known universe-
 leaves us categorical clues in favor of such a position. 
 On the other hand, the more repetitions of those simple rules, the more computational resources
 we need in order to implement our models.
@@ -43,7 +43,7 @@ Currently, this project is receiving High Performance Computing (HPC) mentoring
 from Silvio Rizzi (HPC assistant at ALCF) and George K. Thiruvathukal
 (Professor of Computer Science, Loyola University Chicago).
 I have been provided with an Argonne Leadership Computing Facility
-Allocation whose project name is \textit{neurophon} and all the code is
+Allocation whose project name is *neurophon* and all the code is
 allocated in a GitLab repository at Argonne. 
 By means of Argonne staff assistance, we are performing strong and weak
 scaling capacity tests in Cooley nodes which have returned encouraging results
@@ -64,4 +64,29 @@ reliable and they die and regenerate continuously.
 According to recent findings in neuroscience,
 the brain uses SDRs to process information.
 This is true for all mammals, from mice to humans.
+
+We are convinced that in a near future, HPC will get priceless contributions from works such as the one
+we are developing here.
+Nobody can deny the enormous progress in computing technology in the last years.
+Yet, today most powerful supercomputers are still based on the same architecture
+described by John Von Neumann in 1945.
+We think there are very recent and important scientific milestones to which
+scientific comunity have to pay attention to in this respect. 
+Even though it has its limitations, deep learning -for example- has shown
+unparalleled achievements which suggest alternative roads in future computer architecture
+designs.
+Moreover, it is the same Rick Stevens at Argonne who is warning about future changes in
+the architecture of HPC systems in order to run artificial intelligence and deep learning
+algorithms more efficiently.
+But, regarding deep learning limitations, there are important people who are paying more
+attention to key properties in cortical tissue in order to design dynamical computational
+memory architectures based on the mammalian cortex.
+Furthermore, some organizations have taken such people's ideas and parsimoniously run with them.
+Companies like IBM and federal organizations like DARPA implement their ideas in silicon,
+paving the way for neuromorphic processors that process
+information in near-real time, develop representations of patterns, and make predictions.
+This project is in such direction, a direction in which we share the idea
+that in order to get really intelligent machines it is not necessary to copy all
+the brain complexity, it is necessary to gather just key neuro-physiological
+features for information processing mainly in cortical tissue.
 
