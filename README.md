@@ -26,14 +26,14 @@ With the desired number of layers, our model abstracts phonological features
 in a completely unsupervised fashion.
 The input is composed by a series of words which are processed by
 by our implementation in C of
-(multiresolution spectro-temporal analysis of complex sounds)[http://asa.scitation.org/doi/abs/10.1121/1.1945807?journalCode=jas]
+[multiresolution spectro-temporal analysis of complex sounds](http://asa.scitation.org/doi/abs/10.1121/1.1945807?journalCode=jas)
 which simulates subcortical
 nuclei in the auditory pathway.
 Such implementation is parallelized by means of OpenMP.
 The phonetic features extracted by the model have the function of improving
 the performance of standardized supervised pattern classification techniques
 whose main objective is to test the level of invariance achieved by the model layers.
-We use (libsvm)[https://www.csie.ntu.edu.tw/~cjlin/libsvm/] library 
+We use [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) library 
 under Matlab and Octave in order to test phonetic invariance
 in the classification performance measured on the inputs and on the response of our model abstract features.
 
@@ -62,7 +62,7 @@ architectures which do not pay enough attention to neurophysilogical features
 in the cortex discovered in the last years. Such features are incorporated in our model
 since we think they are key for information processing in cortical tissue.
 Unlike current deep learning architectures, our model uses
-(Sparse Distributed Representations (SDRs))[https://arxiv.org/pdf/1503.07469.pdf]
+[Sparse Distributed Representations (SDRs)](https://arxiv.org/pdf/1503.07469.pdf)
 in order to process information.
 SDRs have surprising mathematical properties which give them high noise rejection
 and fault tolerance.
