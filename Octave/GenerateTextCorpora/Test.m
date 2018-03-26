@@ -53,9 +53,15 @@ vocabulary1R = ["map."; "dog."; "mouse."; "with."; "truck."];
 
 vocabulary2 = ["answer."; "doctor."; "teacher."; "summer."; "tennis."; "guitar."; "balloon."; "paper."; "picture."; "giraffe."; "tower."; "zebra."; "popcorn."; "pizza."; "blanket."; "table."; "marker."; "picture."; "movie."];
 
+vocabulary2R = ["answer."; "doctor."; "teacher."; "summer."; "tennis."];
+
 vocabulary3 = ["computer."; "telephone."; "rectangle."; "tomato."; "magazine."; "volunteer."; "seventeen."; "fantastic."; "basketball."; "banana."; "astronaut."; "animal."; "September."; "Saturday."];
 
+vocabulary3R = ["computer."; "telephone."; "rectangle."; "tomato."; "magazine."];
+
 vocabulary4 = ["kindergarten."; "alligator."; "watermelon."; "harmonica."; "television."; "delivery."; "understanding."; "dictionary."; "Monopoly."; "helicopter."; "elevator."; "discovery."];
+
+vocabulary4R = ["kindergarten."; "alligator."; "watermelon."; "harmonica."; "television."];
 
 vocabulary5 = ["hippopotamus."; "refrigerator."; "curiosity."; "electricity."; "creativity."; "opportunity."; "vocabulary."; "imaginary."; "multiplication."; "imagination."; "cafeteria."; "enthusiastic."];
 
@@ -63,7 +69,7 @@ vocabulary5 = ["hippopotamus."; "refrigerator."; "curiosity."; "electricity."; "
 #Generate_Training_SABLE("Corpus", voices4, vocabulary1, 390, 2);
 
 
-Generate_Training_SABLE("Corpus", [voicesNormal2; voices2; voices4], vocabulary1R, 250, 2);
+Generate_Training_SABLE("Corpus", [voicesNormal2; voices2; voices4], vocabulary4R, 250, 2);
 
 
 
