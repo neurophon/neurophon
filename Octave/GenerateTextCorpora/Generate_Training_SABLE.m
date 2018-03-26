@@ -31,6 +31,7 @@ endif
 # Such variable is specified by a sequence of numbers corresponding to the location
 # of the words in the vocabulary
 global	wordsSequence;
+global	speakersSequence;
 
 filename = [nameOfFile, ".sable"];
 fid = fopen (filename, "w");
@@ -76,6 +77,9 @@ for i=1:turns
 			generalLastWord = voicesActivity(1,r).lastWord;
 			fputs (fid, "</SPEAKER>\n");
 			usedVoices(1,r) = 1;
+			for i=1:wordsPerTurn
+				speakersSequence = [speakersSequence, r];
+			endfor
 			count++;
 			lastVoice = voices(r,:);
 			condition = false;
@@ -91,6 +95,9 @@ for i=1:turns
 				fputs (fid, "</SPEAKER>\n");
 			endif
 			usedVoices(1,r) = 1;
+			for i=1:wordsPerTurn
+				speakersSequence = [speakersSequence, r];
+			endfor
 			count++;
 			lastVoice = voices(r,:);
 			condition = false;
@@ -102,6 +109,7 @@ endfor
 fputs (fid, "\n\n");
 CloseHeader(fid);
 
-save	wordsSequence.mat wordsSequence
+save	wordsSequence.mat wordsSequence -v6
+save	speakersSequence.mat speakersSequence -v6
 
 endfunction
