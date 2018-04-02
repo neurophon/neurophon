@@ -693,7 +693,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												    distalInputs.activeIndexes,
 												    numberOfExcitedUnits,
 												    parameters.sparsity,
-												    true);
+												    false);
 				}
 				else {
 					activeIndexes = _encoderColumns[column/world_size].Activate(response,
@@ -2301,8 +2301,14 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 	assert(check_lateralDistalPercentage == true);
 	assert(check_lateralDistalWrapAround == true);
 	assert(check_afferentConnections == true);
-	assert(check_lateralDistalConnections == true);
-	assert(check_apicalConnections == true);
+
+	if( _lateralDistalReceptiveField.size() != 0 ) {
+		assert(check_lateralDistalConnections == true);
+	}
+	if( _apicalReceptiveField.size() != 0 ) {
+		assert(check_apicalConnections == true);
+	}
+
 	assert(check_populationsArrayDimensionality == true);
 	assert(check_apicalPopulationsArrayDimensionality == true);
 	assert(check_proximalAfferentLowerLimits == true);
