@@ -24,12 +24,18 @@ We have implemented a neurocomputational model whose biological plausibility
 -at the cortical level- allows us to test neurophysiological hypotheses incorporated in the algorithms.
 With the desired number of layers, our model abstracts phonological features
 in a completely unsupervised fashion.
-The input is composed by a series of words which are processed by multiresolution
-spectro-temporal analysis of complex sounds which simulates subcortical
+The input is composed by a series of words which are processed by
+by our implementation in C of
+[multiresolution spectro-temporal analysis of complex sounds](http://asa.scitation.org/doi/abs/10.1121/1.1945807?journalCode=jas)
+which simulates subcortical
 nuclei in the auditory pathway.
+Such implementation is parallelized by means of OpenMP.
 The phonetic features extracted by the model have the function of improving
 the performance of standardized supervised pattern classification techniques
 whose main objective is to test the level of invariance achieved by the model layers.
+We use [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) library 
+under Matlab and Octave in order to test phonetic invariance
+in the classification performance measured on the inputs and on the response of our model abstract features.
 
 The algorithms in our hierarchical cortical memory (HCM) are C++14 compliant,
 they are composed by a set of classes interrelated by inheritance and composition.
@@ -55,8 +61,9 @@ which make us outline it as a future alternative to current deep learning
 architectures which do not pay enough attention to neurophysilogical features
 in the cortex discovered in the last years. Such features are incorporated in our model
 since we think they are key for information processing in cortical tissue.
-Unlike current deep learning architectures, our model uses Sparse Distributed Representations
-(SDRs) in order to process information.
+Unlike current deep learning architectures, our model uses
+[Sparse Distributed Representations (SDRs)](https://arxiv.org/pdf/1503.07469.pdf)
+in order to process information.
 SDRs have surprising mathematical properties which give them high noise rejection
 and fault tolerance.
 Those are typical characteristics in cortical tissue where individual cells are far from 100 percent
@@ -65,13 +72,22 @@ According to recent findings in neuroscience,
 the brain uses SDRs to process information.
 This is true for all mammals, from mice to humans.
 
+The models developed in this project incorporate columnar organization,
+proximal and distal dendritic arborization, afferent, apical and lateral
+inter-columnar interaction, proximal lateral intra-columnar inhibition,
+long term potentiation, long term depression and spike time dependent plasticity;
+to name a few of the neurophysiological phenomena modeled by these networks.
+Our model also exhibits massive firing events (lack of inhibition) as a response to prediction faults
+(unexpected sequential stimuli in the stream of data)
+and it responds with normal firing events (inhibition) when the sequential stimulus is known.
+
 We are convinced that in a near future, HPC will get priceless contributions from works such as the one
 we are developing here.
 Nobody can deny the enormous progress in computing technology in the last years.
 Yet, today most powerful supercomputers are still based on the same architecture
 described by John Von Neumann in 1945.
 We think there are very recent and important scientific milestones to which
-scientific comunity have to pay attention to in this respect. 
+the scientific comunity have to pay attention to in this respect. 
 Even though it has its limitations, deep learning -for example- has shown
 unparalleled achievements which suggest alternative roads in future computer architecture
 designs.
