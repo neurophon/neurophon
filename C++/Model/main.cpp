@@ -11,7 +11,7 @@ using namespace std;
 int main(int argc, char* argv[])
 {
 	// Initialize the MPI environment.
-	MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+	MPI::Init_thread(argc, argv, MPI_THREAD_FUNNELED);
 
 	// Get the rank of the process
 	int	world_rank = MPI::COMM_WORLD.Get_rank();

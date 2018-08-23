@@ -751,7 +751,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size) num_threads(8)
+	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
@@ -965,7 +965,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size) num_threads(8)
+	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
@@ -1180,7 +1180,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(8)
+	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
@@ -2907,9 +2907,19 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 	assert(check_lateralDistalPercentage == true);
 	assert(check_lateralDistalWrapAround == true);
 	assert(check_afferentConnections == true);
-	assert(check_lateralProximalConnections == true);
-	assert(check_lateralDistalConnections == true);
-	assert(check_apicalConnections == true);
+
+	if( _lateralProximalReceptiveField.size() != 0 ) {
+		assert(check_lateralProximalConnections == true);
+	}
+
+	if( _lateralDistalReceptiveField.size() != 0 ) {
+		assert(check_lateralDistalConnections == true);
+	}
+
+	if( _apicalReceptiveField.size() != 0 ) {
+		assert(check_apicalConnections == true);
+	}
+
 	assert(check_populationsArrayDimensionality == true);
 	assert(check_afferentPopulationsArrayDimensionality == true);
 	assert(check_apicalPopulationsArrayDimensionality == true);

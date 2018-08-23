@@ -173,7 +173,7 @@ responseInfo	DynamicProcessor::getDynamicResponse( const responseInfo& response,
 	assert(linkingUnits.size() == _dynamicUnits.size());
 	assert(response.excitation.size() == _unitsDimensionality);
 
-	std::vector<double>	totalDynamicProcessor;
+	std::vector<std::size_t>	totalDynamicProcessor;
 	responseInfo	newResponse;
 
 	totalDynamicProcessor.resize(_unitsDimensionality);
@@ -181,17 +181,20 @@ responseInfo	DynamicProcessor::getDynamicResponse( const responseInfo& response,
 
 	#pragma omp parallel for default(none) shared(linkingUnits,totalDynamicProcessor) num_threads(1)
 	for( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
-		double	auxiliary = 0.0;
+		std::size_t	auxiliary = 0;
 		for( std::size_t link = 0; link < _numberOfLinks; link++) {
+			double	link_accum = 0.0;
 			for ( std::size_t connection = 0; connection < linkingUnits[link].size(); connection++ ) {
 				auto	potentialIndex =
 					find_first_coincident_index(_potentialConnections[link][row],
 								    linkingUnits[link][connection]);
 
 				if ( potentialIndex < _potentialDimensionality[link] )
-					auxiliary += _dynamicUnits[link][row][potentialIndex];
+					link_accum += _dynamicUnits[link][row][potentialIndex];
 
 			}
+			if ( link_accum > 100*DISTAL_SYNAPTIC_THRESHOLD )
+				auxiliary++;
 		}
 		totalDynamicProcessor[row] += auxiliary;
 	}
