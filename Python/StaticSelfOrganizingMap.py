@@ -37,6 +37,10 @@ class   StaticSelfOrganizingMap:
                                                                 "_unitsArrayDimensionality is not numpy array")
             raise ValueError('StaticSelfOrganizingMap error')
             
+        if (len(self._unitsArrayDimensionality.shape) is not 1) :
+            print("StaticSelfOrganizingMap object inconsistence: len(unitsArrayDimensionality.shape) must be one")
+            raise ValueError('StaticSelfOrganizingMap error in member function validateObject')
+    
         for dim in range(0,self._unitsArrayDimensionality.size): 
             if  type(self._unitsArrayDimensionality[dim]) is not np.int64 :
                 print("StaticSelfOrganizingMap object inconsistence: unitsArrayDimensionality in its dim ", dim)
