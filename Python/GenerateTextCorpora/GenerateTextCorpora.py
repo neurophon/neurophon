@@ -15,8 +15,11 @@
 # Language:                 Python interpreted high-level programming language for general-purpose programming.
 
 # This program is a python 3 script that generates text corpora for mono, di, tri and tetrasyllabic words.
-# It generates NumberOfVocabularies random vocabularies each with VocabulariesSize number of words for each case.
+# It generates VocabulariesSizes.size random vocabularies each with VocabulariesSizes number of words for each case.
 # Then it generates the corpora from such vocabularies.
+# This program generates VocabulariesSizes.size * NumberOfVoicesTurns.size corpora for each voice array and for each
+# number of syllables calling Generate_SABLE
+# Generate_SABLE function also generates the corresponding audio files calling festival
 
 import Generate_SABLE as SABLE
 import numpy as np

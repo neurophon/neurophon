@@ -18,6 +18,8 @@
 # SABLE is collaboration between Sun, AT&T, Bell Labs, Edinburgh and CMU to devise a standard cross synthesizer standard mark up language.
 # The language is XML-based and allows users to add addition controlling commands in text to affect the output.
 # An implementation exists in Festival as well as Bell Labs synthesis system. 
+# Once a text corpus is generated, this function calls festival to generate the audio (.wav) file from the SABLE file.
+# An audio vector is also saved with the sound wave from the audio file in matlab format
 
 import os
 import numpy as np
