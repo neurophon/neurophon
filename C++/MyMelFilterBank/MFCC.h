@@ -11,13 +11,9 @@
 //						CCT CONICET Mendoza INCIHUSA					//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// File Name:		GlobalVariables.h
-// File Description:	Global variable definitions. This file contains the Global variable definitions to be used in the code
+// File Name:		MFCC.h
+// File Description: This file contains a function definition.
 
-#ifndef GLOBAL_VARIABLES_H
-#define GLOBAL_VARIABLES_H
+// this function generates a series of mel filter banks and saves them in different files
+void	MFBS( const std::string& );
 
-extern bool	big_endianness;
-extern	std::string	path;
-
-#endif

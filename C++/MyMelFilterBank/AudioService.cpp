@@ -308,7 +308,7 @@ audioVector	loadAudioVectorFile()
 
 	audioVector audio;
 
-	std::ifstream	inputFile( "../../Octave/AudioVector.mat", ios::in | ios::binary );
+	std::ifstream	inputFile( path + "AudioVector.mat", ios::in | ios::binary );
 	// fopen opens inputFile. Exit program if unable to create inputFile
 	if ( !inputFile ) {
 		printf( "inputFile could not be opened\n" );
@@ -491,7 +491,7 @@ void	saveWindowed( audioArray windows )
 	FILE *filePointer; 								// spectrum.mat file pointer
 
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( "../../Octave/windowed.mat", "w" ) ) == NULL ) {
+	if ( ( filePointer = fopen( (path + "windowed.mat").c_str(), "w" ) ) == NULL ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
 	} // end if
@@ -683,7 +683,7 @@ void	saveSpectrum( audioArray processedSpect )
 	FILE *filePointer; 								// spectrum.mat file pointer
 
 	// fopen opens file. Exit program if unable to create file
-	if ( ( filePointer = fopen( "../../Octave/spectrum.mat", "w" ) ) == NULL ) {
+	if ( ( filePointer = fopen( (path + "spectrum.mat").c_str(), "w" ) ) == NULL ) {
 		printf( "File could not be opened\n" );
 		exit( EXIT_FAILURE );
 	} // end if
@@ -1047,7 +1047,7 @@ void	saveMFCC( melArray mel, std::string name )
 	else
 		save_vector_of_vectors_as_matrix(variableName, filter, outputStream);
 
-	std::string	path = "../../Octave/";
+	//std::string	path = "../../Octave/";
 	std::string	extension = ".mat";
 	std::string	fileName = path + name + extension;
 	ofstream	outputFile;
@@ -1069,7 +1069,7 @@ void	saveDeltas( deltaArray delta, std::string name )
 	int	i, j, k;
 
 	FILE *filePointer; 								// Deltas.mat file pointer
-	std::string	path = "../../Octave/";
+	//std::string	path = "../../Octave/";
 	std::string	extension = "_Deltas.mat";
 	std::string	newName = path + name + extension;
 

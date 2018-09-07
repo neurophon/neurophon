@@ -18,85 +18,90 @@
 #include <iostream>
 #include <omp.h>
 
+#include "MFCC.h"
 #include "AudioService.h"
 
-bool	big_endianness;
+#include "../Libraries/Model/GlobalVariables.h"
+#include "../Libraries/Model/Constants.h"
+#include "../Libraries/Model/DataTypes.h"
+#include "../Libraries/Model/Utilities.h"
+#include "../Libraries/Model/OctaveInterface.h"
+#include "../Libraries/Model/MatlabInterface.h"
 
-// starts the program GenerateCorticalNode
-int main()
+// this function generates a series of mel filter banks and saves them in different files
+void	MFBS ( const std::string& my_path )
 {
-int		numberOfFilters = 128;
-double		sampleRate = 0.008;
-int		persistenceValue = 4;
-bool		computeCepstrum = false;
-bool		gainControl = true;
-bool		computeDeltas = false;
-bool		applyPersistence = false;
-bool		leakyIntegration = false;
-bool		kernelConvolution = true;
-double		delay = 0;
+	int		numberOfFilters = 128;
+	double		sampleRate = 0.008;
+	int		persistenceValue = 4;
+	bool		computeCepstrum = false;
+	bool		gainControl = true;
+	bool		computeDeltas = false;
+	bool		applyPersistence = false;
+	bool		leakyIntegration = false;
+	bool		kernelConvolution = true;
+	double		delay = 0;
 
-system("clear");					// clears the screen
+	path = my_path;
 
-
-#pragma omp parallel sections
-{
-
-	#pragma omp section
+	#pragma omp parallel sections
 	{
-		std::string	fileName = "MFB008";
-		std::string	kernelName = "Kernel008";
-		double		sampleWindow = 0.008;
-		double		leakyCoefficient = 0.01;
-		filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
-				   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
-				   kernelConvolution, delay, fileName, kernelName );
+
+		#pragma omp section
+		{
+			std::string	fileName = "MFB008";
+			std::string	kernelName = "Kernel008";
+			double		sampleWindow = 0.008;
+			double		leakyCoefficient = 0.01;
+			filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
+					   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
+					   kernelConvolution, delay, fileName, kernelName );
+		}
+
+		#pragma omp section
+		{
+			std::string	fileName = "MFB016";
+			std::string	kernelName = "Kernel016";
+			double		sampleWindow = 0.016;
+			double		leakyCoefficient = 0.03;
+			filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
+					   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
+					   kernelConvolution, delay, fileName, kernelName );
+		}
+
+		#pragma omp section
+		{
+			std::string	fileName = "MFB032";
+			std::string	kernelName = "Kernel032";
+			double		sampleWindow = 0.032;
+			double		leakyCoefficient = 0.05;
+			filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
+					   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
+					   kernelConvolution, delay, fileName, kernelName );
+		}
+
+		#pragma omp section
+		{
+			std::string	fileName = "MFB064";
+			std::string	kernelName = "Kernel064";
+			double		sampleWindow = 0.064;
+			double		leakyCoefficient = 0.07;
+			filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
+					   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
+					   kernelConvolution, delay, fileName, kernelName );
+		}
+
+		#pragma omp section
+		{
+			std::string	fileName = "MFB128";
+			std::string	kernelName = "Kernel128";
+			double		sampleWindow = 0.128;
+			double		leakyCoefficient = 0.09;
+			filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
+					   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
+					   kernelConvolution, delay, fileName, kernelName );
+		}
 	}
 
-	#pragma omp section
-	{
-		std::string	fileName = "MFB016";
-		std::string	kernelName = "Kernel016";
-		double		sampleWindow = 0.016;
-		double		leakyCoefficient = 0.03;
-		filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
-				   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
-				   kernelConvolution, delay, fileName, kernelName );
-	}
-
-	#pragma omp section
-	{
-		std::string	fileName = "MFB032";
-		std::string	kernelName = "Kernel032";
-		double		sampleWindow = 0.032;
-		double		leakyCoefficient = 0.05;
-		filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
-				   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
-				   kernelConvolution, delay, fileName, kernelName );
-	}
-
-	#pragma omp section
-	{
-		std::string	fileName = "MFB064";
-		std::string	kernelName = "Kernel064";
-		double		sampleWindow = 0.064;
-		double		leakyCoefficient = 0.07;
-		filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
-				   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
-				   kernelConvolution, delay, fileName, kernelName );
-	}
-
-	#pragma omp section
-	{
-		std::string	fileName = "MFB128";
-		std::string	kernelName = "Kernel128";
-		double		sampleWindow = 0.128;
-		double		leakyCoefficient = 0.09;
-		filterAudioVector( numberOfFilters, sampleRate, sampleWindow, persistenceValue, leakyCoefficient,
-				   computeCepstrum, gainControl, computeDeltas, applyPersistence, leakyIntegration,
-				   kernelConvolution, delay, fileName, kernelName );
-	}
-}
-
-} // end main
+} // end MFBS
 
