@@ -23,12 +23,23 @@
 
 import Generate_SABLE as SABLE
 import numpy as np
+from mpi4py import MPI
+import time
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+comm.barrier()
+if (rank==0):
+        start_time = time.time()
+
 
 # Variables initialization
 
 VocabulariesSizes = np.array([5]) #([5, 15, 25])
-NumberOfVoicesTurns = np.array([2]) #([25, 50, 250])
-UtterancePerTurn = 1 #2
+NumberOfVoicesTurns = np.array([3]) #([25, 50, 250])
+UtterancePerTurn = 2
 
 # Festival Voices
 
@@ -38,6 +49,12 @@ voices1 = np.array(["cmu_us_awb_cg","cmu_us_bdl_cg","cmu_us_clb_cg"])
 voices2 = np.array(["cmu_us_jmk_cg","cmu_us_rms_cg","cmu_us_slt_cg"])
 voices3 = np.array(["cmu_us_bdl_arctic_clunits","cmu_us_clb_arctic_clunits","cmu_us_slt_arctic_clunits"]) #"cmu_us_awb_arctic_clunits"
 voices4 = np.array(["cmu_us_jmk_arctic_clunits","cmu_us_rms_arctic_clunits","cmu_us_slt_arctic_clunits"])
+voices5 = np.array(["cmu_indic_guj_kt_cg","cmu_indic_tel_ss_cg"])
+voices6 = np.array(["cmu_indic_hin_ab_cg","cmu_indic_tel_sk_cg"])
+voices7 = np.array(["cmu_indic_mar_aup_cg","cmu_indic_mar_slp_cg"])
+voices8 = np.array(["cmu_indic_pan_amp_cg","cmu_indic_ben_rm_cg"])
+voices9 = np.array(["cmu_indic_tam_sdr_cg","cmu_indic_guj_ad_cg"])
+voices10 = np.array(["cmu_indic_tel_kpn_cg","cmu_indic_guj_dp_cg"]) #"cmu_indic_kan_plv_cg"
 voicesBasic = np.array(["kal_diphone","rab_diphone"])
 
 # Vocabularies of one syllable
@@ -103,40 +120,41 @@ FourSyllables = np.concatenate((FourS7L, FourS8L, FourS9L, FourS10L), axis = 0)
 
 
 # Composition of voices
-Voices1 = np.concatenate((voicesNormal1, voices1, voices3), axis = 0)
-Voices2 = np.concatenate((voicesNormal2, voices2, voices4), axis = 0)
-Voices3 = np.concatenate((voicesBasic, Voices1, Voices2), axis = 0)
+Voices1 = np.concatenate((voicesNormal1, voices1), axis = 0)
+Voices2 = np.concatenate((voicesNormal2, voices2), axis = 0)
+# Voices3 = np.concatenate((voicesBasic, Voices1, Voices2), axis = 0)
 
 # Sample monosyllabic vocabularies
 # Generate monosyllabic corpora
 MonosyllabicVocabularies = {}
 for i in range(0, VocabulariesSizes.size):
-        MonosyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(OneSyllable, VocabulariesSizes[i])
+        if (i%size==rank):
+                MonosyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(OneSyllable, VocabulariesSizes[i])
 
-        # Generate SABLE files
-        for j in range(0, NumberOfVoicesTurns.size):
-                SABLE.Generate_SABLE("Voices_1",\
-                                     "Syllables_1",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices1,\
-                                     MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
-
-
-                SABLE.Generate_SABLE("Voices_2",\
-                                     "Syllables_1",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices2,\
-                                     MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                # Generate SABLE files
+                for j in range(0, NumberOfVoicesTurns.size):
+                        SABLE.Generate_SABLE("Voices_1",\
+                                             "Syllables_1",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices1,\
+                                             MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
-                SABLE.Generate_SABLE("Voices_3",\
-                                     "Syllables_1",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices3,\
-                                     MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                        SABLE.Generate_SABLE("Voices_2",\
+                                             "Syllables_1",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices2,\
+                                             MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+
+
+                        # SABLE.Generate_SABLE("Voices_3",\
+                                             # "Syllables_1",\
+                                             # "Corpus_" + str(j),\
+                                             # "Vocabulary_" + str(i),\
+                                             # Voices3,\
+                                             # MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
 
@@ -144,32 +162,33 @@ for i in range(0, VocabulariesSizes.size):
 # Generate disyllabic corpora
 DisyllabicVocabularies = {}
 for i in range(0, VocabulariesSizes.size):
-        DisyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(TwoSyllables, VocabulariesSizes[i])
+        if (i%size==rank):
+                DisyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(TwoSyllables, VocabulariesSizes[i])
 
-        # Generate SABLE files
-        for j in range(0, NumberOfVoicesTurns.size):
-                SABLE.Generate_SABLE("Voices_1",\
-                                     "Syllables_2",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices1,\
-                                     DisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
-
-
-                SABLE.Generate_SABLE("Voices_2",\
-                                     "Syllables_2",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices2,\
-                                     DisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                # Generate SABLE files
+                for j in range(0, NumberOfVoicesTurns.size):
+                        SABLE.Generate_SABLE("Voices_1",\
+                                             "Syllables_2",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices1,\
+                                             DisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
-                SABLE.Generate_SABLE("Voices_3",\
-                                     "Syllables_2",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices3,\
-                                     DisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                        SABLE.Generate_SABLE("Voices_2",\
+                                             "Syllables_2",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices2,\
+                                             DisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+
+
+                        # SABLE.Generate_SABLE("Voices_3",\
+                                             # "Syllables_2",\
+                                             # "Corpus_" + str(j),\
+                                             # "Vocabulary_" + str(i),\
+                                             # Voices3,\
+                                             # DisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
 
@@ -179,32 +198,33 @@ for i in range(0, VocabulariesSizes.size):
 # Generate trisyllabic corpora
 TrisyllabicVocabularies = {}
 for i in range(0, VocabulariesSizes.size):
-        TrisyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(ThreeSyllables, VocabulariesSizes[i])
+        if (i%size==rank):
+                TrisyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(ThreeSyllables, VocabulariesSizes[i])
 
-        # Generate SABLE files
-        for j in range(0, NumberOfVoicesTurns.size):
-                SABLE.Generate_SABLE("Voices_1",\
-                                     "Syllables_3",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices1,\
-                                     TrisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
-
-
-                SABLE.Generate_SABLE("Voices_2",\
-                                     "Syllables_3",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices2,\
-                                     TrisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                # Generate SABLE files
+                for j in range(0, NumberOfVoicesTurns.size):
+                        SABLE.Generate_SABLE("Voices_1",\
+                                             "Syllables_3",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices1,\
+                                             TrisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
-                SABLE.Generate_SABLE("Voices_3",\
-                                     "Syllables_3",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices3,\
-                                     TrisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                        SABLE.Generate_SABLE("Voices_2",\
+                                             "Syllables_3",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices2,\
+                                             TrisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+
+
+                        # SABLE.Generate_SABLE("Voices_3",\
+                                             # "Syllables_3",\
+                                             # "Corpus_" + str(j),\
+                                             # "Vocabulary_" + str(i),\
+                                             # Voices3,\
+                                             # TrisyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
 
@@ -214,34 +234,38 @@ for i in range(0, VocabulariesSizes.size):
 # Generate tetrasyllabic corpora
 TetrasyllabicVocabularies = {}
 for i in range(0, VocabulariesSizes.size):
-        TetrasyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(FourSyllables, VocabulariesSizes[i])
+        if (i%size==rank):
+                TetrasyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(FourSyllables, VocabulariesSizes[i])
 
-        # Generate SABLE files
-        for j in range(0, NumberOfVoicesTurns.size):
-                SABLE.Generate_SABLE("Voices_1",\
-                                     "Syllables_4",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices1,\
-                                     TetrasyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
-
-
-                SABLE.Generate_SABLE("Voices_2",\
-                                     "Syllables_4",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices2,\
-                                     TetrasyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                # Generate SABLE files
+                for j in range(0, NumberOfVoicesTurns.size):
+                        SABLE.Generate_SABLE("Voices_1",\
+                                             "Syllables_4",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices1,\
+                                             TetrasyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
-                SABLE.Generate_SABLE("Voices_3",\
-                                     "Syllables_4",\
-                                     "Corpus_" + str(j),\
-                                     "Vocabulary_" + str(i),\
-                                     Voices3,\
-                                     TetrasyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                        SABLE.Generate_SABLE("Voices_2",\
+                                             "Syllables_4",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices2,\
+                                             TetrasyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+
+
+                        # SABLE.Generate_SABLE("Voices_3",\
+                                             # "Syllables_4",\
+                                             # "Corpus_" + str(j),\
+                                             # "Vocabulary_" + str(i),\
+                                             # Voices3,\
+                                             # TetrasyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
 
 
 
+comm.barrier()
+if (rank==0):
+        print("--- %s seconds ---" % (time.time() - start_time))

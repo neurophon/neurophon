@@ -40,10 +40,10 @@ def Generate_SABLE ( voiceFolder, syllableFolder, corpusFolder, nameOfVocabulary
         global corpus
 
         # This is the path were festival is installed
-        festival = "/home/dario/Downloads/festival/examples/text2wave"
+        festival = "/projects/neurophon/MySoft/festival-2.4/festival/examples/text2wave"
 
         # This is the path were the corpora is saved
-        path = "/projects/neurophon/TestsData/Corpora/"
+        path = "/projects/neurophon/TestsData/NewCorpora/"
         if not os.path.exists(path):
             os.makedirs(path)
 
