@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 	if (world_rank == 0)
 		if (system("CLS")) system("clear");
 
-	std::string	my_path = "/projects/neurophon/TestsData/Corpora/";
+	std::string	my_path = "/projects/neurophon/TestsData/NewCorpora/";
 	MPI_Barrier(MPI::COMM_WORLD);
 	if ( argc == 5 ) {
 		int	numberOfVoices = atoi(argv[1]);

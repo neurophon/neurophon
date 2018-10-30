@@ -1,8 +1,8 @@
 # Set the compilers you want to use
 
 # Use g++-5 gcc version 4.8.5 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
-CC = g++-5
-#CC = g++
+#CC = g++-5
+CC = g++
 #CC = icpc
 
 # Use mpic++ for MPICH version 3.2 (Ubuntu 4.8.5-2ubuntu1~14.04.1)
@@ -12,7 +12,7 @@ MPI = mpic++ -cxx=
 # Use the following Compile-time flags
 # IMPORTANT!!! DO NOT APPLY OPTIMIZATION
 #CFLAGS = -Wall -pedantic -std=c++14
-CFLAGS = -fopenmp -Wall -pedantic -std=c++14
+CFLAGS = -g -fopenmp -Wall -pedantic -std=c++14
 
 # Use the following libraries
 LIBRARIES = ../Libraries/Model/Templates.h\
