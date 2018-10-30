@@ -24,11 +24,11 @@ int main()
 {
 // Initialize the MPI environment.
 MPI::Init_thread(MPI_THREAD_MULTIPLE);
-std::size_t	numberOfInputs, inputDim = 3, dim = 10;
+std::size_t	numberOfInputs, inputDim = 31, dim = 15;
 double learningRate = 0.1, neighborParameter = 0.05;
 std::string     str;
 std::string     STR;
-std::vector<std::size_t> dimensions = {dim,dim,dim};
+std::vector<std::size_t> dimensions = {dim,dim};
 twodvector<double>	input;
 
 ifstream infile; 
