@@ -37,6 +37,7 @@ public:
 						  const std::size_t,
 						  const double,
 						  const double,
+						  const double,
 						  const std::vector<std::size_t>&,
 						  const std::array<double,2>& );	// constructor that initializes ComplexProcessor
 											// _dynamicUnits are initialized to zero

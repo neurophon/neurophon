@@ -33,12 +33,13 @@ using namespace std;
 // The weights in the self Processor will be initialized with random values between weightLimits
 DynamicProcessor::DynamicProcessor( const std::vector<std::size_t>& populationDimensions,
 				    const std::size_t numberOfInputs,
+				    const double staticPotentialPercentage,
 				    const double potentialPercentage,
 				    const double sparsity,
 				    const std::vector<std::size_t>& dynamicUnits,
 				    const std::array<double,2>& weightLimits )
 	// explicitly call base-class constructor
-	: StaticProcessor(populationDimensions, numberOfInputs, potentialPercentage, sparsity, weightLimits)
+	: StaticProcessor(populationDimensions, numberOfInputs, staticPotentialPercentage, sparsity, weightLimits)
 {
 	assert(potentialPercentage > 0.0 && potentialPercentage < 1.0);
 	_numberOfLinks = dynamicUnits.size();

@@ -223,7 +223,8 @@ struct	regularLayerStructure					// Specifies layer's structure
 	std::vector<std::size_t>	apicalPopulationsArrayDimensionality;	// a vector with the dimensions of the apical populations array
 
 	std::size_t			temporalGatheringAfferentValue;
-	double				potentialPercentage;			// the percentage of potential connections that a unit takes from a column
+	double				proximalPotentialPercentage;		// the percentage of proximal potential connections that a unit takes from a column
+	double				distalPotentialPercentage;		// the percentage of distal potential connections that a unit takes from a column
 };
 
 struct	encoderLayerStructure					// Specifies encoder's structure

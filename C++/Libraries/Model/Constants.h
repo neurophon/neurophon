@@ -30,7 +30,8 @@
 #define PROXIMAL_SYNAPTIC_THRESHOLD	0.0001	
 
 // This is the period of updates
-#define	UPDATE_PERIOD	10000
+#define	UPDATE_PERIOD	100
+//#define	UPDATE_PERIOD	10000
 
 // This is threshold imposed to the input information
 #define	INPUT_THRESHOLD		0.000001
@@ -67,5 +68,8 @@
 
 // this constant enables binary Matlab output file format compatibility
 #define		ENABLE_MATLAB_COMPATIBILITY true
+
+// this is the common path to the I/O data managed by the model
+#define		COMMON_PATH "/projects/neurophon/TestsData/"
 
 #endif

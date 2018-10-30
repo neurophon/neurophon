@@ -624,7 +624,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size) num_threads(8)
+	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
 		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, _apical, _lateral);
@@ -824,7 +824,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size) num_threads(8)
+	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
 		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, _apical, lateral);
@@ -1025,7 +1025,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(8)
+	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		auto	proximalInputs = EncoderLayer::gatherProximalInputs(column/world_size, afferent);
 		auto	distalInputs = EncoderLayer::gatherDistalInputs(column/world_size, apical, lateral);
@@ -1735,7 +1735,7 @@ void	EncoderLayer::saveEncoderLayerStatus( const std::string& folderName )
 	}
 	//MPI_Barrier(MPI_COMM_WORLD);
 
-	std::string	name = "../../Octave/" + folderName + "/EncoderLayer.mat";
+	std::string	name = COMMON_PATH + folderName + "/EncoderLayer.mat";
 	std::remove(&name[0]);
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -1771,7 +1771,7 @@ void	EncoderLayer::loadEncoderLayerStatus( const std::string& folderName )
 	std::stringstream	inputStream;
 
 	// open a file in read mode.
-	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + folderName + "/EncoderLayer.mat").c_str(),
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, (COMMON_PATH + folderName + "/EncoderLayer.mat").c_str(),
 					   MPI::MODE_RDONLY,
 					   MPI::INFO_NULL);
 

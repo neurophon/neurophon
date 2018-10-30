@@ -33,6 +33,8 @@ public:
 
 	void	run( const std::string& );		// run the model
 
+	void	run( const std::string&, const std::string& );		// run the model
+
 	void	train( const std::string& );		// train the model
 
 	std::vector<encoderLayerInput>	loadEncoderInputs( const std::string& );	// loads input information for the encoder.
@@ -73,7 +75,15 @@ public:
 	void	saveCumulativeEncoderLayerOutput( const std::string&,
 						  const threedvector<std::size_t>& );	// this function saves the cumulative encoder layer outputs in a file
 
+	void	saveCumulativeEncoderLayerOutput( const std::string&,
+						  const std::string&,
+						  const threedvector<std::size_t>& );	// this function saves the cumulative encoder layer outputs in a file
+
 	void	saveCumulativeRegularLayerOutput( const std::string&,
+						  const fourdvector<std::size_t>& );	// this function saves the cumulative regular layer outputs in a file
+
+	void	saveCumulativeRegularLayerOutput( const std::string&,
+						  const std::string&,
 						  const fourdvector<std::size_t>& );	// this function saves the cumulative regular layer outputs in a file
 
 private:

@@ -70,7 +70,7 @@ void	Model::run( const std::string& folderName )
 		if ( world_rank == 0 )
 			std::cout << "\nLoading Encoder Layer Input data.\n";
 
-		auto	encoderLayerInput = Model::loadEncoderInputs("inputs");	
+		auto	encoderLayerInput = Model::loadEncoderInputs(folderName + "/inputs");	
 
 		if ( world_rank == 0 )
 			std::cout << "\nEncoder Layer Input data loaded.\n";
@@ -206,7 +206,7 @@ void	Model::run( const std::string& folderName )
 		if ( world_rank == 0 )
 			std::cout << "\nLoading Regular Layer Input data.\n";
 
-		auto	regularLayerInput = Model::loadRegularInputs("inputs");	
+		auto	regularLayerInput = Model::loadRegularInputs(folderName + "/inputs");	
 
 		if ( world_rank == 0 )
 			std::cout << "\nRegular Layer Input data loaded.\n";
@@ -310,6 +310,277 @@ void	Model::run( const std::string& folderName )
 } // end function run 
 
 
+// run the model
+void	Model::run( const std::string& folderName, const std::string& inputFolder )
+{
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n              STARTING INFERENCE PROCESS " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+
+	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
+	std::vector<regularLayerResponse>		regularLayerOutputs;	// outputs from the regular layers
+	regularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
+
+		// Holds output information that comes from
+		// the encoder layer and from the regular layers
+		threedvector<std::size_t>	cumulativeEncoderLayerOutput;
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have encoder layer.\n";
+
+		// then, loads the input information to feed the encoder layer
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Encoder Layer Input data.\n";
+
+		auto	encoderLayerInput = Model::loadEncoderInputs(folderName + "/" + inputFolder + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder Layer Input data loaded.\n";
+
+
+		auto	timeSteps = encoderLayerInput.size();
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// the data is processed by the encoder layer
+			if ( timeStep == 0 ) { // in the first iteration there is no lateral nor apical information
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   _encoderLayerParameters);
+
+			}
+			else if ( _modelStructure.numberOfLayers > 0 ) { // if there is at least one regular layer, then there is apical information
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   encoderLayerOutput,
+										   regularLayerOutputs[0],
+										   _encoderLayerParameters);
+
+			}
+			else { // if there are no regular layers, then there is no apical information
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   encoderLayerOutput,
+										   _encoderLayerParameters);
+
+			}
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from encoder layer
+					if ( timeStep == 0 ) { // in the first iteration there is no
+					       					 // lateral information
+										 // neither apical
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     encoderLayerOutput,
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     encoderLayerOutput,
+									     regularLayerOutputs[layer],
+									     regularLayerOutputs[layer+1],
+									     _regularLayerParameters[layer]);
+						}
+						else { // for the last layer in the model there is no apical information
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     encoderLayerOutput,
+									     regularLayerOutputs[layer],
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+				else {
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     regularLayerOutputs[layer+1],
+									     _regularLayerParameters[layer]);
+						}
+						else { // for the last layer in the model there is no apical information
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+			}
+			// accumulates the encoder and regular layer outputs
+			cumulativeEncoderLayerOutput.push_back(encoderLayerOutput.currentIndexes);
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+
+		}
+		cumulativeEncoderLayerOutput.shrink_to_fit();
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+		
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeEncoderLayerOutput(folderName, inputFolder, cumulativeEncoderLayerOutput);
+		Model::saveCumulativeRegularLayerOutput(folderName, inputFolder, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	else {	// if there is no encoder layer
+		// there must be at least one regular layer
+		if ( !(_modelStructure.numberOfLayers > 0) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn class Model, in function run:" << endl;
+				std::cout << "there is no encoder layer, then there must be -at least- one regular layer, but" << endl;
+				std::cout << "_modelStructure.numberOfLayers > 0 was not satisfied." << endl;
+			}
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have "
+				  << _modelStructure.numberOfLayers
+				  << " number of regular layers.\n";
+
+		// loads the information to feed the first regular layer in the model
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Regular Layer Input data.\n";
+
+		auto	regularLayerInput = Model::loadRegularInputs(folderName + "/" + inputFolder + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular Layer Input data loaded.\n";
+
+		auto	timeSteps = regularLayerInput.size();
+
+
+		// Holds output information that comes from
+		// the regular layers
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+		
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from regular layer input
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerInput[timeStep],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerInput[timeStep],
+									     regularLayerOutputs[layer],
+									     regularLayerOutputs[layer+1],
+									     _regularLayerParameters[layer]);
+						}
+						else { // for the last layer in the model there is no apical information
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerInput[timeStep],
+									     regularLayerOutputs[layer],
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+				else {
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     regularLayerOutputs[layer+1],
+									     _regularLayerParameters[layer]);
+						}
+						else { // for the last layer in the model there is no apical information
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+
+			}
+			// accumulates the regular layer outputs
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+		}
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeRegularLayerOutput(folderName, inputFolder, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n              INFERENCE PROCESS FINISHED  " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+} // end function run 
+
+
 // train the model
 void	Model::train( const std::string& folderName )
 {
@@ -332,7 +603,7 @@ void	Model::train( const std::string& folderName )
 		if ( world_rank == 0 )
 			std::cout << "\nLoading Encoder Layer Input data.\n";
 
-		auto	encoderLayerInput = Model::loadEncoderInputs("inputs");	
+		auto	encoderLayerInput = Model::loadEncoderInputs(folderName + "/inputs");	
 
 		if ( world_rank == 0 )
 			std::cout << "\nEncoder Layer Input data loaded.\n";
@@ -677,7 +948,7 @@ void	Model::train( const std::string& folderName )
 		if ( world_rank == 0 )
 			std::cout << "\nLoading Regular Layer Input data.\n";
 
-		auto	regularLayerInput = Model::loadRegularInputs("inputs");	
+		auto	regularLayerInput = Model::loadRegularInputs(folderName + "/inputs");	
 
 		if ( world_rank == 0 )
 			std::cout << "\nRegular Layer Input data loaded.\n";
@@ -883,7 +1154,7 @@ std::vector<encoderLayerInput>	Model::loadEncoderInputs( const std::string& file
 	std::stringstream	inputStream;
 
        // open a file in read mode.
-	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + fileName + ".mat").c_str(),
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, (COMMON_PATH + fileName + ".mat").c_str(),
 					   MPI::MODE_RDONLY,
 					   MPI::INFO_NULL);
 
@@ -981,7 +1252,7 @@ std::vector<regularLayerResponse>	Model::loadRegularInputs( const std::string& f
 	std::stringstream	inputStream;
 
        // open a file in read mode.
-	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + fileName + ".mat").c_str(),
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, (COMMON_PATH + fileName + ".mat").c_str(),
 					   MPI::MODE_RDONLY,
 					   MPI::INFO_NULL);
 
@@ -1445,7 +1716,7 @@ void	Model::saveModelStructure( const std::string& folderName )
 
 	if ( world_rank == 0 ) {
 		std::ofstream outfile;
-		outfile.open ("../../Octave/" + folderName + "/ModelStructure.mat", ios::out | ios::trunc);
+		outfile.open (COMMON_PATH + folderName + "/ModelStructure.mat", ios::out | ios::trunc);
 
 		// file preamble.
 		if (ENABLE_MATLAB_COMPATIBILITY) {
@@ -1540,7 +1811,7 @@ void	Model::loadModelStructure( const std::string& folderName )
 
 	// open a file in read mode.
 	ifstream infile;
-	infile.open("../../Octave/" + folderName + "/ModelStructure.mat", ios::in | std::ifstream::binary);
+	infile.open(COMMON_PATH + folderName + "/ModelStructure.mat", ios::in | std::ifstream::binary);
 
 	if (ENABLE_MATLAB_COMPATIBILITY) {
 		bool	big_endianness = load_the_header(infile);
@@ -1925,7 +2196,7 @@ void	Model::loadEncoderLayerStructure( const std::string& folderName )
 
 	// open a file in read mode.
 	ifstream infile;
-	infile.open("../../Octave/" + folderName + "/EncoderLayerStructure.mat", ios::in | std::ifstream::binary);
+	infile.open(COMMON_PATH + folderName + "/EncoderLayerStructure.mat", ios::in | std::ifstream::binary);
 
 	if (ENABLE_MATLAB_COMPATIBILITY) {
 		bool	big_endianness = load_the_header(infile);
@@ -2365,11 +2636,12 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 		bool	check_afferentPopulationsArrayDimensionality = false;
 		bool	check_apicalPopulationsArrayDimensionality = false;
 		bool	check_temporalGatheringAfferentValue = false;
-		bool	check_potentialPercentage = false;
+		bool	check_proximalPotentialPercentage = false;
+		bool	check_distalPotentialPercentage = false;
 
 		// open a file in read mode.
 		ifstream infile;
-		infile.open("../../Octave/" + folderName + "/RegularLayerStructure_"
+		infile.open(COMMON_PATH + folderName + "/RegularLayerStructure_"
 					    + std::to_string(layerNumber)
 					    + ".mat", ios::in | std::ifstream::binary);
 
@@ -2570,12 +2842,20 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 					check_temporalGatheringAfferentValue = true;
 				}
 
-				STR = "potentialPercentage";
+				STR = "proximalPotentialPercentage";
 				if ( array_structure.name.compare(STR) == 0 ) {
 					load_numeric_array_to_scalar(array_structure,
-								     _regularLayerStructures[layerNumber].potentialPercentage,
+								     _regularLayerStructures[layerNumber].proximalPotentialPercentage,
 								     infile, big_endianness);
-					check_potentialPercentage = true;
+					check_proximalPotentialPercentage = true;
+				}
+
+				STR = "distalPotentialPercentage";
+				if ( array_structure.name.compare(STR) == 0 ) {
+					load_numeric_array_to_scalar(array_structure,
+								     _regularLayerStructures[layerNumber].distalPotentialPercentage,
+								     infile, big_endianness);
+					check_distalPotentialPercentage = true;
 				}
 
 				array_structure = check_next_data_structure(infile,big_endianness);
@@ -2752,10 +3032,16 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 
 
 
-				STR = "# name: potentialPercentage";
+				STR = "# name: proximalPotentialPercentage";
 				if ( str.compare(STR) == 0 ) {
-					load_scalar(_regularLayerStructures[layerNumber].potentialPercentage, infile);
-					check_potentialPercentage = true;
+					load_scalar(_regularLayerStructures[layerNumber].proximalPotentialPercentage, infile);
+					check_proximalPotentialPercentage = true;
+				}
+
+				STR = "# name: distalPotentialPercentage";
+				if ( str.compare(STR) == 0 ) {
+					load_scalar(_regularLayerStructures[layerNumber].distalPotentialPercentage, infile);
+					check_distalPotentialPercentage = true;
 				}
 
 			}
@@ -2903,9 +3189,16 @@ void	Model::loadRegularLayerStructures( const std::string& folderName )
 			MPI_Abort(MPI::COMM_WORLD,1);
 		}
 
-		if (!(check_potentialPercentage == true)) {
+		if (!(check_proximalPotentialPercentage == true)) {
 			if ( world_rank == 0 ) {
-				std::cout << "(check_potentialPercentage == true) is not satisfied" << std::endl;
+				std::cout << "(check_proximalPotentialPercentage == true) is not satisfied" << std::endl;
+			}
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		if (!(check_distalPotentialPercentage == true)) {
+			if ( world_rank == 0 ) {
+				std::cout << "(check_distalPotentialPercentage == true) is not satisfied" << std::endl;
 			}
 			MPI_Abort(MPI::COMM_WORLD,1);
 		}
@@ -2939,7 +3232,7 @@ void	Model::loadEncoderLayerParameters( const std::string& folderName )
 
 	// open a file in read mode.
 	ifstream infile;
-	infile.open("../../Octave/" + folderName + "/EncoderLayerParameters.mat", ios::in | std::ifstream::binary);
+	infile.open(COMMON_PATH + folderName + "/EncoderLayerParameters.mat", ios::in | std::ifstream::binary);
 
 	if (ENABLE_MATLAB_COMPATIBILITY) {
 		bool	big_endianness = load_the_header(infile);
@@ -3280,7 +3573,7 @@ void	Model::loadRegularLayerParameters( const std::string& folderName )
 
 		// open a file in read mode.
 		ifstream infile;
-		infile.open("../../Octave/" + folderName + "/RegularLayerParameters_"
+		infile.open(COMMON_PATH + folderName + "/RegularLayerParameters_"
 					    + std::to_string(layerNumber)
 					    + ".mat", ios::in | std::ifstream::binary);
 
@@ -3676,7 +3969,7 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 
 	// open a file in read mode.
 	ifstream infile;
-	infile.open("../../Octave/" + folderName + "/EncoderLayer.mat", ios::in | std::ifstream::binary);
+	infile.open(COMMON_PATH + folderName + "/EncoderLayer.mat", ios::in | std::ifstream::binary);
 	std::vector<std::size_t>	columnsArrayDimensionality;
 	std::vector<std::size_t>	populationsArrayDimensionality;
 
@@ -3767,7 +4060,165 @@ void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
 
 	// open a file in write mode
 	std::string	outputFileName = "EncoderLayerOutput";
-	std::string	name = "../../Octave/" + outputFileName + ".mat";
+	std::string	name = COMMON_PATH + folderName + "/" + outputFileName + ".mat";
+	std::remove(&name[0]);
+	MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
+						  MPI::MODE_CREATE | MPI::MODE_WRONLY,
+						  MPI::INFO_NULL);
+
+	// sets the file view for this rank
+	outfile.Set_view(fileView*sizeof(char),
+			 MPI_UNSIGNED_CHAR, MPI_UNSIGNED_CHAR,
+			 "native", MPI::INFO_NULL);
+
+	// write stream in file
+	outfile.Write(&outputStream.str()[fileView],
+		     lengthToBeSent,
+		     MPI_UNSIGNED_CHAR);
+
+	// close the opened file.
+	outfile.Close();
+} // end function saveCumulativeEncoderLayerOutput
+
+
+// this function saves the cumulative encoder layer outputs in a file
+void	Model::saveCumulativeEncoderLayerOutput( const std::string& folderName,
+						 const std::string& inputFolder,
+						 const threedvector<std::size_t>& outputFromEncoderLayer )
+{
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	// first of all, suits the output data in order to save it for Octave
+	threedvector<int>	output;
+	output.resize(outputFromEncoderLayer.size());
+	for(std::size_t timeStep = 0; timeStep < outputFromEncoderLayer.size(); timeStep++) {
+		output[timeStep].resize(outputFromEncoderLayer[timeStep].size());
+		for(std::size_t column = 0; column < outputFromEncoderLayer[timeStep].size(); column++) {
+			if(outputFromEncoderLayer[timeStep][column].size() == 0) { // if there are no indices,
+			       							   // inserts one index with a value of -1
+				output[timeStep][column].push_back(-1);
+			}
+			else {
+				for (const auto& index : outputFromEncoderLayer[timeStep][column])
+					output[timeStep][column].push_back(index);
+
+				output[timeStep][column].shrink_to_fit();
+			}
+		}
+	}
+
+	// stringstream has to be filled with the file contents before written it into the file itself
+	std::stringstream	outputStream;
+
+	// file preamble.
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		save_the_header(outputStream);
+	}
+	else {
+		outputStream << "# This is a file created by saveCumulativeEncoderLayerOutput function from," << endl;
+		outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+		outputStream << "# Author: Dematties Dario Jesus." << endl;
+		outputStream << "\n\n" << endl;
+	}
+
+	std::string	str;
+	std::string	STR;
+
+	// open a file in read mode.
+	ifstream infile;
+	infile.open(COMMON_PATH + folderName + "/EncoderLayer.mat", ios::in | std::ifstream::binary);
+	std::vector<std::size_t>	columnsArrayDimensionality;
+	std::vector<std::size_t>	populationsArrayDimensionality;
+
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(infile);
+		auto	array_structure = check_next_data_structure(infile, big_endianness);
+		while ( array_structure.more_data ) {
+
+			STR = "columnsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 )
+				load_numeric_array_to_vector(array_structure, columnsArrayDimensionality, infile, big_endianness);
+
+			STR = "populationsArrayDimensionality";
+			if ( array_structure.name.compare(STR) == 0 )
+				load_numeric_array_to_vector(array_structure, populationsArrayDimensionality, infile, big_endianness);
+
+			array_structure = check_next_data_structure(infile,big_endianness);
+		}	
+	}
+	else {
+		while ( std::getline(infile, str) ) {
+
+			STR = "# name: columnsArrayDimensionality";
+			if ( str.compare(STR) == 0 )
+				load_matrix_to_vector(columnsArrayDimensionality, infile);
+
+			STR = "# name: populationsArrayDimensionality";
+			if ( str.compare(STR) == 0 )
+				load_matrix_to_vector(populationsArrayDimensionality, infile);
+
+		}
+	}
+	// close the opened file.
+	infile.close();
+
+	// saves columnsArrayDimensionality
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+	else
+		save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+
+	// saves populationsArrayDimensionality
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+	else
+		save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+
+	if ( world_rank == 0 )
+		std::cout << "\nsaving cumulative output from Encoder Layer\n";
+
+	// saves outputFromEncoderLayer
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_multidimensional_vector_as_cell_array("encoderLayerOutput", output, outputStream);
+	else
+		save_multidimensional_vector_as_cell("encoderLayerOutput", output, outputStream);
+
+	if ( world_rank == 0 )
+		std::cout << "\ncumulative output from Encoder Layer saved\n";
+
+	// File view comunication among ranks
+	std::size_t	fileView = 0, fileViewNew;
+	std::size_t	lengthToBeSent = outputStream.str().size()/world_size; // sets the amount of characters to be send by this rank
+	if ( world_size > 1 && world_rank == world_size-1 )
+		lengthToBeSent += outputStream.str().size()%world_size; // accumulates the rest of the characters in the last rank
+
+	if ( world_rank == 0 ) {
+		fileViewNew = fileView+lengthToBeSent;
+		if ( world_size > 1 )
+			MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+				 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+	}
+	else if ( world_rank == world_size-1 ) {
+		MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+			 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+			 MPI_STATUS_IGNORE);
+	}
+	else {
+		MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+			 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+			 MPI_STATUS_IGNORE);
+		
+		fileViewNew = fileView+lengthToBeSent;
+		MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+			 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+	}
+
+	//MPI_Barrier(MPI::COMM_WORLD);
+
+	// open a file in write mode
+	std::string	outputFileName = "EncoderLayerOutput";
+	std::string	name = COMMON_PATH + folderName + "/" + inputFolder + "/" + outputFileName + ".mat";
 	std::remove(&name[0]);
 	MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
 						  MPI::MODE_CREATE | MPI::MODE_WRONLY,
@@ -3842,7 +4293,7 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 
 		// open a file in read mode.
 		ifstream infile;
-		infile.open("../../Octave/" + folderName + "/RegularLayer_" + std::to_string(layer) + ".mat", ios::in | std::ifstream::binary);
+		infile.open(COMMON_PATH + folderName + "/RegularLayer_" + std::to_string(layer) + ".mat", ios::in | std::ifstream::binary);
 		std::vector<std::size_t>	columnsArrayDimensionality;
 		std::vector<std::size_t>	populationsArrayDimensionality;
 
@@ -3934,7 +4385,176 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 
 		// open a file in write mode
 		std::string	outputFileName = "RegularLayerOutput_";
-		std::string	name = "../../Octave/" + outputFileName + std::to_string(layer) + ".mat";
+		std::string	name = COMMON_PATH + folderName + "/" + outputFileName + std::to_string(layer) + ".mat";
+		std::remove(&name[0]);
+		MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
+							  MPI::MODE_CREATE | MPI::MODE_WRONLY,
+							  MPI::INFO_NULL);
+
+		// sets the file view for this rank
+		outfile.Set_view(fileView*sizeof(char),
+				 MPI_UNSIGNED_CHAR, MPI_UNSIGNED_CHAR,
+				 "native", MPI::INFO_NULL);
+
+		// write stream in file
+		outfile.Write(&outputStream.str()[fileView],
+			     lengthToBeSent,
+			     MPI_UNSIGNED_CHAR);
+
+		// close the opened file.
+		outfile.Close();
+	}
+} // end function saveCumulativeRegularLayerOutput
+
+
+// this function saves the cumulative regular layer outputs in a file
+void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
+						 const std::string& inputFolder,
+						 const fourdvector<std::size_t>& outputFromRegularLayers )
+{
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
+
+	fourdvector<int>	output;
+	if (!(outputFromRegularLayers.size() == _modelStructure.numberOfLayers)) {
+		if ( world_rank == 0 ) {
+			std::cout << "(outputFromRegularLayers.size() == _modelStructure.numberOfLayers) no satisfied" << std::endl;
+		}
+		MPI_Abort(MPI::COMM_WORLD,1);
+	}
+
+	output.resize(_modelStructure.numberOfLayers);
+	for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ ) {
+		// first of all, suits the output data in order to save it for Octave
+		output[layer].resize(outputFromRegularLayers[layer].size());
+		for(std::size_t timeStep = 0; timeStep < outputFromRegularLayers[layer].size(); timeStep++) {
+			output[layer][timeStep].resize(outputFromRegularLayers[layer][timeStep].size());
+			for(std::size_t column = 0; column < outputFromRegularLayers[layer][timeStep].size(); column++) {
+				if(outputFromRegularLayers[layer][timeStep][column].size() == 0) { // if there are no indices,
+											   // inserts one index with a value of -1
+					output[layer][timeStep][column].push_back(-1);
+				}
+				else {
+					for (const auto& index : outputFromRegularLayers[layer][timeStep][column])
+						output[layer][timeStep][column].push_back(index);
+
+					output[layer][timeStep][column].shrink_to_fit();
+				}
+			}
+		}
+
+		// stringstream has to be filled with the file contents before written it into the file itself
+		std::stringstream	outputStream;
+
+		// file preamble.
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			save_the_header(outputStream);
+		}
+		else {
+			outputStream << "# This is a file created by saveCumulativeRegularLayerOutput function from," << endl;
+			outputStream << "# C++ implementation code of Hierarchical Spectro-Temporal Model (HSTM)." << endl;
+			outputStream << "# Author: Dematties Dario Jesus." << endl;
+			outputStream << "\n\n" << endl;
+		}
+
+		std::string	str;
+		std::string	STR;
+
+		// open a file in read mode.
+		ifstream infile;
+		infile.open(COMMON_PATH + folderName + "/RegularLayer_" + std::to_string(layer) + ".mat", ios::in | std::ifstream::binary);
+		std::vector<std::size_t>	columnsArrayDimensionality;
+		std::vector<std::size_t>	populationsArrayDimensionality;
+
+		if (ENABLE_MATLAB_COMPATIBILITY) {
+			bool	big_endianness = load_the_header(infile);
+			auto	array_structure = check_next_data_structure(infile, big_endianness);
+			while ( array_structure.more_data ) {
+
+				STR = "columnsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 )
+					load_numeric_array_to_vector(array_structure, columnsArrayDimensionality, infile, big_endianness);
+
+				STR = "populationsArrayDimensionality";
+				if ( array_structure.name.compare(STR) == 0 )
+					load_numeric_array_to_vector(array_structure, populationsArrayDimensionality, infile, big_endianness);
+
+				array_structure = check_next_data_structure(infile,big_endianness);
+			}	
+		}
+		else {
+			while ( std::getline(infile, str) ) {
+
+				STR = "# name: columnsArrayDimensionality";
+				if ( str.compare(STR) == 0 )
+					load_matrix_to_vector(columnsArrayDimensionality, infile);
+
+				STR = "# name: populationsArrayDimensionality";
+				if ( str.compare(STR) == 0 )
+					load_matrix_to_vector(populationsArrayDimensionality, infile);
+
+			}
+		}
+		// close the opened file.
+		infile.close();
+
+		// saves columnsArrayDimensionality
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("columnsArrayDimensionality", columnsArrayDimensionality, outputStream);
+
+		// saves populationsArrayDimensionality
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_vector_as_numeric_array("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+		else
+			save_vector_as_matrix("populationsArrayDimensionality", populationsArrayDimensionality, outputStream);
+
+
+		if ( world_rank == 0 )
+			std::cout << "\nsaving cumulative output from Regular Layer number " << layer << "\n";
+
+		// saves outputFromRegularLayers
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_multidimensional_vector_as_cell_array("regularLayerOutput", output[layer], outputStream);
+		else
+			save_multidimensional_vector_as_cell("regularLayerOutput", output[layer], outputStream);
+
+		if ( world_rank == 0 )
+			std::cout << "\ncumulative output from Regular Layer " << layer << " saved\n";
+
+		// File view comunication among ranks
+		std::size_t	fileView = 0, fileViewNew;
+		std::size_t	lengthToBeSent = outputStream.str().size()/world_size; // sets the amount of characters to be send by this rank
+		if ( world_size > 1 && world_rank == world_size-1 )
+			lengthToBeSent += outputStream.str().size()%world_size; // accumulates the rest of the characters in the last rank
+
+		if ( world_rank == 0 ) {
+			fileViewNew = fileView+lengthToBeSent;
+			if ( world_size > 1 )
+				MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+					 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+		}
+		else if ( world_rank == world_size-1 ) {
+			MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+				 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+				 MPI_STATUS_IGNORE);
+		}
+		else {
+			MPI_Recv(&fileView, 1, my_MPI_SIZE_T,
+				 (int)(world_rank-1), 3, MPI::COMM_WORLD,
+				 MPI_STATUS_IGNORE);
+			
+			fileViewNew = fileView+lengthToBeSent;
+			MPI_Send(&fileViewNew, 1, my_MPI_SIZE_T,
+				 (int)(world_rank+1), 3, MPI::COMM_WORLD);
+		}
+
+		//MPI_Barrier(MPI::COMM_WORLD);
+
+		// open a file in write mode
+		std::string	outputFileName = "RegularLayerOutput_";
+		std::string	name = COMMON_PATH + folderName + "/" + inputFolder + "/" + outputFileName + std::to_string(layer) + ".mat";
 		std::remove(&name[0]);
 		MPI::File	outfile = MPI::File::Open(MPI::COMM_WORLD, (name).c_str(),
 							  MPI::MODE_CREATE | MPI::MODE_WRONLY,

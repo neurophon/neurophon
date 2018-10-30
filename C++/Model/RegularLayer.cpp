@@ -94,7 +94,8 @@ void	RegularLayer::layerInitializer( const regularLayerStructure& structure )
 						   structure.populationsArrayDimensionality,
 						   structure.afferentPopulationsArrayDimensionality,
 						   structure.apicalPopulationsArrayDimensionality,
-						   structure.potentialPercentage);
+						   structure.proximalPotentialPercentage,
+						   structure.distalPotentialPercentage);
 
 	//MPI_Barrier(MPI_COMM_WORLD);
 
@@ -120,7 +121,8 @@ void	RegularLayer::layerInitializer( const regularLayerStructure& structure )
 				      structure.afferentPopulationsArrayDimensionality,
 				      structure.apicalPopulationsArrayDimensionality,
 				      structure.temporalGatheringAfferentValue,
-				      structure.potentialPercentage);
+				      structure.proximalPotentialPercentage,
+				      structure.distalPotentialPercentage);
 
 	//MPI_Barrier(MPI_COMM_WORLD);
 
@@ -197,7 +199,8 @@ void	RegularLayer::validateRegularLayer(  const std::vector<std::size_t>& affere
 					     const std::vector<std::size_t>& populationsArrayDimensionality,
 					     const std::vector<std::size_t>& afferentPopulationsArrayDimensionality,
 					     const std::vector<std::size_t>& apicalPopulationsArrayDimensionality,
-	       				     const double potentialPercentage )
+	       				     const double proximalPotentialPercentage, 
+	       				     const double distalPotentialPercentage )
 {
 	bool	error_flag = false;
 
@@ -222,7 +225,8 @@ void	RegularLayer::validateRegularLayer(  const std::vector<std::size_t>& affere
 								 afferentPopulationsArrayDimensionality,
 								 apicalPopulationsArrayDimensionality,
 								 temporalGatheringAfferentValue,
-								 potentialPercentage);
+								 proximalPotentialPercentage,
+								 distalPotentialPercentage);
 
 	if ( error_flag )
 		MPI_Abort(MPI_COMM_WORLD,1);
@@ -437,15 +441,24 @@ bool	RegularLayer::validatePopulationParameters( const std::vector<std::size_t>&
 						    const std::vector<std::size_t>& afferentPopulationsArrayDimensionality,
 						    const std::vector<std::size_t>& apicalPopulationsArrayDimensionality,
 						    const std::size_t temporalGatheringAfferentValue,
-	       					    const double potentialPercentage )
+	       					    const double proximalPotentialPercentage, 
+	       					    const double distalPotentialPercentage )
 {
 	bool	error_flag = false;
 
-	if ( potentialPercentage < 0.0 || potentialPercentage > 1.0 ) {
+	if ( proximalPotentialPercentage < 0.0 || proximalPotentialPercentage > 1.0 ) {
 		std::cout << "RegularLayer object construction inconsistence: \n";
 		std::cout << "In function validatePopulationParameters\n";
-		std::cout << "potentialPercentage = "
-			  << potentialPercentage << "\n";
+		std::cout << "proximalPotentialPercentage = "
+			  << proximalPotentialPercentage << "\n";
+		error_flag = true;
+	}
+
+	if ( distalPotentialPercentage < 0.0 || distalPotentialPercentage > 1.0 ) {
+		std::cout << "RegularLayer object construction inconsistence: \n";
+		std::cout << "In function validatePopulationParameters\n";
+		std::cout << "distalPotentialPercentage = "
+			  << distalPotentialPercentage << "\n";
 		error_flag = true;
 	}
 
@@ -623,7 +636,8 @@ void	RegularLayer::generateColumns( const std::vector<std::size_t>& populationsA
 				       const std::vector<std::size_t>& afferentPopulationsArrayDimensionality,
 				       const std::vector<std::size_t>& apicalPopulationsArrayDimensionality,
 				       const std::size_t temporalGatheringAfferentValue,
-	       			       const double potentialPercentage )
+	       			       const double proximalPotentialPercentage, 
+	       			       const double distalPotentialPercentage )
 {
 	std::size_t			numberOfInputs;
 	std::vector<std::size_t>	dynamicUnits;
@@ -679,7 +693,8 @@ void	RegularLayer::generateColumns( const std::vector<std::size_t>& populationsA
 		std::array<double,2>	weightLimits = {SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT};
 		_layerColumns.push_back(ComplexProcessor(populationsArrayDimensionality,
 							 numberOfInputs,
-							 potentialPercentage,
+							 proximalPotentialPercentage,
+							 distalPotentialPercentage,
 							 WEIGHTS_SPARSITY,
 							 dynamicUnits,
 							 weightLimits));
@@ -690,7 +705,8 @@ void	RegularLayer::generateColumns( const std::vector<std::size_t>& populationsA
 	_populationsArrayDimensionality = populationsArrayDimensionality;
 	_afferentPopulationsArrayDimensionality = afferentPopulationsArrayDimensionality;
 	_apicalPopulationsArrayDimensionality = apicalPopulationsArrayDimensionality;
-	_potentialPercentage = potentialPercentage;
+	_proximalPotentialPercentage = proximalPotentialPercentage;
+	_distalPotentialPercentage = distalPotentialPercentage;
 } // end function generateColumns
 
 
@@ -1180,6 +1196,9 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
+	if ( parameters.distalSensitivity ) {
+		std::cout << "Distal sensitivity\n" << std::endl;
+	}
 	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
@@ -2103,11 +2122,17 @@ void	RegularLayer::saveRegularLayerStatus( const std::string& folderName, const 
 		else
 			save_as_scalar("temporalGatheringAfferentValue", _temporalGatheringAfferentValue, outputStream);
 
-		// saves potentialPercentage
+		// saves proximalPotentialPercentage
 		if (ENABLE_MATLAB_COMPATIBILITY)
-			save_scalar_as_numeric_array("potentialPercentage", _potentialPercentage, outputStream);
+			save_scalar_as_numeric_array("proximalPotentialPercentage", _proximalPotentialPercentage, outputStream);
 		else
-			save_as_scalar("potentialPercentage", _potentialPercentage, outputStream);
+			save_as_scalar("proximalPotentialPercentage", _proximalPotentialPercentage, outputStream);
+
+		// saves distalPotentialPercentage
+		if (ENABLE_MATLAB_COMPATIBILITY)
+			save_scalar_as_numeric_array("distalPotentialPercentage", _distalPotentialPercentage, outputStream);
+		else
+			save_as_scalar("distalPotentialPercentage", _distalPotentialPercentage, outputStream);
 
 		if ( _temporalGatheringAfferentValue > 1 ) {
 			// saves _internalTemporallyGatheredInputs; then:
@@ -2181,7 +2206,7 @@ void	RegularLayer::saveRegularLayerStatus( const std::string& folderName, const 
 	}
 	//MPI_Barrier(MPI_COMM_WORLD);
 
-	std::string	name = "../../Octave/" + folderName + "/RegularLayer_" + std::to_string(identifyer) + ".mat";
+	std::string	name = COMMON_PATH + folderName + "/RegularLayer_" + std::to_string(identifyer) + ".mat";
 	std::remove(&name[0]);
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -2217,7 +2242,7 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 	std::stringstream	inputStream;
 
         // open a file in read mode.
-	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, ("../../Octave/" + folderName + "/RegularLayer_" + std::to_string(identifyer) + ".mat").c_str(),
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, (COMMON_PATH + folderName + "/RegularLayer_" + std::to_string(identifyer) + ".mat").c_str(),
 					   MPI::MODE_RDONLY,
 					   MPI::INFO_NULL);
 
@@ -2272,7 +2297,8 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 	bool	check_internalSynchronization = false;
 	bool	check_internalTemporallyGatheredInformation = false;
 	bool	check_internalTemporallyGatheredIndexes = false;
-	bool	check_potentialPercentage = false;
+	bool	check_proximalPotentialPercentage = false;
+	bool	check_distalPotentialPercentage = false;
 
 	std::string	str;
 	std::string	STR;
@@ -2582,10 +2608,16 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 				check_internalTemporallyGatheredIndexes = true;
 			}
 
-			STR = "potentialPercentage";
+			STR = "proximalPotentialPercentage";
 			if ( array_structure.name.compare(STR) == 0 ) {
-				load_numeric_array_to_scalar(array_structure, _potentialPercentage, inputStream, big_endianness);
-				check_potentialPercentage = true;
+				load_numeric_array_to_scalar(array_structure, _proximalPotentialPercentage, inputStream, big_endianness);
+				check_proximalPotentialPercentage = true;
+			}
+
+			STR = "distalPotentialPercentage";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_scalar(array_structure, _distalPotentialPercentage, inputStream, big_endianness);
+				check_distalPotentialPercentage = true;
 			}
 
 			array_structure = check_next_data_structure(inputStream,big_endianness);
@@ -2879,10 +2911,16 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 				check_internalTemporallyGatheredIndexes = true;
 			}
 
-			STR = "# name: potentialPercentage";
+			STR = "# name: proximalPotentialPercentage";
 			if ( str.compare(STR) == 0 ) {
-				load_scalar(_potentialPercentage, inputStream);
-				check_potentialPercentage = true;
+				load_scalar(_proximalPotentialPercentage, inputStream);
+				check_proximalPotentialPercentage = true;
+			}
+
+			STR = "# name: distalPotentialPercentage";
+			if ( str.compare(STR) == 0 ) {
+				load_scalar(_distalPotentialPercentage, inputStream);
+				check_distalPotentialPercentage = true;
 			}
 
 		}
@@ -2923,6 +2961,9 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 	assert(check_populationsArrayDimensionality == true);
 	assert(check_afferentPopulationsArrayDimensionality == true);
 	assert(check_apicalPopulationsArrayDimensionality == true);
+	assert(check_proximalPotentialPercentage == true);
+	assert(check_distalPotentialPercentage == true);
+
 	assert(check_temporalGatheringAfferentValue == true);
 
 	if ( _temporalGatheringAfferentValue > 1 ) {
@@ -2930,7 +2971,6 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 		assert(check_internalSynchronization == true);
 		assert(check_internalTemporallyGatheredInformation == true);
 		assert(check_internalTemporallyGatheredIndexes == true);
-		assert(check_potentialPercentage == true);
 	}
 
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
@@ -2969,7 +3009,8 @@ void	RegularLayer::checkRegularLayerStructure( const regularLayerStructure& stru
 	assert(_afferentPopulationsArrayDimensionality == structure.afferentPopulationsArrayDimensionality);
 	assert(_apicalPopulationsArrayDimensionality == structure.apicalPopulationsArrayDimensionality);
 	assert(_temporalGatheringAfferentValue == structure.temporalGatheringAfferentValue);
-	assert(_potentialPercentage == structure.potentialPercentage);
+	assert(_proximalPotentialPercentage == structure.proximalPotentialPercentage);
+	assert(_distalPotentialPercentage == structure.distalPotentialPercentage);
 } // end function checkregularLayerStructure
 
 

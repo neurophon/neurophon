@@ -30,12 +30,13 @@ using namespace std;
 // StaticUnits weights are initialized with random numbers between weight limits
 ComplexProcessor::ComplexProcessor( const std::vector<std::size_t>& populationDimensions,
 				    const std::size_t numberOfInputs,
-				    const double potentialPercentage,
+				    const double proximalPotentialPercentage,
+				    const double distalPotentialPercentage,
 				    const double sparsity,
 				    const std::vector<std::size_t>& dynamicUnits,
 				    const std::array<double,2>& weightLimits )
 	// explicitly call base-class constructor
-	: DynamicProcessor(populationDimensions, numberOfInputs, potentialPercentage, sparsity, dynamicUnits, weightLimits)
+	: DynamicProcessor(populationDimensions, numberOfInputs, proximalPotentialPercentage, distalPotentialPercentage, sparsity, dynamicUnits, weightLimits)
 {
 } // end ComplexProcessor constructor
 

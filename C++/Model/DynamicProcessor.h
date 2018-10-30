@@ -40,6 +40,7 @@ public:
 				  const std::size_t,
 				  const double,
 				  const double,
+				  const double,
 				  const std::vector<std::size_t>&,
 				  const std::array<double,2>& );		// constructor that initializes _dynamicUnits by default to zero
 										// the first parameter is the dimensionality of the array of units,

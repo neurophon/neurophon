@@ -44,7 +44,7 @@ parameters.learning.plasticity = 0.1;
 parameters.learning.spikeTimeDependentSynapticPlasticity = true;
 parameters.learning.distalLearningRate = 0.001;
 
-double		potentialPercentage = 0.1, sparsity = 0.01;
+double		proximalPotentialPercentage = 0.1, distalPotentialPercentage = 0.1, sparsity = 0.01;
 std::string     str;
 std::string     STR;
 std::array<double,2>		weightLimits = {SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT};
@@ -108,7 +108,7 @@ assert(proximalInputs.size() == distalInputs.size());
 numberOfInputs = proximalInputs.size();
 
 std::cout << "Creatin regularColumn object.\n";
-ComplexProcessor regularColumn(dimensions, inputDim, potentialPercentage, sparsity, dynamicUnits, weightLimits);
+ComplexProcessor regularColumn(dimensions, inputDim, proximalPotentialPercentage, distalPotentialPercentage, sparsity, dynamicUnits, weightLimits);
 std::cout << "regularColumn object created.\n";
 
 std::cout << "Processing data.\n";

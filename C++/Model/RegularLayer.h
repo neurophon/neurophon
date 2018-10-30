@@ -63,6 +63,7 @@ public:
 						      const std::vector<std::size_t>&,
 						      const std::vector<std::size_t>&,
 						      const std::vector<std::size_t>&,
+						      const double,
 						      const double );// validates the layer
 
 	bool			validateColumnsInterconnectionsParameters( const std::vector<std::size_t>&,
@@ -86,6 +87,7 @@ public:
 							      const std::vector<std::size_t>&,
 							      const std::vector<std::size_t>&,
 							      const std::size_t,
+							      const double,
 		       					      const double );	// validates the parameters used to generate the columns' populations
 
 	void			interconnectRegularLayerColumns( const std::vector<std::size_t>&,
@@ -108,6 +110,7 @@ public:
 						 const std::vector<std::size_t>&,
 						 const std::vector<std::size_t>&,
 						 const std::size_t,
+						 const double,
 		       				 const double );		// generates a population for every column in the layer
 
 	void			initializeInternalTemporallyGatheredInputs();	// initializes the internal temporal gathered inputs
@@ -210,7 +213,8 @@ private:
 	std::vector<std::size_t>		_populationsArrayDimensionality;
 	std::vector<std::size_t>		_afferentPopulationsArrayDimensionality;
 	std::vector<std::size_t>		_apicalPopulationsArrayDimensionality;
-	double					_potentialPercentage;
+	double					_proximalPotentialPercentage;
+	double					_distalPotentialPercentage;
 
         std::vector<std::size_t>		_afferentArrayDimensionality;		// vector with the dimensions of the array of afferent inputs elements
 	std::size_t				_afferentDimensionality;		// flat dimensionality of the aferent inputs' vector
