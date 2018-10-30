@@ -68,6 +68,8 @@ public:
 											
 	somResponseInfo	getResponse( const std::vector<double>& );			
 											
+
+	void	resetStatus();
 											
 											
 	void	saveStaticSelfOrganizingMapStatus( const std::string&,

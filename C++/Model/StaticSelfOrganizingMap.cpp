@@ -383,6 +383,20 @@ somResponseInfo	StaticSelfOrganizingMap::getResponse( const std::vector<double>&
 } // end function getResponse
 
 
+//! Function to reset the Self Organizing Map's status to its initial state
+
+/*!
+This function reset all the persistent variables
+which have been accumulatively modified to its
+initial state (to the same state than when the
+object was constructed)
+*/
+void	StaticSelfOrganizingMap::resetStatus()
+{
+	_updateStep = 0;
+} // end functiom resetStatus
+
+
 //! Function to save the Self Organizing Map's status
 
 /*!
