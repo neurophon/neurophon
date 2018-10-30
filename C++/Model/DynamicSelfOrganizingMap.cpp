@@ -249,6 +249,14 @@ somResponseInfo	DynamicSelfOrganizingMap::getDynamicResponse( const somResponseI
 } // end function getDynamicResponse
 
 
+// function to reset the status of the object to its initial state
+void	DynamicSelfOrganizingMap::resetStatus()
+{
+	_updateStep = 0;
+	StaticSelfOrganizingMap::resetStatus();
+} // end functiom resetStatus
+
+
 // function to save the DynamicSelfOrganizingMap' status in a file
 void	DynamicSelfOrganizingMap::saveDynamicSelfOrganizingMapStatus( const std::string& dynamicSelfOrganizingMapIdentification,
 								      std::stringstream& outStream )

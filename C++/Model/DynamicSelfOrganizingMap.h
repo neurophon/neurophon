@@ -73,6 +73,9 @@ public:
 										// the response is a somResponseInfo type structure which is compose of
 										// a vector with distances and an vector with indexes sorthed in ascending order
 										// corresponding to the vector of distances
+	void	resetStatus();							// reset the status of the object to its initial state
+											
+											
 	void	saveDynamicSelfOrganizingMapStatus( const std::string&,
 						    std::stringstream& );	// function that saves the DynamicSelfOrganizingMap' status in a file
 
