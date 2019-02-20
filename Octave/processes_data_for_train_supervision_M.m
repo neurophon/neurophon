@@ -55,6 +55,14 @@ if ( finishProcessingAt >= 3 )
 	layerOutput_RL_1 = regularLayerOutput;
 end
 
+if ( finishProcessingAt >= 4 )
+	% Loads the output form hierarchy 2 layer 4 of the model
+	load RegularLayerOutput_2.mat
+	columnsArrayDimensionality_RL_2 = columnsArrayDimensionality;
+	populationsArrayDimensionality_RL_2 = populationsArrayDimensionality;
+	layerOutput_RL_2 = regularLayerOutput;
+end
+
 if ( finishProcessingAt == 1 )
 	% Checks if all the arrays have the same number of time steps
 	if ( size(inputs,1) ~= size(layerOutput_EL,1) )
@@ -79,6 +87,18 @@ if ( finishProcessingAt == 3 )
 	if ( size(inputs,1) ~= size(layerOutput_EL,1) || ...
 	     size(inputs,1) ~= size(layerOutput_RL_0,1) || ...
 	     size(inputs,1) ~= size(layerOutput_RL_1,1) )
+		string = 'Input data inconsistence in script processes_data_for_supervision: different time steps\n';
+		string = [string, 'input and outputs from the model have to have the same time steps'];
+		error(string);
+	end
+end
+
+if ( finishProcessingAt == 4 )
+	% Checks if all the arrays have the same number of time steps
+	if ( size(inputs,1) ~= size(layerOutput_EL,1) || ...
+	     size(inputs,1) ~= size(layerOutput_RL_0,1) || ...
+	     size(inputs,1) ~= size(layerOutput_RL_1,1) || ...
+	     size(inputs,1) ~= size(layerOutput_RL_2,1) )
 		string = 'Input data inconsistence in script processes_data_for_supervision: different time steps\n';
 		string = [string, 'input and outputs from the model have to have the same time steps'];
 		error(string);
@@ -136,6 +156,18 @@ if ( finishProcessingAt >= 3 )
 	slopes = outputs_libsvm.slopes;
 	intercept = outputs_libsvm.intercept;
 	save outputs_RL_1_scale_parameters_libsvm.mat	slopes intercept
+end
+
+if ( finishProcessingAt >= 4 )
+	outputs_libsvm = outputs_to_libsvm_M(layerOutput_RL_2,wordsSequence,start_marks,end_marks, ...
+					   populationsArrayDimensionality_RL_2, ...
+					   columnsArrayDimensionality_RL_2 );
+	outputs_libsvm = scale_for_libsvm_M(outputs_libsvm,-1,1);
+	scaled = outputs_libsvm.scaled;
+	save outputs_RL_2_libsvm.mat	scaled wordsSequence
+	slopes = outputs_libsvm.slopes;
+	intercept = outputs_libsvm.intercept;
+	save outputs_RL_2_scale_parameters_libsvm.mat	slopes intercept
 end
 
 %{

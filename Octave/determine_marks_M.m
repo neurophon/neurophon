@@ -17,6 +17,7 @@
 % Determines the marks at the pauses between words in the corpus
 function [start_marks, end_marks] = determine_marks_M(inputs, wordsSequence)
 
+	%inputs(inputs<0.00000133)=0;
 	activity = any(inputs');	% holds the activity in every time step
 
 	gap = 25;			% this is the necessary gap as to consider the end of the last word
