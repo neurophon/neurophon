@@ -693,7 +693,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												    distalInputs.activeIndexes,
 												    numberOfExcitedUnits,
 												    parameters.sparsity,
-												    false);
+												    true);
 				}
 				else {
 					activeIndexes = _encoderColumns[column/world_size].Activate(response,
@@ -726,6 +726,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  true,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate);
 												  parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
@@ -733,6 +734,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  true,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate*BUSTING);
 												  parameters.learning.distalLearningRate);
 						}
 
@@ -742,6 +744,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  false,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate*BUSTING);
 												  parameters.learning.distalLearningRate);
 						}
 					}
@@ -926,6 +929,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  true,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate);
 												  parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
@@ -933,6 +937,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  true,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate*BUSTING);
 												  parameters.learning.distalLearningRate);
 						}
 
@@ -942,6 +947,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  false,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate*BUSTING);
 												  parameters.learning.distalLearningRate);
 						}
 					}
@@ -1127,6 +1133,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  true,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate);
 												  parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
@@ -1134,6 +1141,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  true,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate*BUSTING);
 												  parameters.learning.distalLearningRate);
 						}
 
@@ -1143,6 +1151,7 @@ regularLayerResponse	EncoderLayer::computeResponse( const encoderLayerInput& aff
 												  distalInputs.activeIndexes,
 												  false,
 												  DISTAL_SYNAPTIC_THRESHOLD,
+												  //parameters.learning.distalLearningRate*BUSTING);
 												  parameters.learning.distalLearningRate);
 						}
 					}
