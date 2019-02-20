@@ -39,7 +39,8 @@ using namespace std;
 
 // constructor that initializes _weights at random
 StaticProcessor::StaticProcessor( const std::vector<std::size_t>& unitsArrayDimensionality,
-				  const std::size_t inputDimensionality,
+				  const std::vector<double>& inputConnectivity,
+				  const std::vector<double>& alinearityFactors,
 				  const double potentialPercentage,
 	       		  	  const double sparsity,
 				  const std::array<double,2>& weightLimits )
@@ -48,7 +49,10 @@ StaticProcessor::StaticProcessor( const std::vector<std::size_t>& unitsArrayDime
 	assert(sparsity >= 0.0 && sparsity <= 1.0);
 
 	_updateStep = 0;
-	_inputDimensionality = inputDimensionality;
+	_alinearityFactors = alinearityFactors;
+	_inputConnectivity = inputConnectivity;
+	_inputDimensionality = inputConnectivity.size();
+	assert(_inputDimensionality == alinearityFactors.size());
 	_unitsDimensionality = std::accumulate(unitsArrayDimensionality.begin(), unitsArrayDimensionality.end(), 1, std::multiplies<std::size_t>());
 	_unitsArrayDimensionality.resize(unitsArrayDimensionality.size());
 	for ( std::size_t dim = 0; dim < unitsArrayDimensionality.size(); dim++ )
@@ -61,16 +65,17 @@ StaticProcessor::StaticProcessor( const std::vector<std::size_t>& unitsArrayDime
 	_weights.resize(_unitsDimensionality);
 	_potentialDimensionality = _potentialPercentage*_inputDimensionality;
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ )
-		_weights[row].resize(_potentialDimensionality);
+		_weights[row].resize(_inputDimensionality);
 
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
-		for ( std::size_t column = 0; column < _potentialDimensionality; column++ ) {
-			if ( sparsity < randomFromDoubleInterval(0.0,1.0) ) {			
-				_weights[row][column] = randomFromDoubleInterval(weightLimits[0],weightLimits[1]);
-			}
-			else {
-				_weights[row][column] = 0.0; 
-			}
+		for ( std::size_t column = 0; column < _inputDimensionality; column++ ) {
+			_weights[row][column] = randomFromDoubleInterval(weightLimits[0],weightLimits[1]);
+			//if ( sparsity < randomFromDoubleInterval(0.0,1.0) ) {			
+				//_weights[row][column] = randomFromDoubleInterval(weightLimits[0],weightLimits[1]);
+			//}
+			//else {
+				//_weights[row][column] = 0.0; 
+			//}
 		}
 	}
 
@@ -87,13 +92,13 @@ StaticProcessor::StaticProcessor( const std::vector<std::size_t>& unitsArrayDime
 	_potentialConnections.resize(_unitsDimensionality);
 	for ( auto& potentialConnections : _potentialConnections ) {
 		sample_vector(inputRange, potentialConnections, _potentialDimensionality);
-		assert(!is_there_duplicate(potentialConnections));
+		//assert(!is_there_duplicate(potentialConnections));
 	}
 
 	assert(is_rectangular(_potentialConnections));
-	assert(_weights.size() == _potentialConnections.size());
-	for ( std::size_t row = 0; row < _weights.size(); row++ )
-		assert(_weights[row].size() == _potentialConnections[row].size());
+	//assert(_weights.size() == _potentialConnections.size());
+	//for ( std::size_t row = 0; row < _weights.size(); row++ )
+		//assert(_weights[row].size() == _potentialConnections[row].size());
 } // end StaticProcessor constructor
 
 
@@ -159,105 +164,168 @@ void	StaticProcessor::validateObject()
 responseInfo	StaticProcessor::learningRule( const double learningRate,
 					       const double neighborParameter,
 					       const double plasticity,
-					       const std::vector<std::size_t>& inputIndexes,
+					       const std::vector<double>& input,
 					       const double synapticThreshold,
 					       const bool activationHomeostasis,
 	       				       const bool randomness )
 {
-	assert(plasticity <= 1.0 && plasticity > 0.0);
-	assert(std::all_of(inputIndexes.begin(), inputIndexes.end(), [&](std::size_t i){return i < _inputDimensionality;}));
-	
-	auto	response = StaticProcessor::getResponse(inputIndexes);
 
-	auto	numberOfAffectedUnits = (std::size_t)(plasticity*_unitsDimensionality);
-	std::vector<std::size_t>	unitsWinnerPositions;
-	if (activationHomeostasis) {
-		std::vector<double>	excitation(_unitsDimensionality);
-		std::transform( response.excitation.begin(), response.excitation.end(),
-				_activationBoosting.begin(), excitation.begin(), 
-				std::multiplies<double>() );
-		
-		if (!randomness) {
-			auto	ranking = sort_indexes(excitation);
-			unitsWinnerPositions.insert(unitsWinnerPositions.end(),
-						    ranking.end()-std::min(numberOfAffectedUnits,ranking.size()),
-						    ranking.end());
-		}
-		else {
-			unitsWinnerPositions = getRandomWeightedIndexes(excitation,numberOfAffectedUnits);
-		}
-	}
-	else {
-		if (!randomness) {
-			unitsWinnerPositions.insert(unitsWinnerPositions.end(),
-						    response.ranking.end()-std::min(numberOfAffectedUnits,response.ranking.size()),
-						    response.ranking.end());
-		}
-		else {
-			unitsWinnerPositions = getRandomWeightedIndexes(response.excitation,numberOfAffectedUnits);
-		}
-	}
+	twodvector<double>	deltaWeights;
+	auto	response = StaticProcessor::getResponse(input);
+	auto	unitsWinnerPosition = response.ranking.back();
 
+	deltaWeights.resize(_unitsDimensionality);
 	std::string	gaussian = "gaussian";
-	for (const auto& unitsWinnerPosition : unitsWinnerPositions) { 
-		assert(unitsWinnerPosition < _unitsDimensionality);
-		#pragma omp parallel for default(none) shared(unitsWinnerPosition, inputIndexes, gaussian) num_threads(1)
-		for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {	// the index row corresponds to the unit
-			auto	neighborhoodValue = StaticProcessor::learningNeighborhood(neighborParameter, unitsWinnerPosition, row, gaussian);
-			if ( neighborhoodValue > PROXIMAL_SYNAPTIC_THRESHOLD ) {  
-				// This is the learning rule to update the synaptic weights
-				auto	increment = learningRate*neighborhoodValue*SYNAPTIC_INCREMENT;
-				auto	decrement = learningRate*neighborhoodValue*SYNAPTIC_DECREMENT;
-
-				std::vector<std::size_t>	potentialIndexes;
-				for (const auto& inputIndex : inputIndexes) {
-					auto	potentialIndex = find_first_coincident_index(_potentialConnections[row], inputIndex);
-					if ( potentialIndex < _potentialDimensionality ) {
-						_weights[row][potentialIndex] += increment;
-						potentialIndexes.push_back(potentialIndex);
-					}
-
-				}
-				potentialIndexes.shrink_to_fit();
-
-				// this is just done when the random behaviour is enabled
-				if ( ENABLE_RANDOM_BEHAVIOUR && !_weightsSparsity[row] ) {
-					auto	numberOfAffectedSynapses = (std::size_t)(MASSIVE_PLASTICITY*_potentialDimensionality); 
-					std::vector<std::size_t>	inactiveIndexes;
-					for ( std::size_t randomChoise = 0; randomChoise < numberOfAffectedSynapses; randomChoise++ ) {
-						std::size_t	choise = rand() % _potentialDimensionality;
-						std::size_t	securityScape = 0;
-						while ( std::find(potentialIndexes.begin(), potentialIndexes.end(), choise) != potentialIndexes.end() ||
-							std::find(inactiveIndexes.begin(), inactiveIndexes.end(), choise) != inactiveIndexes.end() ) {
-							choise = rand() % _potentialDimensionality;
-							if (securityScape > _inputDimensionality*0.1)
-								break;
-							
-							securityScape++;
-						}
-						inactiveIndexes.push_back(choise);
-						
-						if ( _weights[row][choise] > 0.0 ) {
-							_weights[row][choise] -= decrement;
-							if ( _weights[row][choise] < 0.0 )
-								_weights[row][choise] = 0.0;
-						}
-						if ( _weights[row][choise] < 0.0 ) {
-							throw std::runtime_error ("_weights[row][choise] < 0.0");
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	for (const auto& unitsWinnerPosition : unitsWinnerPositions) { 
-		assert(unitsWinnerPosition < _unitsDimensionality);
-		_unitsActivity[unitsWinnerPosition]++;
+	//#pragma omp parallel for default(none) shared(deltaWeights, input, gaussian) num_threads(1)
+	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) { // the index row corresponds to the unit
+		auto	neighborhoodValue = StaticProcessor::learningNeighborhood(neighborParameter, unitsWinnerPosition, row, gaussian);
+		// This is the Kohonen learning rule to update the synaptic weights
+		auto	auxiliary = tan_h((input-_inputConnectivity)/_alinearityFactors);
+		deltaWeights[row] = auxiliary - _weights[row];
+		std::transform(deltaWeights[row].begin(), deltaWeights[row].end(), deltaWeights[row].begin(),
+		std::bind1st(std::multiplies<double>(),learningRate*neighborhoodValue));
+		_weights[row]+=deltaWeights[row];
 	}
 	
 	return	response;
 } // end function learningRule
+
+
+//// function to modify the synapticWeights matrix throught the use of the learning rule
+//responseInfo	StaticProcessor::learningRule( const double learningRate,
+					       //const double neighborParameter,
+					       //const double plasticity,
+					       //const std::vector<std::size_t>& inputIndexes,
+					       //const double synapticThreshold,
+					       //const bool activationHomeostasis,
+						      //const bool randomness )
+//{
+	//assert(plasticity <= 1.0 && plasticity > 0.0);
+	//assert(std::all_of(inputIndexes.begin(), inputIndexes.end(), [&](std::size_t i){return i < _inputDimensionality;}));
+	
+	//auto	response = StaticProcessor::getResponse(inputIndexes);
+
+	//auto	numberOfAffectedUnits = (std::size_t)(plasticity*_unitsDimensionality);
+	//std::vector<std::size_t>	unitsWinnerPositions;
+	//if (activationHomeostasis) {
+		//std::vector<double>	excitation(_unitsDimensionality);
+		//std::transform( response.excitation.begin(), response.excitation.end(),
+				//_activationBoosting.begin(), excitation.begin(), 
+				//std::multiplies<double>() );
+		
+		//if (!randomness) {
+			//auto	ranking = sort_indexes(excitation);
+			//unitsWinnerPositions.insert(unitsWinnerPositions.end(),
+						    //ranking.end()-std::min(numberOfAffectedUnits,ranking.size()),
+						    //ranking.end());
+		//}
+		//else {
+			//if ( randomFromDoubleInterval(0.0,1.0) < 0.1 ) {
+				//unitsWinnerPositions = getRandomWeightedIndexes(excitation,numberOfAffectedUnits);
+			//}
+			//else {
+				//auto	ranking = sort_indexes(excitation);
+				//unitsWinnerPositions.insert(unitsWinnerPositions.end(),
+							    //ranking.end()-std::min(numberOfAffectedUnits,ranking.size()),
+							    //ranking.end());
+			//}
+		//}
+	//}
+	//else {
+		//if (!randomness) {
+			//unitsWinnerPositions.insert(unitsWinnerPositions.end(),
+						    //response.ranking.end()-std::min(numberOfAffectedUnits,response.ranking.size()),
+						    //response.ranking.end());
+		//}
+		//else {
+			//if ( randomFromDoubleInterval(0.0,1.0) < 0.1 ) {
+				//unitsWinnerPositions = getRandomWeightedIndexes(response.excitation,numberOfAffectedUnits);
+			//}
+			//else {
+				//unitsWinnerPositions.insert(unitsWinnerPositions.end(),
+							    //response.ranking.end()-std::min(numberOfAffectedUnits,response.ranking.size()),
+							    //response.ranking.end());
+			//}
+		//}
+	//}
+
+	//std::string	gaussian = "gaussian";
+	//for (const auto& unitsWinnerPosition : unitsWinnerPositions) { 
+		//assert(unitsWinnerPosition < _unitsDimensionality);
+		//#pragma omp parallel for default(none) shared(unitsWinnerPosition, inputIndexes, gaussian) num_threads(1)
+		//for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {	// the index row corresponds to the unit
+			//auto	neighborhoodValue = StaticProcessor::learningNeighborhood(neighborParameter, unitsWinnerPosition, row, gaussian);
+			//if ( neighborhoodValue > randomFromDoubleInterval(0.0,1.0) ) { // TODO fix it to automatically disable when random behavior is disabled 
+				////This is the learning rule to update the synaptic weights
+				//auto	increment = learningRate*neighborhoodValue*SYNAPTIC_INCREMENT;
+				//auto	decrement = learningRate*neighborhoodValue*SYNAPTIC_DECREMENT;
+
+				//// Tries to find coincidences between potential connections and active input indexes and increase the synapses of those coincidences
+				//auto	coincidence = false;
+				//std::vector<std::size_t>	potentialIndexes;
+				//for (const auto& inputIndex : inputIndexes) {
+					//auto	potentialIndex = find_first_coincident_index(_potentialConnections[row], inputIndex);
+					//if ( potentialIndex < _potentialDimensionality ) {
+						//_weights[row][potentialIndex] += increment;
+						//potentialIndexes.push_back(potentialIndex);
+						//coincidence = true;
+					//}
+
+				//}
+
+				//// If there were no coincidences tries to change the weakest potential connection in order to make it coincide with some active index
+				//if ( !coincidence && inputIndexes.size() > 0 ) {
+					//auto	weakPotentialIndex = std::distance(std::begin(_weights[row]),
+									       //std::min_element(std::begin(_weights[row]), std::end(_weights[row])));
+					//auto	newIndex = inputIndexes[rand() % inputIndexes.size()];
+					//// Changes the potential index just in case it is not already in the potential connections
+					//if ( std::find(_potentialConnections[row].begin(), _potentialConnections[row].end(), newIndex) ==
+						       //_potentialConnections[row].end() ) {
+						//_potentialConnections[row][weakPotentialIndex] = newIndex;
+						//_weights[row][weakPotentialIndex] = increment;
+						//potentialIndexes.push_back(weakPotentialIndex);
+					//}
+				//}
+				//potentialIndexes.shrink_to_fit();
+
+				//// this is just done when the random behaviour is enabled
+				//if ( ENABLE_RANDOM_BEHAVIOUR && !_weightsSparsity[row] ) {
+					//auto	numberOfAffectedSynapses = (std::size_t)(MASSIVE_PLASTICITY*_potentialDimensionality); 
+					//std::vector<std::size_t>	inactiveIndexes;
+					//for ( std::size_t randomChoise = 0; randomChoise < numberOfAffectedSynapses; randomChoise++ ) {
+						//std::size_t	choise = rand() % _potentialDimensionality;
+						//std::size_t	securityScape = 0;
+						//while ( std::find(potentialIndexes.begin(), potentialIndexes.end(), choise) != potentialIndexes.end() ||
+							//std::find(inactiveIndexes.begin(), inactiveIndexes.end(), choise) != inactiveIndexes.end() ) {
+							//choise = rand() % _potentialDimensionality;
+							//if (securityScape > _inputDimensionality*0.1)
+								//break;
+							
+							//securityScape++;
+						//}
+						//inactiveIndexes.push_back(choise);
+						
+						//if ( _weights[row][choise] > 0.0 ) {
+							//_weights[row][choise] -= decrement;
+							//if ( _weights[row][choise] < 0.0 )
+								//_weights[row][choise] = 0.0;
+						//}
+						//if ( _weights[row][choise] < 0.0 ) {
+							//throw std::runtime_error ("_weights[row][choise] < 0.0");
+						//}
+					//}
+				//}
+			//}
+		//}
+	//}
+	
+	//for (const auto& unitsWinnerPosition : unitsWinnerPositions) { 
+		//assert(unitsWinnerPosition < _unitsDimensionality);
+		//_unitsActivity[unitsWinnerPosition]++;
+	//}
+	
+	//return	response;
+//} // end function learningRule
 
 
 // function to compute the neighborhood value in the lateral interaction between units in the array for learning process
@@ -273,7 +341,6 @@ double	StaticProcessor::learningNeighborhood( const double widthParameter,
        												// corresponding to the winnerPosition
 	otherPositionArray = unravelIndex(otherPosition, _unitsArrayDimensionality);		// gets a vector with the array coordinates
        												// corresponding to the otherPosition
-
 	auxiliary.resize(winnerPositionArray.size());
 	for ( std::size_t index = 0; index < winnerPositionArray.size(); index++ ) {
 		if ( winnerPositionArray[index] > otherPositionArray[index] )
@@ -302,30 +369,62 @@ double	StaticProcessor::learningNeighborhood( const double widthParameter,
 
 
 // function to get the response information from the input
-responseInfo	StaticProcessor::getResponse( const std::vector<std::size_t>& inputIndexes )
+responseInfo	StaticProcessor::getResponse( const std::vector<double>& input )
 {
+	assert(input.size() == _inputDimensionality);
+	assert(input.size() == _inputConnectivity.size());
 	responseInfo	response;
 	
-	for (const auto& inputIndex : inputIndexes)
-		if ( inputIndex >= _inputDimensionality )
-			throw std::runtime_error ("inputIndex >= _inputDimensionality");
-
 	response.excitation.resize(_unitsDimensionality);
-	#pragma omp parallel for default(none) shared(response, inputIndexes) num_threads(1)
-	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {					// the index row corresponds to the units
-		double	innerProduct = 0.0;
-		for (const auto& inputIndex : inputIndexes) {
-			auto	potentialIndex = find_first_coincident_index(_potentialConnections[row], inputIndex);
-			if ( potentialIndex < _potentialDimensionality )
-				innerProduct += _weights[row][potentialIndex];
-		}
-
-		response.excitation[row] = innerProduct;
+	//#pragma omp parallel for default(none) shared(response, inputIndexes) num_threads(1)
+	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {				// the index row corresponds to the units
+		auto	auxiliary = tan_h((input-_inputConnectivity)/_alinearityFactors);
+		response.excitation[row] = 1.0/vectors_distance(_weights[row], auxiliary);
 	}
+
 	response.ranking = sort_indexes(response.excitation);
 
 	return response;										// returns the units response
 } // end function getResponse
+
+
+//// function to get the response information from the input
+//responseInfo	StaticProcessor::getResponse( const std::vector<std::size_t>& inputIndexes )
+//{
+	//responseInfo	response;
+	
+	//for (const auto& inputIndex : inputIndexes)
+		//if ( inputIndex >= _inputDimensionality )
+			//throw std::runtime_error ("inputIndex >= _inputDimensionality");
+
+	//response.excitation.resize(_unitsDimensionality);
+	////#pragma omp parallel for default(none) shared(response, inputIndexes) num_threads(1)
+	//for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {					// the index row corresponds to the units
+		//double	innerProduct = 0.0;
+		////for (const auto& inputIndex : inputIndexes) {
+			////auto	potentialIndex = find_first_coincident_index(_potentialConnections[row], inputIndex);
+			////if ( potentialIndex < _potentialDimensionality )
+				////innerProduct += _weights[row][potentialIndex];
+		////}
+
+		//for ( std::size_t index = 0; index < _potentialDimensionality; index++ ) {
+			//if( std::find(inputIndexes.begin(), inputIndexes.end(), _potentialConnections[row][index]) != inputIndexes.end() ) {
+				//[> inputIndexes contains potentialIndex <]
+				//innerProduct += std::pow(2,_weights[row][index]-1.0);
+			//}
+			//else {
+				//[> inputIndexes does not contain potentialIndex <]
+				//innerProduct += std::pow(2,_weights[row][index]-0.0);
+			//}
+		//}
+
+		//response.excitation[row] = 1.0/std::sqrt(innerProduct);
+		////response.excitation[row] = innerProduct;
+	//}
+	//response.ranking = sort_indexes(response.excitation);
+
+	//return response;										// returns the units response
+//} // end function getResponse
 
 
 // applies homeostasis to the object
@@ -334,28 +433,29 @@ void	StaticProcessor::homeostasis( const bool learning,
 				      const bool activationHomeostasis,
 				      const double synapticThreshold )
 {
-	if (activationHomeostasis && (positiveMod(_updateStep,5) == 0)) {
+	//if (activationHomeostasis && (positiveMod(_updateStep,5) == 0)) {
+	if (false && (positiveMod(_updateStep,5) == 0)) {
 		StaticProcessor::activationHomeostasis(10*BUSTING);
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		if ( learning ) {
-			if (synapticHomeostasis) {
-				StaticProcessor::synapticHomeostasis(synapticThreshold);	
-			}
-			else {
-				StaticProcessor::synapticGrowthLimitation(synapticThreshold);
-			}
-		}
+		//if ( learning ) {
+			//if (synapticHomeostasis) {
+				//StaticProcessor::synapticHomeostasis(synapticThreshold);	
+			//}
+			//else {
+				//StaticProcessor::synapticGrowthLimitation(synapticThreshold);
+			//}
+		//}
 
-		auto	result = std::min_element(_unitsActivity.begin(), _unitsActivity.end());
-		std::size_t	minimum = _unitsActivity[std::distance(_unitsActivity.begin(), result)];
-		transform(_unitsActivity.begin(), _unitsActivity.end(), _unitsActivity.begin(),
-			  bind2nd(std::minus<std::size_t>(), minimum));
+		//auto	result = std::min_element(_unitsActivity.begin(), _unitsActivity.end());
+		//std::size_t	minimum = _unitsActivity[std::distance(_unitsActivity.begin(), result)];
+		//transform(_unitsActivity.begin(), _unitsActivity.end(), _unitsActivity.begin(),
+			  //bind2nd(std::minus<std::size_t>(), minimum));
 
-		#pragma omp parallel for default(none) num_threads(1)
-		for ( std::size_t row = 0; row < _unitsDimensionality; row++ )
-			_weightsSparsity[row] = (get_rectangular_sparsity(_weights[row]) > SPARSITY_THRESHOLD);
+		//#pragma omp parallel for default(none) num_threads(1)
+		//for ( std::size_t row = 0; row < _unitsDimensionality; row++ )
+			//_weightsSparsity[row] = (get_rectangular_sparsity(_weights[row]) > SPARSITY_THRESHOLD);
 
 		_updateStep = 0;
 	}
@@ -372,11 +472,23 @@ void	StaticProcessor::synapticHomeostasis( const double synapticThreshold )
 	StaticProcessor::synapticGrowthLimitation(synapticThreshold);
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 		if ( (double)_unitsActivity[row] < 0.1*averageActivity ) {	// if this unit has had not enough activity
-		       // tries to fill its weights with neighbor units synaptic weights
+			// tries to fill its weights with neighbor units synaptic weights
 			std::vector<std::size_t>	radius(_unitsArrayDimensionality.size(),1);
 			auto	neighborUnits = neighborhood(row,radius,_unitsArrayDimensionality);
-			for ( const auto& neighborUnit : neighborUnits )
-				_weights[row] += _weights[neighborUnit];
+			for ( const auto& neighborUnit : neighborUnits ) {
+				auto	weakPotentialIndex = std::distance(std::begin(_weights[row]),
+									   std::min_element(std::begin(_weights[row]), std::end(_weights[row])));
+				auto	strongPotentialIndex = std::distance(std::begin(_weights[neighborUnit]),
+									     std::max_element(std::begin(_weights[neighborUnit]), std::end(_weights[neighborUnit])));
+
+				// Modify the potential connection only if the strong potential connection is not already in the potential connections of this unit
+				if ( std::find(_potentialConnections[row].begin(), _potentialConnections[row].end(),
+					       _potentialConnections[neighborUnit][strongPotentialIndex]) ==
+					       _potentialConnections[row].end() ) {
+					_potentialConnections[row][weakPotentialIndex] = _potentialConnections[neighborUnit][strongPotentialIndex];
+					_weights[row][weakPotentialIndex] = _weights[neighborUnit][strongPotentialIndex];
+				}
+			}
 
 			// it does the following work only if random behaviour is enabled
 			if ( ENABLE_RANDOM_BEHAVIOUR ) {
@@ -405,7 +517,7 @@ void	StaticProcessor::synapticHomeostasis( const double synapticThreshold )
 // computes synaptic growth limitation over the weights
 void	StaticProcessor::synapticGrowthLimitation( const double synapticThreshold )
 {
-	#pragma omp parallel for default(none) num_threads(1)
+	//#pragma omp parallel for default(none) num_threads(1)
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 		auto	sum = std::accumulate(_weights[row].begin(), _weights[row].end(), 0.0);
 		if ( sum > 1.0 ) {
@@ -426,7 +538,7 @@ void	StaticProcessor::activationHomeostasis( const double boostingFactor )
 	auto	averageActivity = (double)std::accumulate(_unitsActivity.begin(), _unitsActivity.end(),0)/(double)_unitsActivity.size();
 
 	assert(averageActivity > 0.0);
-	#pragma omp parallel for default(none) shared(averageActivity) num_threads(1)
+	//#pragma omp parallel for default(none) shared(averageActivity) num_threads(1)
 	for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 		if (_updateStep > 0)
 			_activationBoosting[row] = exp(-boostingFactor*((double)_unitsActivity[row]-(double)averageActivity)/(double)_updateStep);
@@ -462,6 +574,18 @@ void	StaticProcessor::saveStaticProcessorStatus( const std::string& staticUnitsI
 		save_vector_as_numeric_array(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
 	else
 		save_vector_as_matrix(str + "unitsArrayDimensionality", _unitsArrayDimensionality, outfile);
+
+        // saves _inputConnectivity
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "inputConnectivity", _inputConnectivity, outfile);
+	else
+		save_vector_as_matrix(str + "inputConnectivity", _inputConnectivity, outfile);
+
+        // saves _alinearityFactors
+	if (ENABLE_MATLAB_COMPATIBILITY)
+		save_vector_as_numeric_array(str + "alinearityFactors", _alinearityFactors, outfile);
+	else
+		save_vector_as_matrix(str + "alinearityFactors", _alinearityFactors, outfile);
 
         // saves _weights
 	if (ENABLE_MATLAB_COMPATIBILITY)
@@ -535,6 +659,8 @@ void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsI
 	bool	check_potentialPercentage = false;
 	bool	check_potentialDimensionality = false;
 	bool	check_potentialConnections = false;
+	bool	check_inputConnectivity = false;
+	bool	check_alinearityFactors = false;
 
 	if (ENABLE_MATLAB_COMPATIBILITY) {
 		auto	array_structure = check_next_data_structure(infile, big_endianness);
@@ -556,6 +682,18 @@ void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsI
 			if ( array_structure.name.compare(auxiliary) == 0 ) {
 				load_numeric_array_to_vector(array_structure, _unitsArrayDimensionality, infile, big_endianness);
 				check_unitsArrayDimensionality = true;
+			}
+
+			auxiliary = STR + "inputConnectivity";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _inputConnectivity, infile, big_endianness);
+				check_inputConnectivity = true;
+			}
+
+			auxiliary = STR + "alinearityFactors";
+			if ( array_structure.name.compare(auxiliary) == 0 ) {
+				load_numeric_array_to_vector(array_structure, _alinearityFactors, infile, big_endianness);
+				check_alinearityFactors = true;
 			}
 
 			auxiliary = STR + "weights";
@@ -640,6 +778,18 @@ void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsI
 				check_unitsArrayDimensionality = true;
 			}
 
+			auxiliary = "# name: " + STR + "inputConnectivity";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector(_inputConnectivity, infile);
+				check_inputConnectivity = true;
+			}
+
+			auxiliary = "# name: " + STR + "alinearityFactors";
+			if ( str.compare(auxiliary) == 0 ) {
+				load_matrix_to_vector(_alinearityFactors, infile);
+				check_alinearityFactors = true;
+			}
+
 			auxiliary = "# name: " + STR + "weights";
 			if ( str.compare(auxiliary) == 0 ) {
 				load_conditional_sparse_matrix_to_vector_of_vectors(_weights,infile);
@@ -701,6 +851,8 @@ void	StaticProcessor::loadStaticProcessorStatus( const std::string& staticUnitsI
 	assert(check_inputDimensionality == true);
 	assert(check_unitsDimensionality == true);
 	assert(check_unitsArrayDimensionality == true);
+	assert(check_inputConnectivity == true);
+	assert(check_alinearityFactors == true);
 	assert(check_weights == true);
 	assert(check_updateStep == true);
 	assert(check_unitsActivity == true);

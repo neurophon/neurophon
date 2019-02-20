@@ -639,8 +639,9 @@ void	RegularLayer::generateColumns( const std::vector<std::size_t>& populationsA
 	       			       const double proximalPotentialPercentage, 
 	       			       const double distalPotentialPercentage )
 {
-	std::size_t			numberOfInputs;
-	std::vector<std::size_t>	dynamicUnits;
+	//std::size_t			numberOfInputs;
+	std::vector<std::size_t>	proximalConnectivity, dynamicUnits;
+	std::vector<double>		alinearityFactors;
 
 	// Get the number of processes
 	std::size_t	world_size = MPI::COMM_WORLD.Get_size();
@@ -656,21 +657,59 @@ void	RegularLayer::generateColumns( const std::vector<std::size_t>& populationsA
 		MPI_Abort(MPI_COMM_WORLD,1);
 	}
 
+	auto	afferentPopulationDimensionality = std::accumulate(afferentPopulationsArrayDimensionality.begin(),
+								   afferentPopulationsArrayDimensionality.end(),
+								   1, std::multiplies<std::size_t>());
+
+	std::size_t	afferentPotentialDimensionality = proximalPotentialPercentage*afferentPopulationDimensionality;
+
+	std::vector<double>	afferentFactors(afferentPopulationsArrayDimensionality.begin(), afferentPopulationsArrayDimensionality.end());
+	std::transform(afferentFactors.begin(), afferentFactors.end(), afferentFactors.begin(), std::bind1st(std::multiplies<double>(), 0.25));
+
+	auto	populationDimensionality = std::accumulate(populationsArrayDimensionality.begin(),
+							   populationsArrayDimensionality.end(),
+							   1, std::multiplies<std::size_t>());
+
+	std::size_t	potentialDimensionality = proximalPotentialPercentage*populationDimensionality;
+
+	std::vector<double>	factors(populationsArrayDimensionality.begin(), populationsArrayDimensionality.end());
+	std::transform(factors.begin(), factors.end(), factors.begin(), std::bind1st(std::multiplies<double>(), 0.25));
+
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
-		numberOfInputs = 0;
+		//numberOfInputs = 0;
 
-		for ( std::size_t afferentInput = 0; afferentInput < _afferentConnections[column/world_size].size(); afferentInput++ )
-			numberOfInputs += std::accumulate(afferentPopulationsArrayDimensionality.begin(),
-							  afferentPopulationsArrayDimensionality.end(),
-							  1, std::multiplies<std::size_t>()); 
+		for ( std::size_t afferentInput = 0; afferentInput < _afferentConnections[column/world_size].size(); afferentInput++ ) {
+			std::vector<std::size_t>	inputRange(afferentPopulationDimensionality);
+			std::iota(std::begin(inputRange), std::end(inputRange), 0);
+			std::vector<std::size_t>	potentialConnections;
+			sample_vector(inputRange, potentialConnections, afferentPotentialDimensionality);
+			assert(!is_there_duplicate(potentialConnections));
 
-		numberOfInputs *= temporalGatheringAfferentValue;
+			for ( auto& potentialConnection : potentialConnections ) {
+				auto	partialConnectivity = unravelIndex(potentialConnection,afferentPopulationsArrayDimensionality);
+				proximalConnectivity.insert(std::end(proximalConnectivity), std::begin(partialConnectivity), std::end(partialConnectivity));
+				alinearityFactors.insert(std::end(alinearityFactors), std::begin(afferentFactors), std::end(afferentFactors));
+			}
+		}
+
+		//numberOfInputs *= temporalGatheringAfferentValue;
 
 		if ( _lateralProximalConnections.size() > 0 ) {
-			for ( std::size_t lateralProximalInput = 0; lateralProximalInput < _lateralProximalConnections[column/world_size].size(); lateralProximalInput++ )
-				numberOfInputs += std::accumulate(populationsArrayDimensionality.begin(),
-								  populationsArrayDimensionality.end(),
-								  1, std::multiplies<std::size_t>());
+			for ( std::size_t lateralProximalInput = 0;
+					  lateralProximalInput < _lateralProximalConnections[column/world_size].size();
+					  lateralProximalInput++ ) {
+				std::vector<std::size_t>	inputRange(populationDimensionality);
+				std::iota(std::begin(inputRange), std::end(inputRange), 0);
+				std::vector<std::size_t>	potentialConnections;
+				sample_vector(inputRange, potentialConnections, potentialDimensionality);
+				assert(!is_there_duplicate(potentialConnections));
+
+				for ( auto& potentialConnection : potentialConnections ) {
+					auto	partialConnectivity = unravelIndex(potentialConnection,populationsArrayDimensionality);
+					proximalConnectivity.insert(std::end(proximalConnectivity), std::begin(partialConnectivity), std::end(partialConnectivity));
+					alinearityFactors.insert(std::end(alinearityFactors), std::begin(factors), std::end(factors));
+				}
+			}
 		}
 
 		if ( _apicalConnections.size() > 0 )
@@ -690,14 +729,19 @@ void	RegularLayer::generateColumns( const std::vector<std::size_t>& populationsA
 			}
 
 		dynamicUnits.shrink_to_fit();
-		std::array<double,2>	weightLimits = {SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT};
+		std::array<double,2>	weightLimits = {-1,1};
+		//std::array<double,2>	weightLimits = {SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT};
+		std::vector<double>	auxiliary(proximalConnectivity.begin(), proximalConnectivity.end());
 		_layerColumns.push_back(ComplexProcessor(populationsArrayDimensionality,
-							 numberOfInputs,
+							 auxiliary,
+							 alinearityFactors,
 							 proximalPotentialPercentage,
 							 distalPotentialPercentage,
 							 WEIGHTS_SPARSITY,
 							 dynamicUnits,
 							 weightLimits));
+		proximalConnectivity.clear();
+		alinearityFactors.clear();
 		dynamicUnits.clear();
 	}
 	_layerColumns.shrink_to_fit();
@@ -715,19 +759,18 @@ void	RegularLayer::initializeInternalTemporallyGatheredInputs()
 {
 	_internalTemporallyGatheredInputs.temporallyGatheredIndexes.resize(_temporalGatheringAfferentValue);
 	_internalTemporallyGatheredInputs.temporallyGatheredInformation.resize(_temporalGatheringAfferentValue);
+	_internalTemporallyGatheredInputs.synchronization.resize(_temporalGatheringAfferentValue);
 
 	for ( std::size_t timeStep = 0; timeStep < _temporalGatheringAfferentValue; timeStep++ ) {
 		_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep].resize(_afferentDimensionality);
 
 		auto	it = _internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].begin();
 		_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].insert(it,_afferentDimensionality,false);
+
+		it = _internalTemporallyGatheredInputs.synchronization[timeStep].begin();
+		_internalTemporallyGatheredInputs.synchronization[timeStep].insert(it,_afferentDimensionality,true);
+
 	}
-
-	auto	it = _internalTemporallyGatheredInputs.synchronization.begin();
-	_internalTemporallyGatheredInputs.synchronization.insert(it,_afferentDimensionality,true);
-
-	auto	iter = _temporalPointer.begin();
-	_temporalPointer.insert(iter,_afferentDimensionality,0);
 } // end function initializeInternalTemporallyGatheredInputs
 
 
@@ -767,12 +810,16 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, parameters, output, world_rank, world_size) num_threads(9)
+	regularLayerResponse	temporalGatheredAfferent;
+	if ( _temporalGatheringAfferentValue > 1 )
+		temporalGatheredAfferent = RegularLayer::temporalGatherer(afferent);
+
+	#pragma omp parallel for default(none) shared(afferent, temporalGatheredAfferent, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
 			proximalInputs = RegularLayer::gatherProximalInputs(column/world_size,
-				       					    RegularLayer::temporalGatherer(afferent),
+									    temporalGatheredAfferent,
 									    _lateral);
 		}
 		else {
@@ -834,7 +881,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 						response = _layerColumns[column/world_size].learningRule(parameters.learning.proximalLearningRate,
 											      parameters.learning.proximalNeighborhood,
 											      parameters.learning.plasticity,
-											      proximalInputs.sparseDistributedRepresentation,
+											      proximalInputs.inputs,
 											      PROXIMAL_SYNAPTIC_THRESHOLD,
 											      parameters.activationHomeostasis,
 											      true);
@@ -845,7 +892,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										  PROXIMAL_SYNAPTIC_THRESHOLD);
 					}
 					else {
-						response = _layerColumns[column/world_size].getResponse(proximalInputs.sparseDistributedRepresentation);
+						response = _layerColumns[column/world_size].getResponse(proximalInputs.inputs);
 
 						_layerColumns[column/world_size].homeostasis(false,
 										  parameters.learning.synapticHomeostasis,
@@ -861,7 +908,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										     distalInputs.activeIndexes,
 										     numberOfExcitedUnits,
 										     parameters.sparsity,
-										     true);
+										     false);
 
 					if ( parameters.learning.enableDistalLearning ) {
 						if ( activeIndexes.size() > PREDICTION_FAULT_THRESHOLD_PERCENTAGE*
@@ -871,12 +918,14 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 							_layerColumns[column/world_size].Update(activeIndexes,
 										     distalInputs.activeIndexes,
 										     true, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate);
 										     parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
 							_layerColumns[column/world_size].Update(activeIndexes,
 										     distalInputs.activeIndexes,
 										     true, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate*BUSTING);
 										     parameters.learning.distalLearningRate);
 						}
 						
@@ -885,12 +934,13 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 							_layerColumns[column/world_size].Update(lastActiveUnits,
 										     distalInputs.activeIndexes,
 										     false, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate*BUSTING);
 										     parameters.learning.distalLearningRate);
 						}						
 					}
 				}
 				else {
-					response = _layerColumns[column/world_size].getResponse(proximalInputs.sparseDistributedRepresentation);
+					response = _layerColumns[column/world_size].getResponse(proximalInputs.inputs);
 					
 					_layerColumns[column/world_size].homeostasis(false,
 									  parameters.learning.synapticHomeostasis,
@@ -981,12 +1031,16 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	#pragma omp parallel for default(none) shared(afferent, lateral, parameters, output, world_rank, world_size) num_threads(9)
+	regularLayerResponse	temporalGatheredAfferent;
+	if ( _temporalGatheringAfferentValue > 1 )
+		temporalGatheredAfferent = RegularLayer::temporalGatherer(afferent);
+
+	#pragma omp parallel for default(none) shared(afferent, temporalGatheredAfferent, lateral, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
 			proximalInputs = RegularLayer::gatherProximalInputs(column/world_size,
-				       					    RegularLayer::temporalGatherer(afferent),
+									    temporalGatheredAfferent,
 									    lateral);
 		}
 		else {
@@ -1048,7 +1102,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 						response = _layerColumns[column/world_size].learningRule(parameters.learning.proximalLearningRate,
 											      parameters.learning.proximalNeighborhood,
 											      parameters.learning.plasticity,
-											      proximalInputs.sparseDistributedRepresentation,
+											      proximalInputs.inputs,
 											      PROXIMAL_SYNAPTIC_THRESHOLD,
 											      parameters.activationHomeostasis,
 											      true);
@@ -1059,7 +1113,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										  PROXIMAL_SYNAPTIC_THRESHOLD);
 					}
 					else {
-						response = _layerColumns[column/world_size].getResponse(proximalInputs.sparseDistributedRepresentation);
+						response = _layerColumns[column/world_size].getResponse(proximalInputs.inputs);
 
 						_layerColumns[column/world_size].homeostasis(false,
 										  parameters.learning.synapticHomeostasis,
@@ -1075,7 +1129,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										     distalInputs.activeIndexes,
 										     numberOfExcitedUnits,
 										     parameters.sparsity,
-										     true);
+										     false);
 
 					if ( parameters.learning.enableDistalLearning ) {
 						if ( activeIndexes.size() > PREDICTION_FAULT_THRESHOLD_PERCENTAGE*
@@ -1085,12 +1139,14 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 							_layerColumns[column/world_size].Update(activeIndexes,
 										     distalInputs.activeIndexes,
 										     true, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate);
 										     parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
 							_layerColumns[column/world_size].Update(activeIndexes,
 										     distalInputs.activeIndexes,
 										     true, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate*BUSTING);
 										     parameters.learning.distalLearningRate);
 						}
 						
@@ -1099,12 +1155,13 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 							_layerColumns[column/world_size].Update(lastActiveUnits,
 										     distalInputs.activeIndexes,
 										     false, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate*BUSTING);
 										     parameters.learning.distalLearningRate);
 						}						
 					}
 				}
 				else {
-					response = _layerColumns[column/world_size].getResponse(proximalInputs.sparseDistributedRepresentation);
+					response = _layerColumns[column/world_size].getResponse(proximalInputs.inputs);
 					
 					_layerColumns[column/world_size].homeostasis(false,
 									  parameters.learning.synapticHomeostasis,
@@ -1196,15 +1253,16 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 	output.synchronization.resize(_columnsDimensionality);
 	output.information.resize(_columnsDimensionality);
 
-	if ( parameters.distalSensitivity ) {
-		std::cout << "Distal sensitivity\n" << std::endl;
-	}
-	#pragma omp parallel for default(none) shared(afferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(9)
+	regularLayerResponse	temporalGatheredAfferent;
+	if ( _temporalGatheringAfferentValue > 1 )
+		temporalGatheredAfferent = RegularLayer::temporalGatherer(afferent);
+
+	#pragma omp parallel for default(none) shared(afferent, temporalGatheredAfferent, lateral, apical, parameters, output, world_rank, world_size) num_threads(9)
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size ) {
 		regularLayerProximalInput	proximalInputs;
 		if ( _temporalGatheringAfferentValue > 1 ) {
 			proximalInputs = RegularLayer::gatherProximalInputs(column/world_size,
-				       					    RegularLayer::temporalGatherer(afferent),
+									    temporalGatheredAfferent,
 									    lateral);
 		}
 		else {
@@ -1266,7 +1324,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 						response = _layerColumns[column/world_size].learningRule(parameters.learning.proximalLearningRate,
 											      parameters.learning.proximalNeighborhood,
 											      parameters.learning.plasticity,
-											      proximalInputs.sparseDistributedRepresentation,
+											      proximalInputs.inputs,
 											      PROXIMAL_SYNAPTIC_THRESHOLD,
 											      parameters.activationHomeostasis,
 											      true);
@@ -1277,7 +1335,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										  PROXIMAL_SYNAPTIC_THRESHOLD);
 					}
 					else {
-						response = _layerColumns[column/world_size].getResponse(proximalInputs.sparseDistributedRepresentation);
+						response = _layerColumns[column/world_size].getResponse(proximalInputs.inputs);
 
 						_layerColumns[column/world_size].homeostasis(false,
 										  parameters.learning.synapticHomeostasis,
@@ -1293,7 +1351,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										     distalInputs.activeIndexes,
 										     numberOfExcitedUnits,
 										     parameters.sparsity,
-										     true);
+										     false);
 
 					if ( parameters.learning.enableDistalLearning ) {
 						if ( activeIndexes.size() > PREDICTION_FAULT_THRESHOLD_PERCENTAGE*
@@ -1303,12 +1361,14 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 							_layerColumns[column/world_size].Update(activeIndexes,
 										     distalInputs.activeIndexes,
 										     true, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate);
 										     parameters.learning.distalLearningRate*BUSTING);
 						}
 						else {
 							_layerColumns[column/world_size].Update(activeIndexes,
 										     distalInputs.activeIndexes,
 										     true, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate*BUSTING);
 										     parameters.learning.distalLearningRate);
 						}
 						
@@ -1317,12 +1377,13 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 							_layerColumns[column/world_size].Update(lastActiveUnits,
 										     distalInputs.activeIndexes,
 										     false, DISTAL_SYNAPTIC_THRESHOLD,
+										     //parameters.learning.distalLearningRate*BUSTING);
 										     parameters.learning.distalLearningRate);
 						}						
 					}
 				}
 				else {
-					response = _layerColumns[column/world_size].getResponse(proximalInputs.sparseDistributedRepresentation);
+					response = _layerColumns[column/world_size].getResponse(proximalInputs.inputs);
 					
 					_layerColumns[column/world_size].homeostasis(false,
 									  parameters.learning.synapticHomeostasis,
@@ -1377,7 +1438,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 
 
 // temporally gathers afferent inputs
-regularLayerTemporallyGatheredResponse	RegularLayer::temporalGatherer( const regularLayerResponse& input )
+regularLayerResponse	RegularLayer::temporalGatherer( const regularLayerResponse& input )
 {
 	assert(_temporalGatheringAfferentValue > 1);
 
@@ -1385,59 +1446,135 @@ regularLayerTemporallyGatheredResponse	RegularLayer::temporalGatherer( const reg
 		input.currentIndexes.size() == input.synchronization.size() &&
 		input.currentIndexes.size() == input.information.size());
 
-	regularLayerTemporallyGatheredResponse	output;
+	regularLayerResponse	output;
+	output.currentIndexes.resize(input.currentIndexes.size());
+	output.synchronization.resize(input.synchronization.size());
+	output.information.resize(input.information.size());
 
-	bool	synchronization = !std::all_of(input.synchronization.begin(),
-					       input.synchronization.end(),
-					       [](bool v) { return !v; });
+	for ( int timeStep = (int)_temporalGatheringAfferentValue-1; timeStep >= 0; timeStep-- ) {
+		if (timeStep == 0) {
+			_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep] = input.currentIndexes;
+			_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep] = input.information;
+			_internalTemporallyGatheredInputs.synchronization[timeStep] = input.synchronization;
 
-	// if the input has some synchronization activity
-	if ( synchronization ) {
-		// iterates through the afferent input layer columns
-		for ( std::size_t column = 0; column < _afferentDimensionality; column++ ) {
-			// if there is synchronization activity in this afferent column
-			if ( input.synchronization[column] ) {
-				// if it is the first internal time step
-				if ( _temporalPointer[column] == 0 ) {
-					for ( std::size_t timeStep = 0; timeStep < _temporalGatheringAfferentValue; timeStep++ ) {
-						_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep][column].clear();
-						_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep][column] = false;
-					}
-					_internalTemporallyGatheredInputs.synchronization[column] = false;
-				}
-				// if there is information comming from this afferent column
-				if ( input.information[column] ) {
-					_internalTemporallyGatheredInputs.temporallyGatheredIndexes[_temporalPointer[column]][column] =
-												input.currentIndexes[column];
-					_internalTemporallyGatheredInputs.temporallyGatheredInformation[_temporalPointer[column]][column] = true;
-					_temporalPointer[column]++;
-					_temporalPointer[column] = positiveMod(_temporalPointer[column],_temporalGatheringAfferentValue);
-					if ( _temporalPointer[column] == 0 )
-						_internalTemporallyGatheredInputs.synchronization[column] = true;
-					else
-						_internalTemporallyGatheredInputs.synchronization[column] = false;
-				}
-				// if there is no information comming from this afferent column
-				else {
-					assert(input.currentIndexes[column].size() == 0);
-					_temporalPointer[column] = 0;
-					_internalTemporallyGatheredInputs.synchronization[column] = true;
-				}
-			}
-			// if there is no synchronization activity in this afferent column
-			else {
-				_internalTemporallyGatheredInputs.synchronization[column] = false;
-			}
+			for ( std::size_t column = 0; column < output.currentIndexes.size(); column++ )
+				output.currentIndexes[column].insert(std::end(output.currentIndexes[column]),
+								     std::begin(_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep][column]),
+								     std::end(_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep][column]));
+
+			std::vector<bool>      aux;
+			std::transform(output.synchronization.begin(),
+				       output.synchronization.end(),
+				       _internalTemporallyGatheredInputs.synchronization[timeStep].begin(),
+				       std::back_inserter(aux),
+				       std::logical_or<bool>());
+			aux.shrink_to_fit();
+			output.synchronization=aux;
+
+			aux.clear();
+			std::transform(output.information.begin(),
+				       output.information.end(),
+				       _internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].begin(),
+				       std::back_inserter(aux),
+				       std::logical_or<bool>());
+			aux.shrink_to_fit();
+			output.information=aux;
 		}
-		return	_internalTemporallyGatheredInputs;
-	}
-	// if there is no synchronization activity from the input
-	else {
-		std::fill (_internalTemporallyGatheredInputs.synchronization.begin(),
-			   _internalTemporallyGatheredInputs.synchronization.end(),false);
+		else {
+			_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep] =
+			_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep-1];
+			_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep] =
+			_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep-1];
+			_internalTemporallyGatheredInputs.synchronization[timeStep] =
+			_internalTemporallyGatheredInputs.synchronization[timeStep-1];
 
-		return	_internalTemporallyGatheredInputs;
+			for ( std::size_t column = 0; column < output.currentIndexes.size(); column++ )
+				output.currentIndexes[column].insert(std::end(output.currentIndexes[column]),
+								     std::begin(_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep][column]),
+								     std::end(_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep][column]));
+
+			std::vector<bool>      aux;
+			std::transform(output.synchronization.begin(),
+				       output.synchronization.end(),
+				       _internalTemporallyGatheredInputs.synchronization[timeStep].begin(),
+				       std::back_inserter(aux),
+				       std::logical_or<bool>());
+			aux.shrink_to_fit();
+			output.synchronization=aux;
+
+			aux.clear();
+			std::transform(output.information.begin(),
+				       output.information.end(),
+				       _internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].begin(),
+				       std::back_inserter(aux),
+				       std::logical_or<bool>());
+			aux.shrink_to_fit();
+			output.information=aux;
+		}
 	}
+
+	return	output;
+
+
+
+
+
+
+
+
+	//regularLayerTemporallyGatheredResponse	output;
+
+	//bool	synchronization = !std::all_of(input.synchronization.begin(),
+					       //input.synchronization.end(),
+					       //[](bool v) { return !v; });
+
+	//// if the input has some synchronization activity
+	//if ( synchronization ) {
+		//// iterates through the afferent input layer columns
+		//for ( std::size_t column = 0; column < _afferentDimensionality; column++ ) {
+			//// if there is synchronization activity in this afferent column
+			//if ( input.synchronization[column] ) {
+				//// if it is the first internal time step
+				//if ( _temporalPointer[column] == 0 ) {
+					//for ( std::size_t timeStep = 0; timeStep < _temporalGatheringAfferentValue; timeStep++ ) {
+						//_internalTemporallyGatheredInputs.temporallyGatheredIndexes[timeStep][column].clear();
+						//_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep][column] = false;
+					//}
+					//_internalTemporallyGatheredInputs.synchronization[column] = false;
+				//}
+				//// if there is information comming from this afferent column
+				//if ( input.information[column] ) {
+					//_internalTemporallyGatheredInputs.temporallyGatheredIndexes[_temporalPointer[column]][column] =
+												//input.currentIndexes[column];
+					//_internalTemporallyGatheredInputs.temporallyGatheredInformation[_temporalPointer[column]][column] = true;
+					//_temporalPointer[column]++;
+					//_temporalPointer[column] = positiveMod(_temporalPointer[column],_temporalGatheringAfferentValue);
+					//if ( _temporalPointer[column] == 0 )
+						//_internalTemporallyGatheredInputs.synchronization[column] = true;
+					//else
+						//_internalTemporallyGatheredInputs.synchronization[column] = false;
+				//}
+				//// if there is no information comming from this afferent column
+				//else {
+					//assert(input.currentIndexes[column].size() == 0);
+					//_temporalPointer[column] = 0;
+					//_internalTemporallyGatheredInputs.synchronization[column] = true;
+				//}
+			//}
+			//// if there is no synchronization activity in this afferent column
+			//else {
+				//_internalTemporallyGatheredInputs.synchronization[column] = false;
+			//}
+		//}
+		//return	_internalTemporallyGatheredInputs;
+	//}
+	//// if there is no synchronization activity from the input
+	//else {
+		//std::fill (_internalTemporallyGatheredInputs.synchronization.begin(),
+			   //_internalTemporallyGatheredInputs.synchronization.end(),false);
+
+		//return	_internalTemporallyGatheredInputs;
+	//}
 } // end function temporalGatherer
 
 
@@ -1449,9 +1586,8 @@ regularLayerProximalInput	RegularLayer::gatherProximalInputs( const std::size_t 
 	regularLayerProximalInput	proximalInputs;
 
 	std::size_t	offset = 0;
-	std::size_t	SDR_offset = 0;
 	assert(afferent.currentIndexes.size() != 0);
-	assert(_temporalGatheringAfferentValue == 1);
+	//assert(_temporalGatheringAfferentValue == 1);
 
 	assert(_afferentConnections.size() != 0);
 	std::size_t	numberOfProximalConnections = _afferentConnections[column].size();
@@ -1461,6 +1597,12 @@ regularLayerProximalInput	RegularLayer::gatherProximalInputs( const std::size_t 
 
 	proximalInputs.synchronization.resize(numberOfProximalConnections);
 	proximalInputs.information.resize(numberOfProximalConnections);
+
+	auto	afferentPopulationDimensionality = std::accumulate(_afferentPopulationsArrayDimensionality.begin(),
+								   _afferentPopulationsArrayDimensionality.end(),
+								   1, std::multiplies<std::size_t>());
+
+	std::size_t	afferentPotentialDimensionality = _proximalPotentialPercentage*afferentPopulationDimensionality;
 
 	for ( std::size_t afferentConnection = 0; afferentConnection < _afferentConnections[column].size(); afferentConnection++ ) {
 		auto	connection = _afferentConnections[column][afferentConnection];
@@ -1473,28 +1615,47 @@ regularLayerProximalInput	RegularLayer::gatherProximalInputs( const std::size_t 
 			assert(afferent.synchronization[connection] == true);
 			proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
 			proximalInputs.information[offset+afferentConnection] = afferent.information[connection];
+
+			std::size_t	randomUnit = std::rand() % afferentPopulationDimensionality;
+			auto	randomUnitCoordinates = unravelIndex(randomUnit,_afferentPopulationsArrayDimensionality);
+			std::vector<std::size_t>	inputs;
+			for ( std::size_t afferentPotentialConnection = 0;
+					  afferentPotentialConnection < afferentPotentialDimensionality;
+					  afferentPotentialConnection++ )
+				inputs.insert(std::end(inputs), std::begin(randomUnitCoordinates), std::end(randomUnitCoordinates));
+
+			for (const auto& input : inputs)
+				proximalInputs.inputs.push_back((double)input);
 		}
 		// If there is at least one index then, gather this information
 		else {
 			assert(afferent.information[connection] == true);
-			for (const auto& index : afferent.currentIndexes[connection]) {
-				proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
-				auxiliary.push_back(SDR_offset+index);
-			}
+			std::vector<std::size_t>	unitCoordinates(_afferentPopulationsArrayDimensionality.size(),0);
+			for (const auto& index : afferent.currentIndexes[connection])
+				unitCoordinates += unravelIndex(index,_afferentPopulationsArrayDimensionality);
+
+			std::vector<std::size_t>	inputs;
+			for ( std::size_t afferentPotentialConnection = 0;
+					  afferentPotentialConnection < afferentPotentialDimensionality;
+					  afferentPotentialConnection++ )
+				inputs.insert(std::end(inputs), std::begin(unitCoordinates), std::end(unitCoordinates));
+
+			for (const auto& input : inputs)
+				proximalInputs.inputs.push_back((double)input/afferent.currentIndexes[connection].size());
+
 			proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
 			proximalInputs.information[offset+afferentConnection] = afferent.information[connection];
 		}
-		auto	old_SDR_offset = SDR_offset;
-		SDR_offset += std::accumulate(_afferentPopulationsArrayDimensionality.begin(),
-					      _afferentPopulationsArrayDimensionality.end(),
-					      1, std::multiplies<std::size_t>());
-
-		for (const auto& index : auxiliary)
-			assert(index >= old_SDR_offset && index < SDR_offset);
 	}
 	offset += _afferentConnections[column].size();
 
 	if ( _lateralProximalConnections.size() != 0 ) {
+		auto	populationDimensionality = std::accumulate(_populationsArrayDimensionality.begin(),
+								   _populationsArrayDimensionality.end(),
+								   1, std::multiplies<std::size_t>());
+
+		std::size_t	potentialDimensionality = _proximalPotentialPercentage*populationDimensionality;
+
 		for ( std::size_t lateralProximalConnection = 0;
 				  lateralProximalConnection < _lateralProximalConnections[column].size();
 				  lateralProximalConnection++ ) {
@@ -1508,125 +1669,231 @@ regularLayerProximalInput	RegularLayer::gatherProximalInputs( const std::size_t 
 				assert(lateral.synchronization[connection] == true);
 				proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
 				proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+
+				std::size_t	randomUnit = std::rand() % populationDimensionality;
+				auto	randomUnitCoordinates = unravelIndex(randomUnit,_populationsArrayDimensionality);
+				std::vector<std::size_t>	inputs;
+				for ( std::size_t potentialConnection = 0;
+						  potentialConnection < potentialDimensionality;
+						  potentialConnection++ )
+					inputs.insert(std::end(inputs), std::begin(randomUnitCoordinates), std::end(randomUnitCoordinates));
+
+				for (const auto& input : inputs)
+					proximalInputs.inputs.push_back((double)input);
 			}
 			// If there is at least one index then, gather this information
 			else {
 				assert(lateral.information[connection] == true);
-				for (const auto& index : lateral.currentIndexes[connection]) {
-					proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
-					auxiliary.push_back(SDR_offset+index);
-				}
+				std::vector<std::size_t>	unitCoordinates(_populationsArrayDimensionality.size(),0);
+				for (const auto& index : lateral.currentIndexes[connection])
+					unitCoordinates += unravelIndex(index,_populationsArrayDimensionality);
+
+				std::vector<std::size_t>	inputs;
+				for ( std::size_t potentialConnection = 0;
+						  potentialConnection < potentialDimensionality;
+						  potentialConnection++ )
+					inputs.insert(std::end(inputs), std::begin(unitCoordinates), std::end(unitCoordinates));
+
+				for (const auto& input : inputs)
+					proximalInputs.inputs.push_back((double)input/lateral.currentIndexes[connection].size());
+
 				proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
 				proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
 			}
-			auto	old_SDR_offset = SDR_offset;
-			SDR_offset += std::accumulate(_populationsArrayDimensionality.begin(),
-						      _populationsArrayDimensionality.end(),
-						      1, std::multiplies<std::size_t>());
-
-			for (const auto& index : auxiliary)
-				assert(index >= old_SDR_offset && index < SDR_offset);
 		}
 	}
-
+	proximalInputs.inputs.shrink_to_fit(); 
 	return	proximalInputs;
 } // end function gatherProximalInputs
 
 
-// gathers proximal inputs from afferent and lateral connections
-regularLayerProximalInput	RegularLayer::gatherProximalInputs( const std::size_t column,
-								    const regularLayerTemporallyGatheredResponse& afferent,
-								    const regularLayerResponse& lateral )
-{
-	regularLayerProximalInput	proximalInputs;
+//// gathers proximal inputs from afferent and lateral connections
+//regularLayerProximalInput	RegularLayer::gatherProximalInputs( const std::size_t column,
+								    //const regularLayerResponse& afferent,
+								    //const regularLayerResponse& lateral )
+//{
+	//regularLayerProximalInput	proximalInputs;
 
-	std::size_t	offset = 0;
-	std::size_t	SDR_offset = 0;
-	assert(afferent.temporallyGatheredIndexes.size() == _temporalGatheringAfferentValue && _temporalGatheringAfferentValue > 1);
-	assert(afferent.temporallyGatheredIndexes.size() == afferent.temporallyGatheredInformation.size());
+	//std::size_t	offset = 0;
+	//std::size_t	SDR_offset = 0;
+	//assert(afferent.currentIndexes.size() != 0);
+	//assert(_temporalGatheringAfferentValue == 1);
 
-	assert(_afferentConnections.size() != 0);
-	std::size_t	numberOfProximalConnections = afferent.temporallyGatheredIndexes.size() * _afferentConnections[column].size();
+	//assert(_afferentConnections.size() != 0);
+	//std::size_t	numberOfProximalConnections = _afferentConnections[column].size();
 
-	if ( _lateralProximalConnections.size() != 0 )
-		numberOfProximalConnections += _lateralProximalConnections[column].size();
+	//if ( _lateralProximalConnections.size() != 0 )
+		//numberOfProximalConnections += _lateralProximalConnections[column].size();
 
-	proximalInputs.synchronization.resize(numberOfProximalConnections);
-	proximalInputs.information.resize(numberOfProximalConnections);
+	//proximalInputs.synchronization.resize(numberOfProximalConnections);
+	//proximalInputs.information.resize(numberOfProximalConnections);
 
-	for ( std::size_t timeStep = 0; timeStep < afferent.temporallyGatheredIndexes.size(); timeStep++ ) {
-		for ( std::size_t afferentConnection = 0;
-				  afferentConnection < _afferentConnections[column].size();
-				  afferentConnection++ ) {
-			auto	connection = _afferentConnections[column][afferentConnection];
-			auto	numberOfIndexes = afferent.temporallyGatheredIndexes[timeStep][connection].size();
-			std::vector<std::size_t>	auxiliary;
+	//for ( std::size_t afferentConnection = 0; afferentConnection < _afferentConnections[column].size(); afferentConnection++ ) {
+		//auto	connection = _afferentConnections[column][afferentConnection];
+		//auto	numberOfIndexes = afferent.currentIndexes[connection].size();
+		//std::vector<std::size_t>	auxiliary;
 
-			// If there is no index, then there is no information
-			if ( numberOfIndexes == 0 ) {
-				assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
-				assert(afferent.synchronization[connection] == true);
-				proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
-				proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
-			}
-			// If there is at least one index then, gather this information
-			else {
-				assert(afferent.temporallyGatheredInformation[timeStep][connection] == true);
-				for (const auto& index : afferent.temporallyGatheredIndexes[timeStep][connection]) {
-					proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
-					auxiliary.push_back(SDR_offset+index);
-				}
-				proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
-				proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
-			}
-			auto	old_SDR_offset = SDR_offset;
-			SDR_offset += std::accumulate(_afferentPopulationsArrayDimensionality.begin(),
-						      _afferentPopulationsArrayDimensionality.end(),
-						      1, std::multiplies<double>());
+		//// If there is no index, then there is no information
+		//if ( numberOfIndexes == 0 ) {
+			//assert(afferent.information[connection] == false);
+			//assert(afferent.synchronization[connection] == true);
+			//proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+			//proximalInputs.information[offset+afferentConnection] = afferent.information[connection];
+		//}
+		//// If there is at least one index then, gather this information
+		//else {
+			//assert(afferent.information[connection] == true);
+			//for (const auto& index : afferent.currentIndexes[connection]) {
+				//proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
+				//auxiliary.push_back(SDR_offset+index);
+			//}
+			//proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[connection];
+			//proximalInputs.information[offset+afferentConnection] = afferent.information[connection];
+		//}
+		//auto	old_SDR_offset = SDR_offset;
+		//SDR_offset += std::accumulate(_afferentPopulationsArrayDimensionality.begin(),
+					      //_afferentPopulationsArrayDimensionality.end(),
+					      //1, std::multiplies<std::size_t>());
 
-			for (const auto& index : auxiliary)
-				assert(index >= old_SDR_offset && index < SDR_offset);
-		}
-		offset += _afferentConnections[column].size();
-	}
+		//for (const auto& index : auxiliary)
+			//assert(index >= old_SDR_offset && index < SDR_offset);
+	//}
+	//offset += _afferentConnections[column].size();
 
-	if ( _lateralProximalConnections.size() != 0 ) {
-		for ( std::size_t lateralProximalConnection = 0;
-				  lateralProximalConnection < _lateralProximalConnections[column].size();
-				  lateralProximalConnection++ ) {
-			auto	connection = _lateralProximalConnections[column][lateralProximalConnection];
-			auto	numberOfIndexes = lateral.currentIndexes[connection].size();
-			std::vector<std::size_t>	auxiliary;
+	//if ( _lateralProximalConnections.size() != 0 ) {
+		//for ( std::size_t lateralProximalConnection = 0;
+				  //lateralProximalConnection < _lateralProximalConnections[column].size();
+				  //lateralProximalConnection++ ) {
+			//auto	connection = _lateralProximalConnections[column][lateralProximalConnection];
+			//auto	numberOfIndexes = lateral.currentIndexes[connection].size();
+			//std::vector<std::size_t>	auxiliary;
 
-			// If there is no index, then there is no information
-			if ( numberOfIndexes == 0 ) {
-				assert(lateral.information[connection] == false);
-				assert(lateral.synchronization[connection] == true);
-				proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
-				proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
-			}
-			// If there is at least one index then, gather this information
-			else {
-				assert(lateral.information[connection] == true);
-				for (const auto& index : lateral.currentIndexes[connection]) {
-					proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
-					auxiliary.push_back(SDR_offset+index);
-				}
-				proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
-				proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
-			}
-			auto	old_SDR_offset = SDR_offset;
-			SDR_offset += std::accumulate(_populationsArrayDimensionality.begin(),
-						      _populationsArrayDimensionality.end(),
-						      1, std::multiplies<std::size_t>());
+			//// If there is no index, then there is no information
+			//if ( numberOfIndexes == 0 ) {
+				//assert(lateral.information[connection] == false);
+				//assert(lateral.synchronization[connection] == true);
+				//proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+				//proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+			//}
+			//// If there is at least one index then, gather this information
+			//else {
+				//assert(lateral.information[connection] == true);
+				//for (const auto& index : lateral.currentIndexes[connection]) {
+					//proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
+					//auxiliary.push_back(SDR_offset+index);
+				//}
+				//proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+				//proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+			//}
+			//auto	old_SDR_offset = SDR_offset;
+			//SDR_offset += std::accumulate(_populationsArrayDimensionality.begin(),
+						      //_populationsArrayDimensionality.end(),
+						      //1, std::multiplies<std::size_t>());
 
-			for (const auto& index : auxiliary)
-				assert(index >= old_SDR_offset && index < SDR_offset);
-		}
-	}
+			//for (const auto& index : auxiliary)
+				//assert(index >= old_SDR_offset && index < SDR_offset);
+		//}
+	//}
 
-	return	proximalInputs;
-} // end function gatherProximalInputs
+	//return	proximalInputs;
+//} // end function gatherProximalInputs
+
+
+//// gathers proximal inputs from afferent and lateral connections
+//regularLayerProximalInput	RegularLayer::gatherProximalInputs( const std::size_t column,
+								    //const regularLayerTemporallyGatheredResponse& afferent,
+								    //const regularLayerResponse& lateral )
+//{
+	//regularLayerProximalInput	proximalInputs;
+
+	//std::size_t	offset = 0;
+	//std::size_t	SDR_offset = 0;
+	//assert(afferent.temporallyGatheredIndexes.size() == _temporalGatheringAfferentValue && _temporalGatheringAfferentValue > 1);
+	//assert(afferent.temporallyGatheredIndexes.size() == afferent.temporallyGatheredInformation.size());
+	//assert(afferent.temporallyGatheredIndexes.size() == afferent.synchronization.size());
+
+	//assert(_afferentConnections.size() != 0);
+	//std::size_t	numberOfProximalConnections = afferent.temporallyGatheredIndexes.size() * _afferentConnections[column].size();
+
+	//if ( _lateralProximalConnections.size() != 0 )
+		//numberOfProximalConnections += _lateralProximalConnections[column].size();
+
+	//proximalInputs.synchronization.resize(numberOfProximalConnections);
+	//proximalInputs.information.resize(numberOfProximalConnections);
+
+	//for ( std::size_t timeStep = 0; timeStep < afferent.temporallyGatheredIndexes.size(); timeStep++ ) {
+		//for ( std::size_t afferentConnection = 0;
+				  //afferentConnection < _afferentConnections[column].size();
+				  //afferentConnection++ ) {
+			//auto	connection = _afferentConnections[column][afferentConnection];
+			//auto	numberOfIndexes = afferent.temporallyGatheredIndexes[timeStep][connection].size();
+			//std::vector<std::size_t>	auxiliary;
+
+			//// If there is no index, then there is no information
+			//if ( numberOfIndexes == 0 ) {
+				//assert(afferent.temporallyGatheredInformation[timeStep][connection] == false);
+				//assert(afferent.synchronization[timeStep][connection] == true);
+				//proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[timeStep][connection];
+				//proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+			//}
+			//// If there is at least one index then, gather this information
+			//else {
+				//assert(afferent.temporallyGatheredInformation[timeStep][connection] == true);
+				//for (const auto& index : afferent.temporallyGatheredIndexes[timeStep][connection]) {
+					//proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
+					//auxiliary.push_back(SDR_offset+index);
+				//}
+				//proximalInputs.synchronization[offset+afferentConnection] = afferent.synchronization[timeStep][connection];
+				//proximalInputs.information[offset+afferentConnection] = afferent.temporallyGatheredInformation[timeStep][connection];
+			//}
+			//auto	old_SDR_offset = SDR_offset;
+			//SDR_offset += std::accumulate(_afferentPopulationsArrayDimensionality.begin(),
+						      //_afferentPopulationsArrayDimensionality.end(),
+						      //1, std::multiplies<double>());
+
+			//for (const auto& index : auxiliary)
+				//assert(index >= old_SDR_offset && index < SDR_offset);
+		//}
+		//offset += _afferentConnections[column].size();
+	//}
+
+	//if ( _lateralProximalConnections.size() != 0 ) {
+		//for ( std::size_t lateralProximalConnection = 0;
+				  //lateralProximalConnection < _lateralProximalConnections[column].size();
+				  //lateralProximalConnection++ ) {
+			//auto	connection = _lateralProximalConnections[column][lateralProximalConnection];
+			//auto	numberOfIndexes = lateral.currentIndexes[connection].size();
+			//std::vector<std::size_t>	auxiliary;
+
+			//// If there is no index, then there is no information
+			//if ( numberOfIndexes == 0 ) {
+				//assert(lateral.information[connection] == false);
+				//assert(lateral.synchronization[connection] == true);
+				//proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+				//proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+			//}
+			//// If there is at least one index then, gather this information
+			//else {
+				//assert(lateral.information[connection] == true);
+				//for (const auto& index : lateral.currentIndexes[connection]) {
+					//proximalInputs.sparseDistributedRepresentation.push_back(SDR_offset+index);
+					//auxiliary.push_back(SDR_offset+index);
+				//}
+				//proximalInputs.synchronization[offset+lateralProximalConnection] = lateral.synchronization[connection];
+				//proximalInputs.information[offset+lateralProximalConnection] = lateral.information[connection];
+			//}
+			//auto	old_SDR_offset = SDR_offset;
+			//SDR_offset += std::accumulate(_populationsArrayDimensionality.begin(),
+						      //_populationsArrayDimensionality.end(),
+						      //1, std::multiplies<std::size_t>());
+
+			//for (const auto& index : auxiliary)
+				//assert(index >= old_SDR_offset && index < SDR_offset);
+		//}
+	//}
+
+	//return	proximalInputs;
+//} // end function gatherProximalInputs
 
 
 // gathers distal inputs from apical and lateral connections
@@ -2134,48 +2401,56 @@ void	RegularLayer::saveRegularLayerStatus( const std::string& folderName, const 
 		else
 			save_as_scalar("distalPotentialPercentage", _distalPotentialPercentage, outputStream);
 
-		if ( _temporalGatheringAfferentValue > 1 ) {
-			// saves _internalTemporallyGatheredInputs; then:
+		//if ( _temporalGatheringAfferentValue > 1 ) {
+			//// saves _internalTemporallyGatheredInputs; then:
 
-			// saves temporalPointer
-			if (ENABLE_MATLAB_COMPATIBILITY)
-				save_vector_as_numeric_array("temporalPointer", _temporalPointer, outputStream);
-			else
-				save_vector_as_matrix("temporalPointer", _temporalPointer, outputStream);
+			////// saves temporalPointer
+			////if (ENABLE_MATLAB_COMPATIBILITY)
+				////save_vector_as_numeric_array("temporalPointer", _temporalPointer, outputStream);
+			////else
+				////save_vector_as_matrix("temporalPointer", _temporalPointer, outputStream);
 
-			// saves synchronization
-			if (ENABLE_MATLAB_COMPATIBILITY)
-				save_vector_as_numeric_array("internalSynchronization",
-							_internalTemporallyGatheredInputs.synchronization,
-							outputStream);
-			else
-				save_vector_as_matrix("internalSynchronization",
-							_internalTemporallyGatheredInputs.synchronization,
-							outputStream);
+			//// saves synchronization
+			//if (ENABLE_MATLAB_COMPATIBILITY)
+				//save_vector_of_vectors_as_numeric_array("internalSynchronization",
+									//_internalTemporallyGatheredInputs.synchronization,
+									//outputStream);
+			//else
+				//save_vector_of_vectors_as_matrix("internalSynchronization",
+								 //_internalTemporallyGatheredInputs.synchronization,
+								 //outputStream);
+			////if (ENABLE_MATLAB_COMPATIBILITY)
+				////save_vector_as_numeric_array("internalSynchronization",
+							////_internalTemporallyGatheredInputs.synchronization,
+							////outputStream);
+			////else
+				////save_vector_as_matrix("internalSynchronization",
+							////_internalTemporallyGatheredInputs.synchronization,
+							////outputStream);
 
-			// saves temporallyGatheredInformation
-			if (ENABLE_MATLAB_COMPATIBILITY)
-				save_vector_of_vectors_as_numeric_array("internalTemporallyGatheredInformation",
-									_internalTemporallyGatheredInputs.temporallyGatheredInformation,
-									outputStream);
-			else
-				save_vector_of_vectors_as_matrix("internalTemporallyGatheredInformation",
-								 _internalTemporallyGatheredInputs.temporallyGatheredInformation,
-								 outputStream);
+			//// saves temporallyGatheredInformation
+			//if (ENABLE_MATLAB_COMPATIBILITY)
+				//save_vector_of_vectors_as_numeric_array("internalTemporallyGatheredInformation",
+									//_internalTemporallyGatheredInputs.temporallyGatheredInformation,
+									//outputStream);
+			//else
+				//save_vector_of_vectors_as_matrix("internalTemporallyGatheredInformation",
+								 //_internalTemporallyGatheredInputs.temporallyGatheredInformation,
+								 //outputStream);
 
-			// saves temporallyGatheredIndexes
-			std::size_t	aux;
-			make_rectangular(_internalTemporallyGatheredInputs.temporallyGatheredIndexes, -1);
-			if (ENABLE_MATLAB_COMPATIBILITY)
-				save_multidimensional_vector_as_numeric_array("internalTemporallyGatheredIndexes",
-									      _internalTemporallyGatheredInputs.temporallyGatheredIndexes,
-									      aux, outputStream);
-			else
-				save_multidimensional_vector_as_matrix("internalTemporallyGatheredIndexes",
-									_internalTemporallyGatheredInputs.temporallyGatheredIndexes,
-									aux, outputStream);
+			//// saves temporallyGatheredIndexes
+			//std::size_t	aux;
+			//make_rectangular(_internalTemporallyGatheredInputs.temporallyGatheredIndexes, -1);
+			//if (ENABLE_MATLAB_COMPATIBILITY)
+				//save_multidimensional_vector_as_numeric_array("internalTemporallyGatheredIndexes",
+									      //_internalTemporallyGatheredInputs.temporallyGatheredIndexes,
+									      //aux, outputStream);
+			//else
+				//save_multidimensional_vector_as_matrix("internalTemporallyGatheredIndexes",
+									//_internalTemporallyGatheredInputs.temporallyGatheredIndexes,
+									//aux, outputStream);
 
-		}
+		//}
 	}
 
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
@@ -2561,52 +2836,66 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 				check_temporalGatheringAfferentValue = true;
 			}
 
-			STR = "temporalPointer";
-			if ( array_structure.name.compare(STR) == 0 ) {
-				load_numeric_array_to_vector(array_structure, _temporalPointer, inputStream, big_endianness);
-				check_temporalPointer = true;
-			}
+			//STR = "temporalPointer";
+			//if ( array_structure.name.compare(STR) == 0 ) {
+				//load_numeric_array_to_vector(array_structure, _temporalPointer, inputStream, big_endianness);
+				//check_temporalPointer = true;
+			//}
 
-			STR = "internalSynchronization";
-			if ( array_structure.name.compare(STR) == 0 ) {
-				std::vector<std::size_t>	auxiliary;
-				load_numeric_array_to_vector(array_structure, auxiliary, inputStream, big_endianness);
-				for(const auto& aux : auxiliary) {
-					if ( aux == 0 )
-						_internalTemporallyGatheredInputs.synchronization.push_back(false);
-					else
-						_internalTemporallyGatheredInputs.synchronization.push_back(true);
-				}
-				_internalTemporallyGatheredInputs.synchronization.shrink_to_fit();
-				check_internalSynchronization = true;
-			}
+			//STR = "internalSynchronization";
+			//if ( array_structure.name.compare(STR) == 0 ) {
+				//twodvector<std::size_t>	auxiliary;
+				//load_numeric_array_to_vector_of_vectors(array_structure, auxiliary, inputStream, big_endianness);
+				//_internalTemporallyGatheredInputs.synchronization.resize(auxiliary.size());
+				//for( std::size_t timeStep = 0; timeStep < auxiliary.size(); timeStep++ ) {
+					//for(const auto& aux : auxiliary[timeStep]) {
+						//if ( aux == 0 )
+							//_internalTemporallyGatheredInputs.synchronization[timeStep].push_back(false);
+						//else
+							//_internalTemporallyGatheredInputs.synchronization[timeStep].push_back(true);
+					//}
+				//}
+				//check_internalTemporallyGatheredInformation = true;
+			//}
+			////if ( array_structure.name.compare(STR) == 0 ) {
+				////std::vector<std::size_t>	auxiliary;
+				////load_numeric_array_to_vector(array_structure, auxiliary, inputStream, big_endianness);
+				////for(const auto& aux : auxiliary) {
+					////if ( aux == 0 )
+						////_internalTemporallyGatheredInputs.synchronization.push_back(false);
+					////else
+						////_internalTemporallyGatheredInputs.synchronization.push_back(true);
+				////}
+				////_internalTemporallyGatheredInputs.synchronization.shrink_to_fit();
+				////check_internalSynchronization = true;
+			////}
 
-			STR = "internalTemporallyGatheredInformation";
-			if ( array_structure.name.compare(STR) == 0 ) {
-				twodvector<std::size_t>	auxiliary;
-				load_numeric_array_to_vector_of_vectors(array_structure, auxiliary, inputStream, big_endianness);
-				_internalTemporallyGatheredInputs.temporallyGatheredInformation.resize(auxiliary.size());
-				for( std::size_t timeStep = 0; timeStep < auxiliary.size(); timeStep++ ) {
-					for(const auto& aux : auxiliary[timeStep]) {
-						if ( aux == 0 )
-							_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(false);
-						else
-							_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(true);
-					}
-				}
-				check_internalTemporallyGatheredInformation = true;
-			}
+			//STR = "internalTemporallyGatheredInformation";
+			//if ( array_structure.name.compare(STR) == 0 ) {
+				//twodvector<std::size_t>	auxiliary;
+				//load_numeric_array_to_vector_of_vectors(array_structure, auxiliary, inputStream, big_endianness);
+				//_internalTemporallyGatheredInputs.temporallyGatheredInformation.resize(auxiliary.size());
+				//for( std::size_t timeStep = 0; timeStep < auxiliary.size(); timeStep++ ) {
+					//for(const auto& aux : auxiliary[timeStep]) {
+						//if ( aux == 0 )
+							//_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(false);
+						//else
+							//_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(true);
+					//}
+				//}
+				//check_internalTemporallyGatheredInformation = true;
+			//}
 
-			STR = "internalTemporallyGatheredIndexes";
-			if ( array_structure.name.compare(STR) == 0 ) {
-				std::size_t	aux;
+			//STR = "internalTemporallyGatheredIndexes";
+			//if ( array_structure.name.compare(STR) == 0 ) {
+				//std::size_t	aux;
 
-				load_array_to_multidimensional_vector(array_structure,
-								      _internalTemporallyGatheredInputs.temporallyGatheredIndexes,
-								      aux, inputStream, big_endianness);
+				//load_array_to_multidimensional_vector(array_structure,
+								      //_internalTemporallyGatheredInputs.temporallyGatheredIndexes,
+								      //aux, inputStream, big_endianness);
 
-				check_internalTemporallyGatheredIndexes = true;
-			}
+				//check_internalTemporallyGatheredIndexes = true;
+			//}
 
 			STR = "proximalPotentialPercentage";
 			if ( array_structure.name.compare(STR) == 0 ) {
@@ -2866,50 +3155,64 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 				check_temporalGatheringAfferentValue = true;
 			}
 
-			STR = "# name: temporalPointer";
-			if ( str.compare(STR) == 0 ) {
-				load_matrix_to_vector(_temporalPointer, inputStream);
-				check_temporalPointer = true;
-			}
+			//STR = "# name: temporalPointer";
+			//if ( str.compare(STR) == 0 ) {
+				//load_matrix_to_vector(_temporalPointer, inputStream);
+				//check_temporalPointer = true;
+			//}
 
-			STR = "# name: internalSynchronization";
-			if ( str.compare(STR) == 0 ) {
-				std::vector<std::size_t>	auxiliary;
-				load_matrix_to_vector(auxiliary, inputStream);
-				for(const auto& aux : auxiliary) {
-					if ( aux == 0 )
-						_internalTemporallyGatheredInputs.synchronization.push_back(false);
-					else
-						_internalTemporallyGatheredInputs.synchronization.push_back(true);
-				}
-				_internalTemporallyGatheredInputs.synchronization.shrink_to_fit();
-				check_internalSynchronization = true;
-			}
+			//STR = "# name: internalSynchronization";
+			//if ( str.compare(STR) == 0 ) {
+				//twodvector<std::size_t>	auxiliary;
+				//load_matrix_to_vector_of_vectors(auxiliary, inputStream);
+				//_internalTemporallyGatheredInputs.synchronization.resize(auxiliary.size());
+				//for( std::size_t timeStep = 0; timeStep < auxiliary.size(); timeStep++ ) {
+					//for(const auto& aux : auxiliary[timeStep]) {
+						//if ( aux == 0 )
+							//_internalTemporallyGatheredInputs.synchronization[timeStep].push_back(false);
+						//else
+							//_internalTemporallyGatheredInputs.synchronization[timeStep].push_back(true);
+					//}
+				//}
+				//check_internalTemporallyGatheredInformation = true;
+			//}
+			////if ( str.compare(STR) == 0 ) {
+				////std::vector<std::size_t>	auxiliary;
+				////load_matrix_to_vector(auxiliary, inputStream);
+				////for(const auto& aux : auxiliary) {
+					////if ( aux == 0 )
+						////_internalTemporallyGatheredInputs.synchronization.push_back(false);
+					////else
+						////_internalTemporallyGatheredInputs.synchronization.push_back(true);
+				////}
+				////_internalTemporallyGatheredInputs.synchronization.shrink_to_fit();
+				////check_internalSynchronization = true;
+			////}
 
-			STR = "# name: internalTemporallyGatheredInformation";
-			if ( str.compare(STR) == 0 ) {
-				twodvector<std::size_t>	auxiliary;
-				load_matrix_to_vector_of_vectors(auxiliary, inputStream);
-				_internalTemporallyGatheredInputs.temporallyGatheredInformation.resize(auxiliary.size());
-				for( std::size_t timeStep = 0; timeStep < auxiliary.size(); timeStep++ ) {
-					for(const auto& aux : auxiliary[timeStep]) {
-						if ( aux == 0 )
-							_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(false);
-						else
-							_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(true);
-					}
-				}
-				check_internalTemporallyGatheredInformation = true;
-			}
+			//STR = "# name: internalTemporallyGatheredInformation";
+			//if ( str.compare(STR) == 0 ) {
+				//twodvector<std::size_t>	auxiliary;
+				//load_matrix_to_vector_of_vectors(auxiliary, inputStream);
+				//_internalTemporallyGatheredInputs.temporallyGatheredInformation.resize(auxiliary.size());
+				//for( std::size_t timeStep = 0; timeStep < auxiliary.size(); timeStep++ ) {
+					//for(const auto& aux : auxiliary[timeStep]) {
+						//if ( aux == 0 )
+							//_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(false);
+						//else
+							//_internalTemporallyGatheredInputs.temporallyGatheredInformation[timeStep].push_back(true);
+					//}
+				//}
+				//check_internalTemporallyGatheredInformation = true;
+			//}
 
-			STR = "# name: internalTemporallyGatheredIndexes";
-			if ( str.compare(STR) == 0 ) {
-				std::size_t	aux;
-				load_matrix_to_multidimensional_vector(_internalTemporallyGatheredInputs.temporallyGatheredIndexes,
-									aux, inputStream);
+			//STR = "# name: internalTemporallyGatheredIndexes";
+			//if ( str.compare(STR) == 0 ) {
+				//std::size_t	aux;
+				//load_matrix_to_multidimensional_vector(_internalTemporallyGatheredInputs.temporallyGatheredIndexes,
+									//aux, inputStream);
 
-				check_internalTemporallyGatheredIndexes = true;
-			}
+				//check_internalTemporallyGatheredIndexes = true;
+			//}
 
 			STR = "# name: proximalPotentialPercentage";
 			if ( str.compare(STR) == 0 ) {
@@ -2966,12 +3269,15 @@ void	RegularLayer::loadRegularLayerStatus( const std::string& folderName, const 
 
 	assert(check_temporalGatheringAfferentValue == true);
 
-	if ( _temporalGatheringAfferentValue > 1 ) {
-		assert(check_temporalPointer == true);
-		assert(check_internalSynchronization == true);
-		assert(check_internalTemporallyGatheredInformation == true);
-		assert(check_internalTemporallyGatheredIndexes == true);
-	}
+	//if ( _temporalGatheringAfferentValue > 1 ) {
+		//assert(check_temporalPointer == true);
+		//assert(check_internalSynchronization == true);
+		//assert(check_internalTemporallyGatheredInformation == true);
+		//assert(check_internalTemporallyGatheredIndexes == true);
+	//}
+
+	if ( _temporalGatheringAfferentValue > 1 )
+		RegularLayer::initializeInternalTemporallyGatheredInputs();
 
 	for ( std::size_t column = world_rank; column < _columnsDimensionality; column=column+world_size )
 		_layerColumns.push_back(ComplexProcessor(inputStream, std::to_string(column)));

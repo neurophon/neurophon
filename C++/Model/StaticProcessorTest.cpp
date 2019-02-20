@@ -24,12 +24,14 @@ int main()
 {
 // Initialize the MPI environment.
 MPI::Init_thread(MPI_THREAD_MULTIPLE);
-std::size_t	 iterations = 50, numberOfInputs, inputDim = 135*135, dim = 15;
+std::size_t	 iterations = 50, numberOfInputs, inputDim = 3, dim = 15;
 double learningRate = 0.1, neighborParameter = 0.05, plasticity = 0.01, sparsity = 0.01;
+std::vector<double>	inputConnectivity(inputDim,0.0);
+std::vector<double>	alinearityFactors(inputDim,1.0);
 std::string     str;
 std::string     STR;
 std::vector<std::size_t> dimensions = {dim,dim};
-std::vector<std::vector<std::size_t>> input;
+std::vector<std::vector<double>> input;
 
 std::size_t	numberOfActiveUnits = sparsity*std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<std::size_t>());
 ifstream infile; 
@@ -66,7 +68,7 @@ std::cout << "Input loaded.\n";
 numberOfInputs = input.size();
 
 std::cout << "Creating CorticalColumn object.\n";
-StaticProcessor CorticalColumn(dimensions, inputDim,0.1,0.6,{SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT});
+StaticProcessor CorticalColumn(dimensions, inputConnectivity, alinearityFactors, 0.1,0.6,{SYNAPTIC_DECREMENT,SYNAPTIC_INCREMENT});
 std::cout << "CorticalColumn object created.\n";
 
 std::cout << "Processing data.\n";

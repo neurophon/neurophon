@@ -25,7 +25,9 @@ int main()
 // Initialize the MPI environment.
 MPI::Init_thread(MPI_THREAD_MULTIPLE);
 std::size_t	iterations = 5;
-std::size_t	numberOfInputs, inputDim = 1100, dim = 15, numberOfLinks = 20;
+std::size_t	numberOfInputs, inputDim = 10, dim = 15, numberOfLinks = 20;
+std::vector<double>	inputConnectivity(inputDim,0.0);
+std::vector<double>	alinearityFactors(inputDim,1.0);
 regularLayerParameters	parameters;
 
 // These are the regularColumn parameters 
@@ -53,7 +55,7 @@ std::vector<std::size_t>	dynamicUnits(numberOfLinks,std::accumulate(dimensions.b
 									   dimensions.end(),
 									   1, std::multiplies<std::size_t>()));
 
-twodvector<std::size_t>		proximalInputs;
+twodvector<double>		proximalInputs;
 threedvector<std::size_t>	distalInputs;
 
 std::cout << "This is a test performed on a ComplexProcessor object instance" << std::endl;
@@ -108,7 +110,7 @@ assert(proximalInputs.size() == distalInputs.size());
 numberOfInputs = proximalInputs.size();
 
 std::cout << "Creatin regularColumn object.\n";
-ComplexProcessor regularColumn(dimensions, inputDim, proximalPotentialPercentage, distalPotentialPercentage, sparsity, dynamicUnits, weightLimits);
+ComplexProcessor regularColumn(dimensions, inputConnectivity, alinearityFactors, proximalPotentialPercentage, distalPotentialPercentage, sparsity, dynamicUnits, weightLimits);
 std::cout << "regularColumn object created.\n";
 
 std::cout << "Processing data.\n";

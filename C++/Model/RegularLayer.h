@@ -130,15 +130,15 @@ public:
 							 const regularLayerParameters& );	// computes the layer response. If learning is enabled
 										// this function also modifies the synaptic weights in every population
 
-	regularLayerTemporallyGatheredResponse		temporalGatherer( const regularLayerResponse& );	// temporally gathers afferent inputs
+	regularLayerResponse		temporalGatherer( const regularLayerResponse& );	// temporally gathers afferent inputs
 
 	regularLayerProximalInput	gatherProximalInputs( const std::size_t,
 							      const regularLayerResponse&,
 							      const regularLayerResponse& );		// gathers proximal inputs from afferent and lateral connections
 
-	regularLayerProximalInput	gatherProximalInputs( const std::size_t,
-							      const regularLayerTemporallyGatheredResponse&,
-							      const regularLayerResponse& );		// gathers proximal inputs from afferent and lateral connections
+	//regularLayerProximalInput	gatherProximalInputs( const std::size_t,
+							      //const regularLayerTemporallyGatheredResponse&,
+							      //const regularLayerResponse& );		// gathers proximal inputs from afferent and lateral connections
 
 
 	regularLayerDistalInput	gatherDistalInputs( const std::size_t,

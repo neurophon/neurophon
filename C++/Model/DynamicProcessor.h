@@ -37,7 +37,8 @@ class DynamicProcessor : public StaticProcessor
 {
 public:
 		DynamicProcessor( const std::vector<std::size_t>&,
-				  const std::size_t,
+				  const std::vector<double>&,
+				  const std::vector<double>&,
 				  const double,
 				  const double,
 				  const double,

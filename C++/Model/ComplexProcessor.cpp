@@ -26,22 +26,30 @@
 
 using namespace std;
 
-// constructor initializes populationDimensions, numberOfInputs and dynamicUnits with variables supplied as arguments
+// constructor initializes populationDimensions, proximalConnectivity and dynamicUnits with variables supplied as arguments
 // StaticUnits weights are initialized with random numbers between weight limits
 ComplexProcessor::ComplexProcessor( const std::vector<std::size_t>& populationDimensions,
-				    const std::size_t numberOfInputs,
+				    const std::vector<double>& proximalConnectivity,
+				    const std::vector<double>& alinearityFactors,
 				    const double proximalPotentialPercentage,
 				    const double distalPotentialPercentage,
 				    const double sparsity,
 				    const std::vector<std::size_t>& dynamicUnits,
 				    const std::array<double,2>& weightLimits )
 	// explicitly call base-class constructor
-	: DynamicProcessor(populationDimensions, numberOfInputs, proximalPotentialPercentage, distalPotentialPercentage, sparsity, dynamicUnits, weightLimits)
+	: DynamicProcessor(populationDimensions,
+			   proximalConnectivity,
+			   alinearityFactors,
+			   proximalPotentialPercentage,
+			   distalPotentialPercentage,
+			   sparsity,
+			   dynamicUnits,
+			   weightLimits)
 {
 } // end ComplexProcessor constructor
 
 
-// constructor initializes populationDimensions, numberOfInputs and dynamicUnits with variables supplied as arguments
+// constructor initializes populationDimensions, proximalConnectivity and dynamicUnits with variables supplied as arguments
 ComplexProcessor::ComplexProcessor( std::stringstream& inputStream,
 				    const std::string& dynamicUnitsIdentification )
 	// explicitly call base-class constructor

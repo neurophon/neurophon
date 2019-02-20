@@ -34,7 +34,8 @@ class ComplexProcessor : public DynamicProcessor
 {
 public:
 				ComplexProcessor( const std::vector<std::size_t>&,
-						  const std::size_t,
+						  const std::vector<double>&,
+						  const std::vector<double>&,
 						  const double,
 						  const double,
 						  const double,

@@ -34,7 +34,8 @@ class StaticProcessor
 {
 public:
 		StaticProcessor( const std::vector<std::size_t>&,
-				 const std::size_t,
+				 const std::vector<double>&,
+				 const std::vector<double>&,
 				 const double,
 				 const double,
 				 const std::array<double,2>& weightLimits = {0.0,1.0} );// constructor that initializes _weights with
@@ -50,7 +51,7 @@ public:
 	responseInfo	learningRule( const double,
 				      const double,
 				      const double,
-				      const std::vector<std::size_t>&,
+				      const std::vector<double>&,
 				      const double,
 		       		      const bool activationHomeostasis = false,
 				      const bool randomness = false );			// function that modifies _weights members through learning rule
@@ -64,7 +65,7 @@ public:
 											// a string parameter. i.e. "gaussian" for a Gaussian bell,
 											// "mex" for a Mexican hat function, etc
 
-	responseInfo	getResponse( const std::vector<std::size_t>& );			// function that gets the response information from the input.
+	responseInfo	getResponse( const std::vector<double>& );			// function that gets the response information from the input.
 											// the response is compose by a vector with the inverse of the inner product
 											// between the input and every unit in the class and a
 											// vector with the indexes of such units in ascending value order
@@ -104,6 +105,9 @@ protected:
 										     is equal to \f$30~15\f$, indicating an amount
 										     of 450 units */		
 private:
+	std::vector<double>			_inputConnectivity;
+	std::vector<double>			_alinearityFactors;
+
 	std::size_t				_updateStep;			/**< This is a natural number which counts
 										     the time steps in the execution of an
 										     instance of this class. */				

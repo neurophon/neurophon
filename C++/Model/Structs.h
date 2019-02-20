@@ -90,7 +90,8 @@ struct	encoderLayerDistalInput					// Holds encoder's distal input information
 
 struct	regularLayerProximalInput					// Holds encoder's proximal input information
 {
-	std::vector<std::size_t>	sparseDistributedRepresentation;
+	std::vector<double>	inputs;
+	//std::vector<std::size_t>	sparseDistributedRepresentation;
 								// Sparse Distributive Representation (SDR).
 	std::vector<bool>	synchronization;		// input synchronization
 	std::vector<bool>	information;			// input information
@@ -126,7 +127,7 @@ struct	regularLayerTemporallyGatheredResponse			// Holds layer's response inform
 								// information is received, and
 								// third index corresponds to the unit index alternative
 								// from the population that information is received.
-	std::vector<bool>	synchronization;		// Columns synchronization outputs
+	twodvector<bool>	synchronization;		// Columns synchronization outputs
 	twodvector<bool>	temporallyGatheredInformation;	// Temporally gathered column information
 								// First index corresponds to the time step,
 								// second index corresponds to the column from which

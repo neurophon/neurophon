@@ -29,17 +29,18 @@
 
 using namespace std;
 
-// constructor initializes populationDimensions, numberOfInputs and dynamicUnits with variables supplied as arguments
+// constructor initializes populationDimensions, proximalConnectivity and dynamicUnits with variables supplied as arguments
 // The weights in the self Processor will be initialized with random values between weightLimits
 DynamicProcessor::DynamicProcessor( const std::vector<std::size_t>& populationDimensions,
-				    const std::size_t numberOfInputs,
+				    const std::vector<double>& proximalConnectivity,
+				    const std::vector<double>& alinearityFactors,
 				    const double staticPotentialPercentage,
 				    const double potentialPercentage,
 				    const double sparsity,
 				    const std::vector<std::size_t>& dynamicUnits,
 				    const std::array<double,2>& weightLimits )
 	// explicitly call base-class constructor
-	: StaticProcessor(populationDimensions, numberOfInputs, staticPotentialPercentage, sparsity, weightLimits)
+	: StaticProcessor(populationDimensions, proximalConnectivity, alinearityFactors, staticPotentialPercentage, sparsity, weightLimits)
 {
 	assert(potentialPercentage > 0.0 && potentialPercentage < 1.0);
 	_numberOfLinks = dynamicUnits.size();
@@ -74,7 +75,7 @@ DynamicProcessor::DynamicProcessor( const std::vector<std::size_t>& populationDi
 } // end DynamicProcessor constructor
 
 
-// constructor initializes populationDimensions and numberOfInputs with variables supplied as arguments.
+// constructor initializes populationDimensions and proximalConnectivity with variables supplied as arguments.
 // This loads _dynamicUnits with previous vector supplied as argument too
 DynamicProcessor::DynamicProcessor( std::stringstream& inputStream,
 				    const std::string& dynamicProcessorIdentification )
@@ -105,7 +106,7 @@ void	DynamicProcessor::Update( const std::vector<std::size_t>& indexes,
 			if ( index > _unitsDimensionality )
 				throw std::runtime_error ("index > _unitsDimensionality");
 
-			#pragma omp parallel for default(none) shared(index, links, linkingUnits) num_threads(1)
+			//#pragma omp parallel for default(none) shared(index, links, linkingUnits) num_threads(1)
 			for ( std::size_t link = 0; link < links; link++ ) {
 				for ( std::size_t connection = 0; connection < linkingUnits[link].size(); connection++ ) {
 					auto	potentialIndex =
@@ -125,7 +126,7 @@ void	DynamicProcessor::Update( const std::vector<std::size_t>& indexes,
 			if ( index > _unitsDimensionality )
 				throw std::runtime_error ("index > _unitsDimensionality");
 
-			#pragma omp parallel for default(none) shared(index, links, linkingUnits) num_threads(1)
+			//#pragma omp parallel for default(none) shared(index, links, linkingUnits) num_threads(1)
 			for ( std::size_t link = 0; link < links; link++ ) {
 				for ( std::size_t connection = 0; connection < linkingUnits[link].size(); connection++ ) {
 					auto	potentialIndex =
@@ -148,7 +149,7 @@ void	DynamicProcessor::Update( const std::vector<std::size_t>& indexes,
 	}
 
 	if ( _updateStep > UPDATE_PERIOD ) {
-		#pragma omp parallel for default(none) shared(links) num_threads(1)
+		//#pragma omp parallel for default(none) shared(links) num_threads(1)
 		for ( std::size_t link = 0; link < links; link++ ) {
 			for ( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 				auto	sum = std::accumulate(_dynamicUnits[link][row].begin(), _dynamicUnits[link][row].end(), 0.0);
@@ -180,7 +181,7 @@ responseInfo	DynamicProcessor::getDynamicResponse( const responseInfo& response,
 	totalDynamicProcessor.resize(_unitsDimensionality);
 	newResponse = response;
 
-	#pragma omp parallel for default(none) shared(linkingUnits,totalDynamicProcessor) num_threads(1)
+	//#pragma omp parallel for default(none) shared(linkingUnits,totalDynamicProcessor) num_threads(1)
 	for( std::size_t row = 0; row < _unitsDimensionality; row++ ) {
 		std::size_t	auxiliary = 0;
 		for( std::size_t link = 0; link < _numberOfLinks; link++) {
