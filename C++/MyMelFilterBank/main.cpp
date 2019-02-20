@@ -26,11 +26,11 @@ int main(int argc, char* argv[])
 	// Get the number of processes
 	int	world_size = MPI::COMM_WORLD.Get_size();
 
-	std::cout << "world_size: " << world_size << "\n";
+	//std::cout << "world_size: " << world_size << "\n";
 	if (world_rank == 0)
 		if (system("CLS")) system("clear");
 
-	std::string	my_path = "/projects/neurophon/TestsData/NewCorpora/";
+	std::string	my_path = "/projects/neurophon/TestsData/5_Way_Corpora/";
 	MPI_Barrier(MPI::COMM_WORLD);
 	if ( argc == 5 ) {
 		int	numberOfVoices = atoi(argv[1]);
