@@ -26,6 +26,7 @@ import numpy as np
 import scipy.io as sio
 import subprocess
 from scipy.io import wavfile
+from mpi4py import MPI
 
 # Hold the sequence of words and the sequence of voices in the corpus
 # Such variables are specified by a sequence of numbers corresponding to the location
@@ -36,6 +37,11 @@ global path
 global corpus
 
 def Generate_SABLE ( voiceFolder, syllableFolder, corpusFolder, nameOfVocabulary, voices, vocabulary, turns, wordsPerTurn ):
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+
         global wordsSequence
         global corpus
 
@@ -44,147 +50,141 @@ def Generate_SABLE ( voiceFolder, syllableFolder, corpusFolder, nameOfVocabulary
 
         # This is the path were the corpora is saved
         path = "/projects/neurophon/TestsData/NewCorpora/"
-        if not os.path.exists(path):
-            os.makedirs(path)
-
         path = path + voiceFolder + "/"
-        if not os.path.exists(path):
-            os.makedirs(path)
-
         path = path + syllableFolder + "/"
-        if not os.path.exists(path):
-            os.makedirs(path)
-
         path = path + corpusFolder + "/"
-        if not os.path.exists(path):
-            os.makedirs(path)
-
         path = path + nameOfVocabulary + "/"
-        if not os.path.exists(path):
-            os.makedirs(path)
 
+        filename1 = "Corpus.sable"
+        filename2 = "CorpusMetadata.mat"
+        filename3 = "Corpus.wav"
+        filename4 = "AudioVector.mat"
+        if not os.path.isfile(path + filename1) or \
+           not os.path.isfile(path + filename2) or \
+           not os.path.isfile(path + filename3) or \
+           not os.path.isfile(path + filename4):
+                filename = "Corpus.sable"
+                fid = open (path + filename, "w");
 
-        filename = "Corpus.sable"
-        fid = open (path + filename, "w");
+                InsertHeader(fid);
 
-        InsertHeader(fid);
+                numberOfVoices = voices.size                           # the number of voices
+                numberOfWords = vocabulary.size                        # the number of words in the vocabulary
 
-        numberOfVoices = voices.size                           # the number of voices
-        numberOfWords = vocabulary.size                        # the number of words in the vocabulary
-
-        count = 0;
-        usedVoices = np.zeros((numberOfVoices))                # array whose members different from zero indicates the voices that have been used
-        lastVoice = "none"                                     # the last voice used in the corpus
-        generalLastWord = "none"                               # the last word used in the corpus
-
-
-
-
-
-
-
-
+                count = 0;
+                usedVoices = np.zeros((numberOfVoices))                # array whose members different from zero indicates the voices that have been used
+                lastVoice = "none"                                     # the last voice used in the corpus
+                generalLastWord = "none"                               # the last word used in the corpus
 
 
 
 
 
-        # this is a structure with two members:
-        # "lastWord" is the last word used by a determined speaker (voice)
-        # "usedWords" is an array whose members different from zero indicates the words that have been used for a determined speaker (voice)
-        activityPerVoice = {"lastWord": "none", "usedWords": np.zeros((numberOfWords), dtype=int)}
-        voicesActivity = np.full((numberOfVoices), activityPerVoice)        # this is an array with as many "activityPerVoice" as voices (one structure per voice).
 
-        # "turns" is the number of turns distributed for the speakers (voices).
-        # The turns are distributed in run sections in which every speaker has to participate in random order.
-        # In every run section, every speaker cannot participate more than once.
-        # After a run section, the first speaker in the new run section cannot be the same that participated in the last turn of the last run section.
-        for i in range(1,turns+1):
 
-                fid.write("\n")
 
-                if count == numberOfVoices:
-                        count = 0;
-                        usedVoices = np.zeros((numberOfVoices))
 
-                condition = True
-                while ( condition ):
 
-                        r = np.random.randint(numberOfVoices)
 
-                        if numberOfVoices > 1 and usedVoices[r] == 0 and not(lastVoice is voices[r]):
-                                fid.write("<SPEAKER NAME=\"reset\"></SPEAKER>\n")
-                                temporalString = "<SPEAKER NAME=\"" + voices[r] + "\">\n"
-                                fid.write(temporalString)
-                                voicesActivity[r] = InsertTextWords(fid, voicesActivity[r], vocabulary, wordsPerTurn, generalLastWord)
-                                generalLastWord = voicesActivity[r]["lastWord"]
-                                fid.write("</SPEAKER>\n")
-                                usedVoices[r] = 1
-                                for j in range(0,wordsPerTurn):
-                                    try:
-                                            speakersSequence
-                                    except NameError:
-                                            speakersSequence = r
-                                    else:
-                                            speakersSequence = np.append(speakersSequence, r)
 
-                                count+=1
-                                lastVoice = voices[r]
-                                condition = False
-                        elif numberOfVoices == 1:
-                                if i == 1:
+
+
+                # this is a structure with two members:
+                # "lastWord" is the last word used by a determined speaker (voice)
+                # "usedWords" is an array whose members different from zero indicates the words that have been used for a determined speaker (voice)
+                activityPerVoice = {"lastWord": "none", "usedWords": np.zeros((numberOfWords), dtype=int)}
+                voicesActivity = np.full((numberOfVoices), activityPerVoice)        # this is an array with as many "activityPerVoice" as voices (one structure per voice).
+
+                # "turns" is the number of turns distributed for the speakers (voices).
+                # The turns are distributed in run sections in which every speaker has to participate in random order.
+                # In every run section, every speaker cannot participate more than once.
+                # After a run section, the first speaker in the new run section cannot be the same that participated in the last turn of the last run section.
+                for i in range(1,turns+1):
+
+                        fid.write("\n")
+
+                        if count == numberOfVoices:
+                                count = 0;
+                                usedVoices = np.zeros((numberOfVoices))
+
+                        condition = True
+                        while ( condition ):
+
+                                r = np.random.randint(numberOfVoices)
+
+                                if numberOfVoices > 1 and usedVoices[r] == 0 and not(lastVoice is voices[r]):
                                         fid.write("<SPEAKER NAME=\"reset\"></SPEAKER>\n")
                                         temporalString = "<SPEAKER NAME=\"" + voices[r] + "\">\n"
                                         fid.write(temporalString)
-
-                                voicesActivity[r] = InsertTextWords(fid, voicesActivity[r], vocabulary, wordsPerTurn, generalLastWord)
-                                generalLastWord = voicesActivity[r]["lastWord"]
-                                if i == turns:
+                                        voicesActivity[r] = InsertTextWords(fid, voicesActivity[r], vocabulary, wordsPerTurn, generalLastWord)
+                                        generalLastWord = voicesActivity[r]["lastWord"]
                                         fid.write("</SPEAKER>\n")
+                                        usedVoices[r] = 1
+                                        for j in range(0,wordsPerTurn):
+                                            try:
+                                                    speakersSequence
+                                            except NameError:
+                                                    speakersSequence = r
+                                            else:
+                                                    speakersSequence = np.append(speakersSequence, r)
 
-                                usedVoices[r] = 1
-                                for j in range(0,wordsPerTurn):
-                                    try:
-                                            speakersSequence
-                                    except NameError:
-                                            speakersSequence = r
-                                    else:
-                                            speakersSequence = np.append(speakersSequence, r)
+                                        count+=1
+                                        lastVoice = voices[r]
+                                        condition = False
+                                elif numberOfVoices == 1:
+                                        if i == 1:
+                                                fid.write("<SPEAKER NAME=\"reset\"></SPEAKER>\n")
+                                                temporalString = "<SPEAKER NAME=\"" + voices[r] + "\">\n"
+                                                fid.write(temporalString)
 
-                                count+=1
-                                lastVoice = voices[r]
-                                condition = False
+                                        voicesActivity[r] = InsertTextWords(fid, voicesActivity[r], vocabulary, wordsPerTurn, generalLastWord)
+                                        generalLastWord = voicesActivity[r]["lastWord"]
+                                        if i == turns:
+                                                fid.write("</SPEAKER>\n")
+
+                                        usedVoices[r] = 1
+                                        for j in range(0,wordsPerTurn):
+                                            try:
+                                                    speakersSequence
+                                            except NameError:
+                                                    speakersSequence = r
+                                            else:
+                                                    speakersSequence = np.append(speakersSequence, r)
+
+                                        count+=1
+                                        lastVoice = voices[r]
+                                        condition = False
 
 
-        fid.write("\n\n")
-        CloseHeader(fid)
+                fid.write("\n\n")
+                CloseHeader(fid)
 
-        filename = "CorpusMetadata.mat"
-        sio.savemat(path + filename, {'wordsSequence': wordsSequence,\
-                                      'speakersSequence': speakersSequence,\
-                                      'vocabulary': vocabulary,\
-                                      'voices': voices,\
-                                      'turns': turns,\
-                                      'corpus': corpus,\
-                                      'wordsPerTurn': wordsPerTurn})
+                filename = "CorpusMetadata.mat"
+                sio.savemat(path + filename, {'wordsSequence': wordsSequence,\
+                                              'speakersSequence': speakersSequence,\
+                                              'vocabulary': vocabulary,\
+                                              'voices': voices,\
+                                              'turns': turns,\
+                                              'corpus': corpus,\
+                                              'wordsPerTurn': wordsPerTurn})
 
-        del wordsSequence
-        del speakersSequence
-        del corpus
+                del wordsSequence
+                del speakersSequence
+                del corpus
 
-        filename = "Corpus.wav"
-        print(subprocess.check_output([festival, path + "Corpus.sable", "-o", path + filename]))
+                filename = "Corpus.wav"
+                print(subprocess.check_output([festival, path + "Corpus.sable", "-o", path + filename]))
 
-        Fs, X = wavfile.read(path + filename)
+                Fs, X = wavfile.read(path + filename)
 
-	# This abomination is in order to avoid matlab compression since my library does not manage matlab compression
-        Residue = 1*10^(-10);
-        X = X + Residue;
-        Fs = Fs + Residue;
+                # This abomination is in order to avoid matlab compression since my library does not manage matlab compression
+                Residue = 1*10^(-10);
+                X = X + Residue;
+                Fs = Fs + Residue;
 
-        # Saves vector X and scalar Fs in 'AudioVector.mat' file
-        filename = "AudioVector.mat"
-        sio.savemat(path + filename, {'X':X, 'Fs':Fs})
+                # Saves vector X and scalar Fs in 'AudioVector.mat' file
+                filename = "AudioVector.mat"
+                sio.savemat(path + filename, {'X':X, 'Fs':Fs})
 
 
 
@@ -315,4 +315,48 @@ def CloseHeader ( identifier ):
 
 
 
+
+
+
+
+
+
+# This function generates the directory tree to hold the corpora
+def Generate_Directory_Tree ( numberOfVoices, numberOfSyllables, numberOfCorpora, numberOfVocabularies ):
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+
+        if rank == 0:
+                # This is the path were the corpora is saved
+                path = "/projects/neurophon/TestsData/NewCorpora/"
+
+                if not os.path.exists(path):
+                    os.makedirs(path)
+
+
+                for i in range(1, numberOfVoices+1):
+                        voicesPath = path + "Voices_" + str(i) + "/"
+                        if not os.path.exists(voicesPath):
+                            os.makedirs(voicesPath)
+
+                        for j in range(1, numberOfSyllables+1):
+                                syllablesPath = voicesPath + "Syllables_" + str(j) + "/"
+                                if not os.path.exists(syllablesPath):
+                                    os.makedirs(syllablesPath)
+
+                                for k in range(0, numberOfCorpora):
+                                        corporaPath = syllablesPath + "Corpus_" + str(k) + "/"
+                                        if not os.path.exists(corporaPath):
+                                            os.makedirs(corporaPath)
+
+                                        for l in range(0, numberOfVocabularies):
+                                                vocabulariesPath = corporaPath + "Vocabulary_" + str(l) + "/"
+                                                if not os.path.exists(vocabulariesPath):
+                                                    os.makedirs(vocabulariesPath)
+
+
+
+        comm.Barrier()
 
