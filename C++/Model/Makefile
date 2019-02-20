@@ -12,8 +12,9 @@ MPI = mpic++ -cxx=
 # Use the following Compile-time flags
 #CFLAGS = -ggdb -fopenmp -Wall -pedantic -std=c++14
 #CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
-CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
-#CFLAGS = -g -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
+#CFLAGS = -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
+CFLAGS = -g -O3 -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
+#CFLAGS = -g -mcmodel=large -fopenmp -Wall -pedantic -std=c++14
 
 # Use the following libraries
 LIBRARIES = ../Libraries/Model/Templates.h\

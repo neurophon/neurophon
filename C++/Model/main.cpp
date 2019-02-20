@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 			Model	model(folderName, false);
 
 			// run inference
-			model.run(folderName,"Minicorpus");
+			//model.run(folderName,"Minicorpus");
 			model.run(folderName,"original");
 			model.run(folderName,"whitenoise1");
 			model.run(folderName,"whitenoise2");
@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
 			model.run(folderName,"reverberation60");
 			model.run(folderName,"pitchdown");
 			model.run(folderName,"pitchup");
+			model.run(folderName,"changedvoices");
 			MPI_Barrier(MPI::COMM_WORLD);
 		}
 		else if ( mode.compare(training) == 0 ) {
