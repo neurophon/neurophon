@@ -30,8 +30,8 @@
 #define PROXIMAL_SYNAPTIC_THRESHOLD	0.0001	
 
 // This is the period of updates
-#define	UPDATE_PERIOD	100
-//#define	UPDATE_PERIOD	10000
+//#define	UPDATE_PERIOD	100
+#define	UPDATE_PERIOD	10000
 
 // This is threshold imposed to the input information
 #define	INPUT_THRESHOLD		0.000001

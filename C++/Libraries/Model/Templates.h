@@ -183,6 +183,49 @@ void operator+=(std::vector<T>& a, const std::vector<T>& b)
     a=aux;
 }
 
+
+// Multiply one vector by another; operator*= overload for std::vector.
+// Example, if
+// A1 = {1,2,3}; and
+// A2 = {4,5,6}; then
+// A1*=A2; and
+// A1 = {4,10,18}; and
+// A2 = {4,5,6};
+template <typename T>
+void operator*=(std::vector<T>& a, const std::vector<T>& b)
+{
+    assert(a.size() == b.size());
+
+    std::vector<T>	aux;
+    std::transform(a.begin(), a.end(), b.begin(), 
+                   std::back_inserter(aux), std::multiplies<T>());
+
+    aux.shrink_to_fit();
+    a=aux;
+}
+
+
+// Divides one vector by another; operator/= overload for std::vector.
+// Example, if
+// A1 = {1,2,3}; and
+// A2 = {4,5,6}; then
+// A1/=A2; and
+// A1 = {0.25,0.4,0.5}; and
+// A2 = {4,5,6};
+template <typename T>
+void operator/=(std::vector<T>& a, const std::vector<T>& b)
+{
+    assert(a.size() == b.size());
+
+    std::vector<T>	aux;
+    std::transform(a.begin(), a.end(), b.begin(), 
+                   std::back_inserter(aux), std::divides<T>());
+
+    aux.shrink_to_fit();
+    a=aux;
+}
+
+
 // Add two vectors and put the result in another vector; operator+ overload for std::vector.
 // Example, if
 // A1 = {1,2,3};
@@ -225,6 +268,52 @@ std::vector<T> operator-(const std::vector<T>& a, const std::vector<T>& b)
 
     std::transform(a.begin(), a.end(), b.begin(), 
                    std::back_inserter(result), std::minus<T>());
+    return result;
+}
+
+
+// Multiply two vectors and put the result in another vector; operator* overload for std::vector.
+// Example, if
+// A1 = {1,2,3};
+// A2 = {4,5,6}; and
+// B; then
+// B = A1*A2; and
+// A1 = {1,2,3};
+// A2 = {4,5,6}; and
+// B = {4,10,18};
+template <typename T>
+std::vector<T> operator*(const std::vector<T>& a, const std::vector<T>& b)
+{
+    assert(a.size() == b.size());
+
+    std::vector<T> result;
+    result.reserve(a.size());
+
+    std::transform(a.begin(), a.end(), b.begin(), 
+                   std::back_inserter(result), std::multiplies<T>());
+    return result;
+}
+
+
+// Divides two vectors and put the result in another vector; operator/ overload for std::vector.
+// Example, if
+// A1 = {1,2,3};
+// A2 = {4,5,6}; and
+// B; then
+// B = A1/A2; and
+// A1 = {1,2,3};
+// A2 = {4,5,6}; and
+// B = {0.25,0.4,0.5};
+template <typename T>
+std::vector<T> operator/(const std::vector<T>& a, const std::vector<T>& b)
+{
+    assert(a.size() == b.size());
+
+    std::vector<T> result;
+    result.reserve(a.size());
+
+    std::transform(a.begin(), a.end(), b.begin(), 
+                   std::back_inserter(result), std::divides<T>());
     return result;
 }
 
@@ -772,6 +861,20 @@ std::size_t find_first_coincident_index( const std::vector<T>& v, const T value 
 {
     return  std::distance(v.begin(),std::find(v.begin(), v.end(), value));
 } // end template find_first_coincident_index
+
+
+// Returns a std::vector whose elements are the hyperbolic tangent of the elements of an argument std::vector.
+template <typename T>
+std::vector<T> tan_h(const std::vector<T>& a)
+{
+    std::vector<T> result;
+    result.reserve(a.size());
+
+    std::transform(std::begin(a), std::end(a), std::back_inserter(result),
+		   [] (const auto v) { return std::tanh(v);});
+    return result;
+} // end template tan_h
+
 
 #endif
 
