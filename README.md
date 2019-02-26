@@ -68,7 +68,7 @@ Python 3.5.1 :: Anaconda 4.0.0 (64-bit)
 )
 [demattie@cooleylogin2 ~]$ 
 ```
-You will need several packages for python (such as `mpi4py`) which are appropriately referenced in the corresponding code.
+Additionally, you will need several packages for python (such as `mpi4py`) which are appropriately referenced in the corresponding code.
 
 You will need [Festival Text-to-Speech](http://www.cstr.ed.ac.uk/projects/festival/) soft too, which is a general multi-lingual speech synthesis system originally developed by Alan W. Black at Centre for Speech Technology Research (CSTR) at the University of Edinburgh.
 
@@ -238,7 +238,7 @@ If you want to add, remove or modify such acoustic variants and its correspondin
 
 
 
-#### Preparing the datasets for the MRSTSA algorithm
+### Preparing the datasets for the MRSTSA algorithm
 
 In order to prepare the datasets to feed the MRSTSA algorithm you have to go into the following path, `~/neurophon/Octave/GenerateAudioCorpora`.
 Then, from Matlab run:
@@ -258,7 +258,7 @@ This sentence will generate an audio for each `Corpus.wav` file from a scheme wi
 
 
 
-#### Running the MRSTSA algorithm
+### Running the MRSTSA algorithm
 
 Once the preprocessing of the datasets has been conducted you can run the following command in order to reserve 20 nodes for 1 hour.
 
@@ -278,5 +278,204 @@ This script passes the same parameters to the MRSTSA algorithm in order to proce
 
 Once the MRSTSA algorithms have run properly, you have to go to `cd ~/neurophon/Octave/`, launch Matlab and run the following program: `>> ComposeInput_M(2,3,2,10,true)`.
 This program will provide you with a file ready to be processed by the EL (such file is called `inputs.mat`).
+
+
+### Running the EL algorithm
+
+Once the outputs from the MRSTSA are properly formated you will use those files as inputs to feed the EL, but first of all you will have to generate a folder containing all the model specifications. After generating such folder, an EL run will read and test the files inside it and generate and EL object guided by such specifications.
+
+You will go to `~/neurophon/Octave` and launch Matlab. Then you will run the following program in Matlab:
+
+```
+>> GenerateModelFiles_M('Model')
+```
+
+Such program generates a folder called `Model` in the path `~/neurophon/Octave`.
+
+The Matlab code in `GenerateModelFiles_M()` is:
+
+```
+% File Name:		GenerateModelFiles_M.m
+% Language:		GNU Octave high-level interpreted language.
+
+% This program generates a set of files which will be used by Model object class 
+% in order togenerate its structure and configuration.
+
+function GenerateModelFiles_M(folderName)
+
+keepVariables = [folderName];
+clear -except keepVariables
+
+if ~(ischar(folderName))
+	error('folder name must be of type string');
+end
+
+[status, msg, msgid] = mkdir (folderName);
+if ( status ~= 1 )
+	disp(msg);
+	disp(msgid);
+	error('in function GenerateModelFiles_M');
+end
+
+clear -except keepVariables
+
+my_residue = 1*10^(-10);
+% This is the model structure
+encoderIncorporation = 1 + my_residue;
+newEncoder = 1 + my_residue;
+numberOfLayers = 0 + my_residue;
+newLayerAt = 0 + my_residue;
+initialStageAt = 0 + my_residue;
+iterations = 4 + my_residue;
+stages = 4 + my_residue;
+
+% Saves the model structure
+name = ['./'];
+name = [name folderName];
+name = [name '/ModelStructure.mat'];
+
+save (name, 'encoderIncorporation', ...
+	    'newEncoder', ...
+	    'numberOfLayers', ...
+	    'newLayerAt', ...
+	    'initialStageAt', ...
+	    'iterations', ...
+	    'stages', ...
+	    '-v6'); 
+
+clear -except keepVariables
+
+% This is the encoder layer structure
+afferentArrayDimensionality = [5 + my_residue, 128 + my_residue];
+apicalArrayDimensionality = [1 + my_residue, 1 + my_residue];
+columnsArrayDimensionality = [15 + my_residue, 15 + my_residue];
+
+afferentReceptiveField = [2 + my_residue, 63 + my_residue];
+afferentPercentage = 0.05;
+afferentWrapAround = 1 + my_residue;
+
+lateralDistalReceptiveField = [4 + my_residue, 4 + my_residue];
+lateralDistalPercentage = 0.9;
+lateralDistalWrapAround = 1 + my_residue;
+
+apicalReceptiveField = [-2 + my_residue, -2 + my_residue];
+apicalPercentage = 0.9;
+apicalWrapAround = 1 + my_residue;
+
+iterationNum = 0 + my_residue;
+
+populationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
+apicalPopulationsArrayDimensionality = [15 + my_residue,15 + my_residue];
+%apicalPopulationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
+potentialPercentage = 0.03;
+
+% Saves the encoder layer structure
+name = ['./'];
+name = [name folderName];
+name = [name '/EncoderLayerStructure.mat'];
+
+save (name, 'afferentArrayDimensionality', ...
+	    'apicalArrayDimensionality', ...
+	    'columnsArrayDimensionality', ...
+	    'afferentReceptiveField', ...
+	    'afferentPercentage', ...
+	    'afferentWrapAround', ...
+	    'lateralDistalReceptiveField', ...
+	    'lateralDistalPercentage', ...
+	    'lateralDistalWrapAround', ...
+	    'apicalReceptiveField', ...
+	    'apicalPercentage', ...
+	    'apicalWrapAround', ...
+	    'iterationNum', ...
+	    'populationsArrayDimensionality', ...
+	    'apicalPopulationsArrayDimensionality', ...
+	    'potentialPercentage', ...
+	    '-v6');
+
+clear -except keepVariables
+
+% These are the encoder layer parameters 
+enableLearning = 0 + my_residue;
+distalSensitivity = 0 + my_residue;
+proximalInformationThreshold = 0.1;
+distalInformationThreshold = 0.5;
+activationRadius = 0.8;
+sparsity = 0.99;
+enableProximalLearning = 0 + my_residue;
+enableDistalLearning = 0 + my_residue;
+proximalLearningRate = 0.001;
+proximalNeighborhood = 0.005;
+spikeTimeDependentSynapticPlasticity = 1 + my_residue;
+distalLearningRate = 0.001;
+limitsLearningRate = 0.1;
+
+% Saves the encoder layer parameters
+name = ['./'];
+name = [name folderName];
+name = [name '/EncoderLayerParameters.mat'];
+
+save (name, 'enableLearning', ...
+	    'distalSensitivity', ...
+	    'proximalInformationThreshold', ...
+	    'distalInformationThreshold', ...
+	    'activationRadius', ...
+	    'sparsity', ...
+	    'enableProximalLearning', ...
+	    'enableDistalLearning', ...
+	    'proximalLearningRate', ...
+	    'proximalNeighborhood', ...
+	    'spikeTimeDependentSynapticPlasticity', ...
+	    'distalLearningRate', ...
+	    'limitsLearningRate', ...
+	    '-v6');
+
+clear -except keepVariables
+
+end
+
+```
+
+This program generates the specification for an EL with 15 for 15 cortical columns (CCs), an afferent receptive field of 5 for 127 inputs, a lateral receptive field of 9 for 9 CCs, etc. This program specifies a CSTM instance in three files in which it gives details of the whole CSTM structure, the EL structure and specific the EL parameters.
+
+In our experimental setup we move the folder `Model` to the path `/projects/neurophon/TestsData`. If you choose another path, you will have to change that path in the source code of the project.
+
+Once you have the `Model` folder in the right place you will run the following `qsub` command: `qsub -n 25 -t 240 -A neurophon ./run_Model.sh`, whose script `run_Model.sh` has the following instructions:
+
+```
+#!/bin/sh
+
+# Common path
+my_path='/projects/neurophon/TestsData/'
+
+# Processes the original corpus
+# Prepares the input file for the original corpus
+cd $my_path
+cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_0/Vocabulary_0/original/inputs.mat Model/inputs.mat
+mkdir -p Model/original/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_0/Vocabulary_0/original/inputs.mat Model/original/inputs.mat
+mkdir -p Model/whitenoise1/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/whitenoise1/inputs.mat Model/whitenoise1/inputs.mat
+mkdir -p Model/whitenoise2/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/whitenoise2/inputs.mat Model/whitenoise2/inputs.mat
+mkdir -p Model/reverberation30/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/reverberation30/inputs.mat Model/reverberation30/inputs.mat
+mkdir -p Model/reverberation60/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/reverberation60/inputs.mat Model/reverberation60/inputs.mat
+mkdir -p Model/pitchdown/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/pitchdown/inputs.mat Model/pitchdown/inputs.mat
+mkdir -p Model/pitchup/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/pitchup/inputs.mat Model/pitchup/inputs.mat
+mkdir -p Model/changedvoices/ && cp 5_Way_Corpora/Voices_1/Syllables_1/Corpus_1/Vocabulary_0/original/inputs.mat Model/changedvoices/inputs.mat
+
+
+cd ~/hstm/C++/Model/
+# Trains the model
+mpiexec -n 25 -f $COBALT_NODEFILE -env MV2_ENABLE_AFFINITY=0 -ppn 1 ./Test Model training
+
+# Run the model in inference mode
+mpiexec -n 25 -f $COBALT_NODEFILE -env MV2_ENABLE_AFFINITY=0 -ppn 1 ./Test Model inference
+
+```
+
+This script copy all the necessary corpora and then runs the model in training and inference mode.
+Afterwars, in the `Model` folder you will end up with a set of folders: `original`, `whitenoise1`, `whitenoise2`, `reverberation30`, `reverberation60`, `pitchdown`, `pitchup` and `changedvoices` which contain the MRSTSA an EL outputs to train and test the SVM algorithms.
+
+
+
+
+
 
 
