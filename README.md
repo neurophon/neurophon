@@ -366,7 +366,6 @@ iterationNum = 0 + my_residue;
 
 populationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 apicalPopulationsArrayDimensionality = [15 + my_residue,15 + my_residue];
-%apicalPopulationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 potentialPercentage = 0.03;
 
 % Saves the encoder layer structure
@@ -435,7 +434,7 @@ end
 
 ```
 
-This program generates the specification for an EL with 15 for 15 cortical columns (CCs), an afferent receptive field of 5 for 127 inputs, a lateral receptive field of 9 for 9 CCs, etc. This program specifies a CSTM instance in three files in which it gives details of the whole CSTM structure, the EL structure and specific the EL parameters.
+This program generates the specification for an EL with 15 for 15 cortical columns (CCs), with afferent receptive fields of 5 for 127 inputs, lateral receptive fields of 9 for 9 CCs, etc. This program specifies a CSTM instance in three files `ModelStructure.mat`, `EncoderLayerStructure.mat` and `EncoderLayerParameters.mat` in which it gives details of the whole CSTM structure, the EL structure and specific EL parameters.
 
 In our experimental setup we move the folder `Model` to the path `/projects/neurophon/TestsData`. If you choose another path, you will have to change that path in the source code of the project.
 
@@ -470,12 +469,27 @@ mpiexec -n 25 -f $COBALT_NODEFILE -env MV2_ENABLE_AFFINITY=0 -ppn 1 ./Test Model
 
 ```
 
-This script copy all the necessary corpora and then runs the model in training and inference mode.
-Afterwars, in the `Model` folder you will end up with a set of folders: `original`, `whitenoise1`, `whitenoise2`, `reverberation30`, `reverberation60`, `pitchdown`, `pitchup` and `changedvoices` which contain the MRSTSA an EL outputs to train and test the SVM algorithms.
+This script copies all the necessary corpora and then runs the model in training and inference mode.
+Afterwars, inside the `Model` folder you will end up with a set of sub-folders: `original`, `whitenoise1`, `whitenoise2`, `reverberation30`, `reverberation60`, `pitchdown`, `pitchup` and `changedvoices` which will contain the MRSTSA an EL outputs to train and test the SVM algorithms.
 
 
 
 
+
+
+### Preparing the data to Train and Test the SVM algorithm
+
+After running the EL you are in good shape to train and test the SVM algorithm.
+
+First of all, you have to prepare the data to train the SVM algorithm.
+
+Copy the files in `original` folder to `Octave` folder: `cp /projects/neurophon/TestsData/Model/original/*.mat ~/neurophon/Octave`, then launch Matlab and run the following script: `>> processes_data_for_train_supervision_M(1)`. This script will prepare the data to train both SVM models, one using the MRSTSA outputs and the other using the EL outputs.
+
+To train the SVM models see [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) documentation.
+
+Once the SVM models are trained, you will be able to test them using some of the features returned by the MRSTSA and the EL in response to the corpora affected by the acoustic variants. In order to prepare the data to test the SVM models you will have to run the following command `cp /projects/neurophon/TestsData/Model/whitenoise1/*.mat ~/neurophon/Octave` and then run the following script from Matlab `processes_data_for_test_supervision_M(1)`. Such script will prepare the MRSTSA outputs and the EL outputs to test the SVM already trained models.
+
+To test the SVM models see [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) documentation.
 
 
 
