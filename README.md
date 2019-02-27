@@ -490,7 +490,7 @@ First of all, you have to prepare the data to train the SVM algorithm.
 
 #### Training the SVM algorithm
 
-Assuming you built the libsvm sources in the path `~/libsvm/matlab`, you can use the following [script](libsvm_train_M) to train the SVM models.
+Assuming you built the libsvm sources in the path `~/libsvm/matlab`, you can use the following [script](libsvm_train_M.md) to train the SVM models.
 Copy such script in the path `~/libsvm/matlab/MyInterface` and run the command `>> libsvm_train_M(1)` under Matlab.
 
 For further details about how to train SVM models see [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) documentation.
@@ -508,7 +508,7 @@ Once the SVM models are trained, you will be able to test them using some of the
 
 #### Testing the SVM algorithm
 
-Assuming you built the libsvm sources in the path `~/libsvm/matlab`, you can use the following [script](libsvm_test_M) to test the SVM models.
+Assuming you built the libsvm sources in the path `~/libsvm/matlab`, you can use the following [script](libsvm_test_M.md) to test the SVM models.
 Copy such script in the path `~/libsvm/matlab/MyInterface` and run the command `>> libsvm_test_M(1)` under Matlab.
 
 For further details about how to test SVM models see [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) documentation.
