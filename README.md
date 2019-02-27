@@ -68,6 +68,32 @@ Python 3.5.1 :: Anaconda 4.0.0 (64-bit)
 )
 [demattie@cooleylogin2 ~]$ 
 ```
+
+Use the following code to determine your OpenMP version.
+
+```
+#include <unordered_map>
+#include <cstdio>
+#include <omp.h>
+
+int main(int argc, char *argv[])
+{
+  std::unordered_map<unsigned,std::string> map{
+    {200505,"2.5"},{200805,"3.0"},{201107,"3.1"},{201307,"4.0"},{201511,"4.5"}};
+  printf("We have OpenMP %s.\n", map.at(_OPENMP).c_str());
+  return 0;
+}
+```
+
+Compile and run using:
+
+```
+[demattie@cooleylogin2 ~]$ g++ -std=c++11 -fopenmp ./ompversion.cpp 
+[demattie@cooleylogin2 ~]$ ./a.out 
+We have OpenMP 4.5.
+[demattie@cooleylogin2 ~]$ 
+```
+
 Additionally, you will need several packages for python (such as `mpi4py`) which are appropriately referenced in the corresponding code.
 
 You will need [Festival Text-to-Speech](http://www.cstr.ed.ac.uk/projects/festival/) soft too, which is a general multi-lingual speech synthesis system originally developed by Alan W. Black at Centre for Speech Technology Research (CSTR) at the University of Edinburgh.
@@ -95,7 +121,7 @@ festival>
 [demattie@cooleylogin2 bin]$ 
 ```
 
-You will also need software featuring a high-level programming languages, primarily intended for numerical computations, such as GNU Octave or Matlab.
+You will also need software featuring high-level programming languages, primarily intended for numerical computations, such as [GNU Octave](https://www.gnu.org/software/octave/) or [Matlab](https://www.mathworks.com/products/matlab.html).
 
 ```
 [demattie@cooleylogin2 ~]$ matlab 
@@ -133,7 +159,7 @@ octave:1> exit
 
 [demattie@cooleylogin2 ~]$ 
 ```
-Finally, you will need [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) package, which we use under Matlab on Cooley.
+Finally, you will need [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) package, which we use under [Matlab](https://www.mathworks.com/products/matlab.html) on Cooley.
 You can use it under [GNU Octave](https://www.gnu.org/software/octave/).
 
 ### Building
@@ -184,12 +210,14 @@ The script will run a python script to generate the corpora.
 
 If the run cannot generate all the corpora asked, the python script can be called again in order to continue its work from the point where it left the previous job since such script has checkpoint and restart capacity.
 
+The code of the script file `generate_Corpora.sh` is:
+
 ```
 #!/bin/sh
 cd ~/neurophon/Python/GenerateTextCorpora
 mpiexec -n 10 -f $COBALT_NODEFILE -env MV2_ENABLE_AFFINITY=0 python3 GenerateTextCorpora.py
 ```
-In its current state, the python script will generate 2 corpora of 500 words for each condition which is determined by 2 set of voices, three syllabic conditions and ten different vocabularies.
+In its current state, the python script will generate 2 corpora of 500 words for each condition which is determined by 2 sets of voices, three syllabic conditions and ten different vocabularies.
 
 This configuration ends up producing 120 corpora.
 
@@ -226,8 +254,8 @@ For example, having the following directory tree in the folder `5_Way_Corpora`,
 │   │   │   │   │   └── Corpus.wav
 ```
 
-you have to get into `Vocabulary_0` in such path and create 7 new folders called 'original', `whitenoise1`, `whitenoise2`, `reverberation30`, `reverberation60`, `pitchdown` and `pitchup`.
-Inside such folders we save the corpora that match the file `Corpus.wav` in `Vocabulary_0` affected by the corresponding acoustic variant.
+you have to get into `Vocabulary_0` in such path and create 7 new folders called `original`, `whitenoise1`, `whitenoise2`, `reverberation30`, `reverberation60`, `pitchdown` and `pitchup`.
+Inside such folders we save the corpora that match the file `Corpus.wav` in `Vocabulary_0` affected by the corresponding acoustic variants.
 The `original` folder will hold the original `Corpus.wav` file.
 White Noise 1 determines a SNR average RMS power rate of 19.8 dB while White Noise 2 13.8 dB. Reverberation 30% determines a RT-60 value of 0.61 seconds while
 Reverberation 60% determines a RT-60 value of 1.78 seconds.  Pitch Up determines a pitch move from E to G, while Pitch Down determines a pitch move from E to C.
@@ -253,19 +281,21 @@ In this particular case it would be:
 >> GenerateAudioVector_M(2,3,2,10,true)
 ```
 
-This sentence will generate an audio for each `Corpus.wav` file from a scheme with 2 voices, three syllabic conditions, two corpora and ten vocabularies in 7 acoustic variants (including the original corpus). 
+This sentence will generate an audio vector for each `Corpus.wav` file from a scheme with 2 voices, three syllabic conditions, two corpora and ten vocabularies in 7 acoustic variants (including the original corpus). Each audio vector will be saved in its corresponding `Corpus.wav` folder.
 
 
 
 
 ### Running the MRSTSA algorithm
 
-Once the preprocessing of the datasets has been conducted you can run the following command in order to reserve 20 nodes for 1 hour.
+Once the preprocessing of the datasets has been conducted you will be able to run the following command in order to reserve 20 nodes for 1 hour.
 
 ```
 qsub -n 20 -t 60 -A neurophon ./generate_Inputs.sh
 ```
  
+In our case we asked for 20 nodes because we have 2 corpora for each vocabulary having 10 vocabularies, which results in 20 corpora. Therefore, we used one node per corpus. En each node, 5 threads in 5 CPUs generated different sections (5 resolutions) ot the MRSTSA outputs.
+
 And the script is:
 
 ```
@@ -277,7 +307,7 @@ mpiexec -n 20 -f $COBALT_NODEFILE -env MV2_ENABLE_AFFINITY=0 -ppn 1 ./Test 2 3 2
 This script passes the same parameters to the MRSTSA algorithm in order to process the 840 corpora (i.e. 2 voices, 3 syllabic conditions, 2 corpora and 10 vocabularies) in the dataset.
 
 Once the MRSTSA algorithms have run properly, you have to go to `cd ~/neurophon/Octave/`, launch Matlab and run the following program: `>> ComposeInput_M(2,3,2,10,true)`.
-This program will provide you with a file ready to be processed by the EL (such file is called `inputs.mat`).
+This program will provide you with a file ready to be processed by the EL (such file is called `inputs.mat` for each corpus).
 
 
 ### Running the EL algorithm
@@ -434,11 +464,11 @@ end
 
 ```
 
-This program generates the specification for an EL with 15 for 15 cortical columns (CCs), with afferent receptive fields of 5 for 127 inputs, lateral receptive fields of 9 for 9 CCs, etc. This program specifies a CSTM instance in three files `ModelStructure.mat`, `EncoderLayerStructure.mat` and `EncoderLayerParameters.mat` in which it gives details of the whole CSTM structure, the EL structure and specific EL parameters.
+This program generates the specification for an EL with an array of 15 for 15 cortical columns (CCs), with afferent receptive fields of 5 for 127 inputs, lateral receptive fields of 9 for 9 CCs, etc. This program specifies a CSTM instance in three files `ModelStructure.mat`, `EncoderLayerStructure.mat` and `EncoderLayerParameters.mat` in which it gives details of the whole CSTM structure, the EL structure and specific EL parameters.
 
 In our experimental setup we move the folder `Model` to the path `/projects/neurophon/TestsData`. If you choose another path, you will have to change that path in the source code of the project.
 
-Once you have the `Model` folder in the right place you will run the following `qsub` command: `qsub -n 25 -t 240 -A neurophon ./run_Model.sh`, whose script `run_Model.sh` has the following instructions:
+Once you have the `Model` folder in the right place, you will run the following `qsub` command: `qsub -n 25 -t 240 -A neurophon ./run_Model.sh`, whose script `run_Model.sh` has the following instructions:
 
 ```
 #!/bin/sh
@@ -460,7 +490,7 @@ mkdir -p Model/pitchup/ && cp 5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabu
 mkdir -p Model/changedvoices/ && cp 5_Way_Corpora/Voices_1/Syllables_1/Corpus_1/Vocabulary_0/original/inputs.mat Model/changedvoices/inputs.mat
 
 
-cd ~/hstm/C++/Model/
+cd ~/neurophon/C++/Model/
 # Trains the model
 mpiexec -n 25 -f $COBALT_NODEFILE -env MV2_ENABLE_AFFINITY=0 -ppn 1 ./Test Model training
 
@@ -469,7 +499,7 @@ mpiexec -n 25 -f $COBALT_NODEFILE -env MV2_ENABLE_AFFINITY=0 -ppn 1 ./Test Model
 
 ```
 
-This script copies all the necessary corpora and then runs the model in training and inference mode.
+This script copies all the necessary corpora and then runs the model in training and inference modes.
 Afterwars, inside the `Model` folder you will end up with a set of sub-folders: `original`, `whitenoise1`, `whitenoise2`, `reverberation30`, `reverberation60`, `pitchdown`, `pitchup` and `changedvoices` which will contain the MRSTSA an EL outputs to train and test the SVM algorithms.
 
 
@@ -478,20 +508,20 @@ Afterwars, inside the `Model` folder you will end up with a set of sub-folders: 
 
 ### SVM Classification Stage
 
-#### Preparing the data to Train the SVM algorithm
-
 After running the EL you are in good shape to train and test the SVM algorithm.
+
+#### Preparing the data to Train the SVM algorithm
 
 First of all, you have to prepare the data to train the SVM algorithm.
 
 1. Copy the files in `original` folder to `Octave` folder: `cp /projects/neurophon/TestsData/Model/original/*.mat ~/neurophon/Octave`.
-2. Launch Matlab and run the following command `>> load /projects/neurophon/TestsData/5_Way_Corpora/Voices_2/Syllables_1/Corpus_0/Vocabulary_0/CorpusMetadata.mat` in order to load the metadata of the corpus you are currently processing. Then run the command `>> wordsSequence = double(wordsSequence)`, then -on Matlab- go to the path `~/neurophon/Octave/GenerateTextCorpora/` and save wordsSequence vector using `>> save -v6 wordsSequence.mat wordsSequence`. In this way, the labels of the sequence of words in the corpus are ready to be used.
+2. Launch Matlab and run the following command `>> load /projects/neurophon/TestsData/5_Way_Corpora/Voices_2/Syllables_1/Corpus_0/Vocabulary_0/CorpusMetadata.mat` in order to load the metadata of the corpus you are currently processing. Then run the command `>> wordsSequence = double(wordsSequence)`, then -on Matlab- go to the path `~/neurophon/Octave/GenerateTextCorpora/` and save `wordsSequence` vector using `>> save -v6 wordsSequence.mat wordsSequence`. In this way, the labels of the sequence of words in the corpus are ready to be used.
 3. Finally on Matlab in the path `~/neurophon/Octave/` run the following script: `>> processes_data_for_train_supervision_M(1)`. This script will prepare the data to train both SVM models, one using the MRSTSA outputs and the other using the EL outputs. Such script will also generate a series of temporal marks to determine the begining and the end of each word in the corpus.
 
 #### Training the SVM algorithm
 
 Assuming you built the libsvm sources in the path `~/libsvm/matlab`, you can use the following [script](libsvm_train_M.md) to train the SVM models.
-Copy such script in the path `~/libsvm/matlab/MyInterface` and run the command `>> libsvm_train_M(1)` under Matlab.
+Copy such script in the path `~/libsvm/matlab/MyInterface` and run the command `>> libsvm_train_M(1)` under Matlab. Such script will produce a swept of the parameters through cross validation in order to find the best SVM model.
 
 For further details about how to train SVM models see [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) documentation.
 
@@ -499,8 +529,8 @@ For further details about how to train SVM models see [libsvm](https://www.csie.
 
 Once the SVM models are trained, you will be able to test them using some of the features returned by the MRSTSA and the EL in response to the corpora affected by the acoustic variants.
 
-1. First copy the files in `original` folder to `Octave` folder: `cp /projects/neurophon/TestsData/5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/original/inputs.mat ~/neurophon/Octave`.
-2. Launch Matlab and run the following command `>> load /projects/neurophon/TestsData/5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/CorpusMetadata.mat` in order to load the metadata of the corpus you are currently processing. Then run the command `>> wordsSequence = double(wordsSequence)`, then -on Matlab- go to the path `~/neurophon/Octave/GenerateTextCorpora/` and save wordsSequence vector using `>> save -v6 wordsSequence.mat wordsSequence`. In this way, the labels of the sequence of words in the corpus are ready to be used.
+1. First copy the files in `original` folder to `Octave` folder: `cp /projects/neurophon/TestsData/5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/original/inputs.mat ~/neurophon/Octave`. Notice that this time the files come from the folder `Corpus_1` instead of `Corpus_0`. 
+2. Launch Matlab and run the following command `>> load /projects/neurophon/TestsData/5_Way_Corpora/Voices_2/Syllables_1/Corpus_1/Vocabulary_0/CorpusMetadata.mat` in order to load the metadata of the corpus you are currently processing. Then run the command `>> wordsSequence = double(wordsSequence)`, then -on Matlab- go to the path `~/neurophon/Octave/GenerateTextCorpora/` and save `wordsSequence` vector using `>> save -v6 wordsSequence.mat wordsSequence`. In this way, the labels of the sequence of words in the corpus are ready to be used.
 3. On Matlab in the path `~/neurophon/Octave/` run the following script: `>> processes_data_for_train_supervision_M(0)`. By means of this script you will generate the marks for the new corpus `Corpus_1`.
 4. In order to prepare the data to test the SVM models you will have to run the following command `cp /projects/neurophon/TestsData/Model/whitenoise1/*.mat ~/neurophon/Octave`.
 5. Then, run `>> load marks.mat`. This file contains all the marks just generated by `processes_data_for_train_supervision_M` script.
