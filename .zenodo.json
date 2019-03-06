@@ -1,0 +1,38 @@
+{
+  "creators": [
+    {
+      "name": "Dematties, Dario",
+      "affiliation": "University of Buenos Aires",
+      "orcid": "0000-0002-8726-7837"
+    },
+    {
+      "name": "Thiruvathukal, George K.",
+      "affiliation": "Loyola University Chicago and Argonne National Laboratory",
+      "orcid": "0000-0002-0452-5571"
+    },
+    {
+      "name": "Rizzi, Silvio",
+      "affiliation": "Argonne National Laboratory",
+      "orcid": "0000-0002-3804-2471"
+    },
+    {
+      "name": "Wainselboim, Alejandro Javier",
+      "affiliation": "University of Buenos Aires"
+    },
+    {
+      "name": "Zanutto, Bonifacio Silvano",
+      "affiliation": "University of Buenos Aires"
+    }
+  ],
+  "keywords": [
+    "cortical dynamics",
+    "early language acquisition",
+    "incidental phonetic acquisition",
+    "sparse distributed representations",
+    "unsupervised learning",
+    "biologically inspired computational models",
+    "neural networks"
+  ],
+  "license": "GPL-3.0",
+  "upload_type": "software"
+}
