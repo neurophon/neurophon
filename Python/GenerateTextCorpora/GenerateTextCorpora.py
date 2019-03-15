@@ -378,38 +378,38 @@ SABLE.Generate_Directory_Tree(2, 3, NumberOfVoicesTurns.size, VocabulariesSizes.
 # Generate monosyllabic corpora
 MonosyllabicVocabularies = {}
 for i in range(0, VocabulariesSizes.size):
-	if (i%size==rank):
-		if i == 0:
-		    MonosyllabicVocabularies["Vocabulary_" + str(i)] = OneSyllable[:VocabulariesIndexes[i]]
-		else:
-		    MonosyllabicVocabularies["Vocabulary_" + str(i)] = OneSyllable[VocabulariesIndexes[i-1]:VocabulariesIndexes[i]]
+        if (i%size==rank):
+                if i == 0:
+                    MonosyllabicVocabularies["Vocabulary_" + str(i)] = OneSyllable[:VocabulariesIndexes[i]]
+                else:
+                    MonosyllabicVocabularies["Vocabulary_" + str(i)] = OneSyllable[VocabulariesIndexes[i-1]:VocabulariesIndexes[i]]
 
-		# MonosyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(OneSyllable, VocabulariesSizes[i])
+                # MonosyllabicVocabularies["Vocabulary_" + str(i)] = np.random.choice(OneSyllable, VocabulariesSizes[i])
 
-		# Generate SABLE files
-		for j in range(0, NumberOfVoicesTurns.size):
-			SABLE.Generate_SABLE("Voices_1",\
-					     "Syllables_1",\
-					     "Corpus_" + str(j),\
-					     "Vocabulary_" + str(i),\
-					     Voices1,\
-					     MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
-
-
-			SABLE.Generate_SABLE("Voices_2",\
-					     "Syllables_1",\
-					     "Corpus_" + str(j),\
-					     "Vocabulary_" + str(i),\
-					     Voices2,\
-					     MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                # Generate SABLE files
+                for j in range(0, NumberOfVoicesTurns.size):
+                        SABLE.Generate_SABLE("Voices_1",\
+                                             "Syllables_1",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices1,\
+                                             MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
-			# SABLE.Generate_SABLE("Voices_3",\
-					     # "Syllables_1",\
-					     # "Corpus_" + str(j),\
-					     # "Vocabulary_" + str(i),\
-					     # Voices3,\
-					     # MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+                        SABLE.Generate_SABLE("Voices_2",\
+                                             "Syllables_1",\
+                                             "Corpus_" + str(j),\
+                                             "Vocabulary_" + str(i),\
+                                             Voices2,\
+                                             MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
+
+
+                        # SABLE.Generate_SABLE("Voices_3",\
+                                             # "Syllables_1",\
+                                             # "Corpus_" + str(j),\
+                                             # "Vocabulary_" + str(i),\
+                                             # Voices3,\
+                                             # MonosyllabicVocabularies["Vocabulary_" + str(i)], NumberOfVoicesTurns[j], UtterancePerTurn);
 
 
 
