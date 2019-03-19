@@ -50,7 +50,7 @@ def extractSnippetsFromWebPage(url, removeStopWords):
 
 # Generate Semantic Space from snippets
 # snippets is a list of strings
-def generateWordSemanticSpaces(snippets):
+def generateWordSemanticSpaces(snippets, checkPointAt):
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -60,31 +60,62 @@ def generateWordSemanticSpaces(snippets):
     uniqueWords = list(np.unique(np.array(seq_of_words)))
     numberOfWords = len(uniqueWords)
     semanticSpace = np.zeros([numberOfSnippets,numberOfWords])
-    for j in range(len(snippets)):
-        if (j%size==rank):
-            dist = Counter(snippets[j].split())
-            for word in dist:
-                semanticSpace[j,uniqueWords.index(word)] += dist[word]
 
-    if (size>1):
-        sendbuf = semanticSpace
-        recvbuf = None
-        if rank == 0:
-            recvbuf = np.empty([size, semanticSpace.size], dtype='d')
-    
-        comm.Gather(sendbuf, recvbuf, root=0)
+    if (os.path.isfile('./firstSnippetAt.mat')):
+            contents = sio.loadmat('firstSnippetAt.mat')
+            firstSnippetAt = contents['firstSnippetAt'][0][0]
+    else:
+            firstSnippetAt = 0
 
-        if (rank==0):
-            auxiliary = np.sum(recvbuf,axis=0)
-            semanticSpace = np.reshape(auxiliary, (numberOfSnippets, numberOfWords))
+    while(firstSnippetAt<numberOfSnippets):
+            broken = False
+            for j in range(firstSnippetAt, numberOfSnippets):
+                followingSnippet = j
+                if (j%size==rank and (j%checkPointAt!=0 or j==firstSnippetAt)):
+                    dist = Counter(snippets[j].split())
+                    for word in dist:
+                        semanticSpace[j,uniqueWords.index(word)] += dist[word]
+                elif (j%checkPointAt==0 and j!=firstSnippetAt):
+                        broken = True
+                        break
 
-    if (rank==0):
-        sequence = []
-        for word in seq_of_words:
-            sequence.append(uniqueWords.index(word))
+            
 
-        sio.savemat("semanticSpace.mat", {'semanticSpace': semanticSpace, 'seq_of_words': sequence})
+            if (broken):
+                    firstSnippetAt = followingSnippet
+            else:
+                    firstSnippetAt = followingSnippet+1
 
+
+
+            if (size>1):
+                sendbuf = semanticSpace
+                recvbuf = None
+                if rank == 0:
+                    recvbuf = np.empty([size, semanticSpace.size], dtype='d')
+            
+                comm.Gather(sendbuf, recvbuf, root=0)
+
+                if (rank==0):
+                    auxiliary = np.sum(recvbuf,axis=0)
+                    semanticSpace = np.reshape(auxiliary, (numberOfSnippets, numberOfWords))
+
+
+            if (rank==0):
+                sequence = []
+                for word in seq_of_words:
+                    sequence.append(uniqueWords.index(word))
+
+                if (os.path.isfile('./semanticSpace.mat')):
+                    contents = sio.loadmat('semanticSpace.mat')
+                    semanticSpace += contents['semanticSpace']
+
+                sio.savemat("semanticSpace.mat", {'semanticSpace': semanticSpace, 'seq_of_words': sequence})
+
+                sio.savemat("firstSnippetAt.mat", {'firstSnippetAt': firstSnippetAt})
+
+            semanticSpace = np.zeros([numberOfSnippets,numberOfWords])
+            comm.Barrier()
 
 
 
@@ -237,6 +268,37 @@ def saveSnippets(fileName, snippets):
 
 
 
+
+
+
+
+
+
+# This method loads snippets from a file if the file exists
+# snippets is a list of strings
+def loadSnippets(fileName):
+        if (os.path.isfile('./' + fileName)):
+                snippets = []
+                with open('./' + fileName) as fp:
+                    line = fp.readline().rstrip()
+                    while line:
+                            snippets.append(line)
+                            line = fp.readline().rstrip()
+
+                snippets = list(filter(str.strip, snippets))
+                return snippets
+        else:
+                print('Not file called ' + fileName)
+                raise
+
+
+
+
+
+
+
+
+
 # Bring text from web urls and get formated snippets
 check_point_at = 5;
 url = 'https://en.wikipedia.org/wiki/'
@@ -279,9 +341,17 @@ while (os.stat('./SomeTitles.txt').st_size != 0):
 
         comm.Barrier()
 
-# snippets = broadcastSnippets(snippets)
 
-# generateWordSemanticSpaces(snippets)
+
+
+if (rank==0):
+        snippets = loadSnippets('snippets.txt')
+else:
+        snippets = []
+
+snippets = broadcastSnippets(snippets)
+
+generateWordSemanticSpaces(snippets,300)
 
 
 
