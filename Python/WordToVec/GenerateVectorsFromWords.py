@@ -1,3 +1,4 @@
+import os
 import math
 import sys
 import gensim
@@ -198,7 +199,7 @@ def gatherInformation(inputs):
 
 
 # This is a wrapper that parallelizes the generateVectorsFromWords method
-def parallelWrapper(words):
+def parallelWrapper(words, outputPath):
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -214,14 +215,110 @@ def parallelWrapper(words):
 
     if rank == 0:
         absentWordsHistograms = wordsHistogram(output['absentWords'])
-        sio.savemat("inputs.mat", {'inputs': output['vectors']})
+        sio.savemat(outputPath + 'inputs.mat', {'inputs': output['vectors']})
         absentWords = np.array([])
         frequences = np.array([])
         for key,val in absentWordsHistograms.items():
                 absentWords = np.append(absentWords,key)
                 frequences = np.append(frequences,val)
 
-        sio.savemat("absentWords.mat", {'absentWords': absentWords, 'frequences': frequences})
+        sio.savemat(outputPath + 'absentWords.mat', {'absentWords': absentWords, 'frequences': frequences})
 
 
+
+
+
+
+
+# This method get a sequence of words from text lines and separates
+# the lines using a gap with empty strings
+# The sequence of words is returned in a numpy array
+def getWordsSequence(filePath, numberOfLines, gapSize):
+    output = np.array([])
+    gap = np.full((gapSize),'')
+    with open(filePath) as fp:
+        for i, l in enumerate(fp):
+            output = np.append(output, gap)
+            output = np.append(output, l.split())
+
+            if (i+1>=numberOfLines):
+                break
+
+    return output
+
+
+
+
+
+
+
+
+
+
+
+# Gets the part of speech sequence from file
+def getPartOfSpeechSequence(filePath):
+    output = np.array([])
+    with open(filePath) as fp:
+        for i, l in enumerate(fp):
+            output = np.append(output, l.split())
+
+    return output
+
+
+
+
+
+
+
+
+
+
+
+# Generates a catalog with all the parts of speech in
+# partOfSpeechSequence
+def generateCatalog(partOfSpeechSequence):
+    aux = wordsHistogram(partOfSpeechSequence)
+    part_of_speech = np.array([])
+    for key,val in aux.items():
+        part_of_speech = np.append(part_of_speech,key)
+
+    sio.savemat("catalog.mat", {'part_of_speech': part_of_speech})
+
+
+
+
+
+
+
+
+
+# Generates a category sequence from a file containing
+# a part of speech sequence corresponding to a certain corpus
+def generateCategorySequence(inputFilePath, outputFilePath):
+    sequence = getPartOfSpeechSequence(inputFilePath)
+    catalog = np.array(['V_VBP', 'ADV_DT', 'P_VBN', 'ADV_VBZ', 'ADV_JJ', 'ADV_RBS', 'ADV_NNS', 'ADV_RB', 'ADJ_NN',\
+                          'N_VBZ', 'CONJ_CC', 'P_CC', 'D_PRP$', 'N_WDT', 'PRT_RP', 'N_VBP', 'N_LS', 'SC_RB', 'ADJ_NNS',\
+                          'P_DT', 'V_POS', 'V_VBN', 'PRT_IN', 'ADV_CD', 'P_RB', 'D_VBZ', 'ADJ_DT', 'N_NN', 'ADJ_JJR', 'ADV_NN',\
+                          'D_WP$', 'ADJ_RBR', 'ADJ_CD', 'N_JJR', 'N_NNS', 'V_VBD', 'ADJ_VB', 'N_VBN', 'C_TO', 'N_WP', 'SC_WRB',\
+                          'C_WDT', 'ADV_JJS', 'ADV_IN', 'V_VB', 'V_NN', 'N_FW', 'N_VBG', 'D_DT', 'N_RB', 'N_RBS', 'ADV_RBR', 'ADV_VBD',\
+                          'N_PRP', 'N_SYM', 'ADJ_FW', 'N_VB', 'N_VBD', 'V_VBZ', 'ADV_VB', 'N_PRP$', 'ADV_FW', 'ADV_JJR', 'N_IN', 'P_FW',\
+                          'P_NN', 'SC_IN', 'P_JJ', 'N_JJ', 'N_JJS', 'ADJ_RB', 'CONJ_RB', 'ADV_LS', 'V_VBG', 'ADV_CC', 'N_RBR', 'P_VB',\
+                          'CONJ_IN', 'N_PDT', 'P_VBG', 'N_EX', 'V_NNS', 'ADJ_IN', 'P_RP', 'ADV_WRB', 'V_MD', 'N_DT', 'C_IN', 'ADJ_JJ',\
+                          'ADJ_JJS', 'ADJ_VBD', 'V_JJ', 'V_IN', 'ADJ_PDT', 'ADV_RP', 'ADJ_VBG', 'V_PRP$', 'C_DT', 'PRT_RB', 'P_TO', 'N_CD',\
+                          'ADJ_RP', 'P_POS', 'P_IN', 'ADJ_VBN', 'D_WDT', 'N_NNP', 'N_NNPS', 'V_NNP', 'PRT_JJ','ADJ_NNP','ADV_NNP','ADJ_RBS'])
+
+    output = np.array([])
+    for part_of_speech in sequence:
+        index = np.where(catalog == part_of_speech)
+        if len(index[0]) == 0:
+            raise Exception('The part of speech {} is not in the catalog. You should add it to the code in generateCategorySequence function'\
+                            .format(part_of_speech))
+        elif len(index[0]) > 1:
+            raise Exception('More than one part of speech {} in catalog. You should delete duplicated elements in the code in generateCategorySequence function'\
+                            .format(part_of_speech))
+        else:
+            output = np.append(output, index)
+
+    sio.savemat(outputFilePath + 'categorySequence.mat', {'categories': output})
 
