@@ -254,21 +254,38 @@ template <typename T, typename V>
 void	load_matrix_to_vector( std::vector<T>& matrix, V &stm )
 {
 	std::string	str, str1;
-	if(!(std::getline(stm, str) && str == type_tag + "matrix")) goto failure;
-	if(!(std::getline(stm, str) && str == rows_tag + "1")) goto failure;
+	if(!(std::getline(stm, str) && str == type_tag + "matrix")) {
+		std::cout << "\nProblems reading or decoding type tag. Type must be matrix" << std::endl;
+		std::cout << str << std::endl;
+		goto failure;
+	}
+
+	if(!(std::getline(stm, str) && str == rows_tag + "1")) {
+		std::cout << "\nProblems reading or decoding row tag." << std::endl;
+		std::cout << str << std::endl;
+		goto failure;
+	}
 
 	std::size_t expected_size;
-	if( !( stm >> str1 && stm >> str && stm >> expected_size ) )
+	if( !( stm >> str1 && stm >> str && stm >> expected_size ) ) {
+		std::cout << "\nProblems reading column tag." << std::endl;
 		goto failure;
+	}
 
 	str = str1+" "+str+" ";
-	if( !( str == columns_tag ) )
+	if( !( str == columns_tag ) ) {
+		std::cout << "\nProblems decoding column tag." << std::endl;
+		std::cout << str << std::endl;
 		goto failure;
+	}
 
 	matrix.clear();
 	using iterator = std::istream_iterator<T>;
 	std::copy_n(iterator(stm), expected_size, std::back_inserter(matrix));
-	if( matrix.size() != expected_size ) goto failure;
+	if( matrix.size() != expected_size ) {
+		std::cout << "\nmatrix.size() != expected_size." << std::endl;
+		goto failure;
+	}
 	
 	return;
 	
