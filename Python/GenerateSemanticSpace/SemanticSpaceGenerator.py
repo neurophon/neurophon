@@ -87,7 +87,7 @@ def generateWordSemanticSpaces(snippets, checkPointAt):
                     firstSnippetAt = followingSnippet+1
 
 
-
+            # TODO: This gathering process has a problem since the size of semanticSpace is not the same for each rank
             if (size>1):
                 sendbuf = semanticSpace
                 recvbuf = None
