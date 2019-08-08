@@ -908,7 +908,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										     distalInputs.activeIndexes,
 										     numberOfExcitedUnits,
 										     parameters.sparsity,
-										     false);
+										     true);
 
 					if ( parameters.learning.enableDistalLearning ) {
 						if ( activeIndexes.size() > PREDICTION_FAULT_THRESHOLD_PERCENTAGE*
@@ -1129,7 +1129,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										     distalInputs.activeIndexes,
 										     numberOfExcitedUnits,
 										     parameters.sparsity,
-										     false);
+										     true);
 
 					if ( parameters.learning.enableDistalLearning ) {
 						if ( activeIndexes.size() > PREDICTION_FAULT_THRESHOLD_PERCENTAGE*
@@ -1351,7 +1351,7 @@ regularLayerResponse	RegularLayer::computeResponse( const regularLayerResponse& 
 										     distalInputs.activeIndexes,
 										     numberOfExcitedUnits,
 										     parameters.sparsity,
-										     false);
+										     true);
 
 					if ( parameters.learning.enableDistalLearning ) {
 						if ( activeIndexes.size() > PREDICTION_FAULT_THRESHOLD_PERCENTAGE*
