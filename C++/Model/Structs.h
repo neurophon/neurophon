@@ -292,4 +292,10 @@ struct	connectionsSet						// Holds connections vectors of the model
 	twodvector<std::size_t>		lateralDistalConnections;
 	twodvector<std::size_t>		apicalConnections;
 };
+
+struct	supervisionData						// Holds information for the model supervision
+{
+	std::vector<regularLayerResponse>	codes;	// this is a vector with a SDR for each supervision category in a catalog
+	std::vector<std::size_t>		labels;			// this is a vector containing the sequence of labels	
+};
 #endif

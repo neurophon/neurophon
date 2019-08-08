@@ -581,6 +581,1287 @@ void	Model::run( const std::string& folderName, const std::string& inputFolder )
 } // end function run 
 
 
+// run the model using supervision
+void	Model::run_supervised( const std::string& folderName )
+{
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n      STARTING SUPERVISED INFERENCE PROCESS " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+
+	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
+	std::vector<regularLayerResponse>		regularLayerOutputs;	// outputs from the regular layers
+	regularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+	// loads the supervision information to feed the model
+	if ( world_rank == 0 )
+		std::cout << "\nLoading Model Supervision data.\n";
+
+	auto	supervision = Model::loadSupervisionData(folderName + "/supervision");	
+
+	if ( world_rank == 0 )
+		std::cout << "\nModel Supervision data loaded.\n";
+
+	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
+
+		// Holds output information that comes from
+		// the encoder layer and from the regular layers
+		threedvector<std::size_t>	cumulativeEncoderLayerOutput;
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have encoder layer.\n";
+
+		// then, loads the input information to feed the encoder layer
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Encoder Layer Input data.\n";
+
+		auto	encoderLayerInput = Model::loadEncoderInputs(folderName + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder Layer Input data loaded.\n";
+
+
+		auto	timeSteps = encoderLayerInput.size();
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// the data is processed by the encoder layer
+			if ( timeStep == 0 ) { // in the first iteration there is no lateral nor apical information
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   _encoderLayerParameters);
+
+			}
+			// if there is at least one regular layer, then apical information comes from the next regular layer
+			// and from supervision general information
+			else if ( _modelStructure.numberOfLayers > 0 ) {
+				std::vector<regularLayerResponse>	apicalInformation;
+				apicalInformation.resize(2);
+				apicalInformation[0] = regularLayerOutputs[0];
+				apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   encoderLayerOutput,
+										   Model::mergeSDRs(apicalInformation),	// apical
+										   _encoderLayerParameters);
+			}
+			// if there are no regular layers, then apical information comes only from supervision inputs
+			else {
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   encoderLayerOutput,
+										   supervision.codes[supervision.labels[timeStep]], // apical
+										   _encoderLayerParameters);
+
+			}
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from encoder layer
+					if ( timeStep == 0 ) { // in the first iteration there is no
+					       					 // lateral information
+										 // neither apical
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     encoderLayerOutput,
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     encoderLayerOutput,
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision information
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     encoderLayerOutput,
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+				// if layer is not 0, afferent information comes from the previous regular layer
+				else {
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision information
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+			}
+			// accumulates the encoder and regular layer outputs
+			cumulativeEncoderLayerOutput.push_back(encoderLayerOutput.currentIndexes);
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+
+		}
+		cumulativeEncoderLayerOutput.shrink_to_fit();
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+		
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeEncoderLayerOutput(folderName, cumulativeEncoderLayerOutput);
+		Model::saveCumulativeRegularLayerOutput(folderName, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	else {	// if there is no encoder layer
+		// there must be at least one regular layer
+		if ( !(_modelStructure.numberOfLayers > 0) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn class Model, in function run_supervised:" << endl;
+				std::cout << "there is no encoder layer, then there must be -at least- one regular layer, but" << endl;
+				std::cout << "_modelStructure.numberOfLayers > 0 was not satisfied." << endl;
+			}
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have "
+				  << _modelStructure.numberOfLayers
+				  << " number of regular layers.\n";
+
+		// loads the information to feed the first regular layer in the model
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Regular Layer Input data.\n";
+
+		auto	regularLayerInput = Model::loadRegularInputs(folderName + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular Layer Input data loaded.\n";
+
+		auto	timeSteps = regularLayerInput.size();
+
+
+		// Holds output information that comes from
+		// the regular layers
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+		
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from regular layer input
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerInput[timeStep],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerInput[timeStep],
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision inputs
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerInput[timeStep],
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+				// if lares is not 0, afferent information comes from the previous regular layer
+				else { 
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision inputs
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+
+			}
+			// accumulates the regular layer outputs
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+		}
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeRegularLayerOutput(folderName, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n       SUPERVISED INFERENCE PROCESS FINISHED  " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+} // end function run_supervised 
+
+
+// run the model using supervision
+void	Model::run_supervised( const std::string& folderName, const std::string& inputFolder )
+{
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n     STARTING SUPERVISED INFERENCE PROCESS " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+
+	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
+	std::vector<regularLayerResponse>		regularLayerOutputs;	// outputs from the regular layers
+	regularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+	// loads the supervision information to feed the model
+	if ( world_rank == 0 )
+		std::cout << "\nLoading Model Supervision data.\n";
+
+	auto	supervision = Model::loadSupervisionData(folderName + "/" + inputFolder + "/supervision");	
+
+	if ( world_rank == 0 )
+		std::cout << "\nModel Supervision data loaded.\n";
+
+	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
+
+		// Holds output information that comes from
+		// the encoder layer and from the regular layers
+		threedvector<std::size_t>	cumulativeEncoderLayerOutput;
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have encoder layer.\n";
+
+		// then, loads the input information to feed the encoder layer
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Encoder Layer Input data.\n";
+
+		auto	encoderLayerInput = Model::loadEncoderInputs(folderName + "/" + inputFolder + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder Layer Input data loaded.\n";
+
+
+		auto	timeSteps = encoderLayerInput.size();
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// the data is processed by the encoder layer
+			if ( timeStep == 0 ) { // in the first iteration there is no lateral nor apical information
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   _encoderLayerParameters);
+
+			}
+			// if there is at least one regular layer, then apical information comes from the next regular layer
+			// and from supervision general information
+			else if ( _modelStructure.numberOfLayers > 0 ) {
+				std::vector<regularLayerResponse>	apicalInformation;
+				apicalInformation.resize(2);
+				apicalInformation[0] = regularLayerOutputs[0];
+				apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   encoderLayerOutput,
+										   Model::mergeSDRs(apicalInformation),	// apical
+										   _encoderLayerParameters);
+
+			}
+			// if there are no regular layers, then apical information comes from supervision inputs
+			else {
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   encoderLayerOutput,
+										   supervision.codes[supervision.labels[timeStep]], // apical
+										   _encoderLayerParameters);
+			}
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from encoder layer
+					if ( timeStep == 0 ) { // in the first iteration there is no
+					       					 // lateral information
+										 // neither apical
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     encoderLayerOutput,
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     encoderLayerOutput,
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision information
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     encoderLayerOutput,
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+				// if layer is not 0, afferent information comes from the previous regular layer
+				else {
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision information
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+			}
+			// accumulates the encoder and regular layer outputs
+			cumulativeEncoderLayerOutput.push_back(encoderLayerOutput.currentIndexes);
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+
+		}
+		cumulativeEncoderLayerOutput.shrink_to_fit();
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+		
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeEncoderLayerOutput(folderName, inputFolder, cumulativeEncoderLayerOutput);
+		Model::saveCumulativeRegularLayerOutput(folderName, inputFolder, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	else {	// if there is no encoder layer
+		// there must be at least one regular layer
+		if ( !(_modelStructure.numberOfLayers > 0) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn class Model, in function run_supervised:" << endl;
+				std::cout << "there is no encoder layer, then there must be -at least- one regular layer, but" << endl;
+				std::cout << "_modelStructure.numberOfLayers > 0 was not satisfied." << endl;
+			}
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have "
+				  << _modelStructure.numberOfLayers
+				  << " number of regular layers.\n";
+
+		// loads the information to feed the first regular layer in the model
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Regular Layer Input data.\n";
+
+		auto	regularLayerInput = Model::loadRegularInputs(folderName + "/" + inputFolder + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular Layer Input data loaded.\n";
+
+		auto	timeSteps = regularLayerInput.size();
+
+
+		// Holds output information that comes from
+		// the regular layers
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+		
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from regular layer input
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerInput[timeStep],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerInput[timeStep],
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision inputs
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerInput[timeStep],
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+				// if lares is not 0, afferent information comes from the previous regular layer
+				else { 
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     Model::mergeSDRs(apicalInformation),	// apical
+									     _regularLayerParameters[layer]);
+						}
+						// for the last layer in the model apical information comes from supervision inputs
+						else {
+							regularLayerOutputs[layer] =
+							_regularLayers[layer].computeResponse(
+									     regularLayerOutputs[layer-1],
+									     regularLayerOutputs[layer],
+									     supervision.codes[supervision.labels[timeStep]], // apical
+									     _regularLayerParameters[layer]);
+						}
+					}
+				}
+
+			}
+			// accumulates the regular layer outputs
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+		}
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeRegularLayerOutput(folderName, inputFolder, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n       SUPERVISED INFERENCE PROCESS FINISHED  " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+} // end function run_supervised 
+
+
+// run the model using supervision but just in the first number_of_supervisions words in each sentence
+void	Model::run_supervised( const std::string& folderName, const std::string& inputFolder, const std::size_t number_of_supervisions )
+{
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n     STARTING SUPERVISED INFERENCE PROCESS " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+
+	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
+	std::vector<regularLayerResponse>		regularLayerOutputs;	// outputs from the regular layers
+	regularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+	// loads the supervision information to feed the model
+	if ( world_rank == 0 )
+		std::cout << "\nLoading Model Supervision data.\n";
+
+	auto	supervision = Model::loadSupervisionData(folderName + "/" + inputFolder + "/supervision");	
+
+	if ( world_rank == 0 )
+		std::cout << "\nModel Supervision data loaded.\n";
+
+	std::size_t	wordCounter = 0;
+	bool		firstWord = true;
+	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
+
+		// Holds output information that comes from
+		// the encoder layer and from the regular layers
+		threedvector<std::size_t>	cumulativeEncoderLayerOutput;
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have encoder layer.\n";
+
+		// then, loads the input information to feed the encoder layer
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Encoder Layer Input data.\n";
+
+		auto	encoderLayerInput = Model::loadEncoderInputs(folderName + "/" + inputFolder + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder Layer Input data loaded.\n";
+
+
+		auto	timeSteps = encoderLayerInput.size();
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// the data is processed by the encoder layer
+			if ( timeStep == 0 ) { // in the first iteration there is no lateral nor apical information
+				encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+										   _encoderLayerParameters);
+
+			}
+			// if there is at least one regular layer, then apical information comes from the next regular layer
+			// as well as from supervision information
+			// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+			else if ( _modelStructure.numberOfLayers > 0 ) {
+				std::vector<regularLayerResponse>	apicalInformation;
+				apicalInformation.resize(2);
+				apicalInformation[0] = regularLayerOutputs[0];
+				apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+				if ( supervision.labels[timeStep] == 1000 ) {
+					firstWord = true;
+					wordCounter = 0;
+					encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+											   encoderLayerOutput,
+									     		   Model::mergeSDRs(apicalInformation),	// apical
+											   _encoderLayerParameters);
+				}
+				else {
+					if ( firstWord && wordCounter < number_of_supervisions ) {
+						firstWord = false;
+						wordCounter++;
+						encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+												   encoderLayerOutput,
+									     		   	   Model::mergeSDRs(apicalInformation),	// apical
+												   _encoderLayerParameters);
+					}
+					else if ( wordCounter < number_of_supervisions ) {
+						wordCounter++;
+						encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+												   encoderLayerOutput,
+									     		   	   Model::mergeSDRs(apicalInformation),	// apical
+												   _encoderLayerParameters);
+					}
+					else {
+						wordCounter++;
+						encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+												   encoderLayerOutput,
+												   regularLayerOutputs[0],
+												   _encoderLayerParameters);
+					}
+				}
+			}
+			// if there are no regular layers, then apical information comes from supervision inputs
+			// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+			else {
+				if ( supervision.labels[timeStep] == 1000 ) {
+					firstWord = true;
+					wordCounter = 0;
+					encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+											   encoderLayerOutput,
+											   supervision.codes[supervision.labels[timeStep]], // apical
+											   _encoderLayerParameters);
+				}
+				else {
+					if ( firstWord && wordCounter < number_of_supervisions ) {
+						firstWord = false;
+						wordCounter++;
+						encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+												   encoderLayerOutput,
+												   supervision.codes[supervision.labels[timeStep]], // apical
+												   _encoderLayerParameters);
+					}
+					else if ( wordCounter < number_of_supervisions ) {
+						wordCounter++;
+						encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+												   encoderLayerOutput,
+												   supervision.codes[supervision.labels[timeStep]], // apical
+												   _encoderLayerParameters);
+					}
+					else {
+						wordCounter++;
+						encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],
+												   encoderLayerOutput,
+												   _encoderLayerParameters);
+					}
+				}
+			}
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from encoder layer
+					if ( timeStep == 0 ) { // in the first iteration there is no
+					       					 // lateral information
+										 // neither apical
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     encoderLayerOutput,
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						// if this is not the last layer in the model then apical information comes from the next regular layer
+						// as well as from supervision information
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      encoderLayerOutput,
+										      regularLayerOutputs[layer],
+										      Model::mergeSDRs(apicalInformation),	// apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      encoderLayerOutput,
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      encoderLayerOutput,
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      encoderLayerOutput,
+											      regularLayerOutputs[layer],
+											      regularLayerOutputs[layer+1],	// apical
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+						// for the last layer in the model apical information comes from supervision information
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						else {
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      encoderLayerOutput,
+										      regularLayerOutputs[layer],
+										      supervision.codes[supervision.labels[timeStep]], // apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      encoderLayerOutput,
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      encoderLayerOutput,
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      encoderLayerOutput,
+											      regularLayerOutputs[layer],
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+					}
+				}
+				// if layer is not 0, afferent information comes from the previous regular layer
+				else {
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						// if this is not the last layer in the model then apical information comes from the next regular layer
+						// as well as from supervision information
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      regularLayerOutputs[layer-1],
+										      regularLayerOutputs[layer],
+										      Model::mergeSDRs(apicalInformation),	// apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      regularLayerOutputs[layer+1],
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+						// for the last layer in the model apical information comes from supervision information
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						else {
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      regularLayerOutputs[layer-1],
+										      regularLayerOutputs[layer],
+										      supervision.codes[supervision.labels[timeStep]], // apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+					}
+				}
+			}
+			// accumulates the encoder and regular layer outputs
+			cumulativeEncoderLayerOutput.push_back(encoderLayerOutput.currentIndexes);
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+
+		}
+		cumulativeEncoderLayerOutput.shrink_to_fit();
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+		
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeEncoderLayerOutput(folderName, inputFolder, cumulativeEncoderLayerOutput);
+		Model::saveCumulativeRegularLayerOutput(folderName, inputFolder, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	else {	// if there is no encoder layer
+		// there must be at least one regular layer
+		if ( !(_modelStructure.numberOfLayers > 0) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn class Model, in function run_supervised:" << endl;
+				std::cout << "there is no encoder layer, then there must be -at least- one regular layer, but" << endl;
+				std::cout << "_modelStructure.numberOfLayers > 0 was not satisfied." << endl;
+			}
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have "
+				  << _modelStructure.numberOfLayers
+				  << " number of regular layers.\n";
+
+		// loads the information to feed the first regular layer in the model
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Regular Layer Input data.\n";
+
+		auto	regularLayerInput = Model::loadRegularInputs(folderName + "/" + inputFolder + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular Layer Input data loaded.\n";
+
+		auto	timeSteps = regularLayerInput.size();
+
+
+		// Holds output information that comes from
+		// the regular layers
+		fourdvector<std::size_t>	cumulativeRegularLayerOutputs;
+		cumulativeRegularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+		if ( world_rank == 0 )
+			std::cout << "\nProcessing the Input data.\n";
+		
+		// starts to process the input data one time step at a time
+		for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+			// regular layers processes the data in turns
+			// one regular layer at a time
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+
+				if ( layer == 0 ) { // if layer is 0, information comes from regular layer input
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerInput[timeStep],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						// if this is not the last layer in the model then apical information comes from the next regular layer
+						// as well as from supervision information
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      regularLayerInput[timeStep],
+										      regularLayerOutputs[layer],
+										      Model::mergeSDRs(apicalInformation),	// apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerInput[timeStep],
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerInput[timeStep],
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerInput[timeStep],
+											      regularLayerOutputs[layer],
+											      regularLayerOutputs[layer+1],
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+						// for the last layer in the model apical information comes from supervision inputs
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						else {
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      regularLayerInput[timeStep],
+										      regularLayerOutputs[layer],
+										      supervision.codes[supervision.labels[timeStep]], // apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerInput[timeStep],
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerInput[timeStep],
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerInput[timeStep],
+											      regularLayerOutputs[layer],
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+					}
+				}
+				// if layer is not 0, afferent information comes from the previous regular layer
+				else { 
+					if ( timeStep == 0 ) { // in the first iteration there is no lateral information
+						regularLayerOutputs[layer] =
+						_regularLayers[layer].computeResponse(
+								     regularLayerOutputs[layer-1],
+								     _regularLayerParameters[layer]);
+					}
+					else {
+						// if this is not the last layer in the model then apical information comes from the next regular layer
+						// as well as from supervision information
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						if ( layer < _modelStructure.numberOfLayers-1 ) {
+							std::vector<regularLayerResponse>	apicalInformation;
+							apicalInformation.resize(2);
+							apicalInformation[0] = regularLayerOutputs[layer+1];
+							apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      regularLayerOutputs[layer-1],
+										      regularLayerOutputs[layer],
+										      Model::mergeSDRs(apicalInformation),	// apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      Model::mergeSDRs(apicalInformation),	// apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      regularLayerOutputs[layer+1],
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+						// for the last layer in the model apical information comes from supervision inputs
+						// yet, supervision must be conducted only in the first number_of_supervisions words in each sentence
+						else {
+							if ( supervision.labels[timeStep] == 1000 ) {
+								firstWord = true;
+								wordCounter = 0;
+								regularLayerOutputs[layer] = 
+								_regularLayers[layer].computeResponse(
+										      regularLayerOutputs[layer-1],
+										      regularLayerOutputs[layer],
+										      supervision.codes[supervision.labels[timeStep]], // apical
+										      _regularLayerParameters[layer]);
+							}
+							else {
+								if ( firstWord && wordCounter < number_of_supervisions ) {
+									firstWord = false;
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else if ( wordCounter < number_of_supervisions ) {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      supervision.codes[supervision.labels[timeStep]], // apical
+											      _regularLayerParameters[layer]);
+								}
+								else {
+									wordCounter++;
+									regularLayerOutputs[layer] = 
+									_regularLayers[layer].computeResponse(
+											      regularLayerOutputs[layer-1],
+											      regularLayerOutputs[layer],
+											      _regularLayerParameters[layer]);
+								}
+							}
+						}
+					}
+				}
+
+			}
+			// accumulates the regular layer outputs
+			for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+				cumulativeRegularLayerOutputs[layer].push_back(regularLayerOutputs[layer].currentIndexes);
+		}
+		for ( std::size_t layer = 0; layer < _modelStructure.numberOfLayers; layer++ )
+			cumulativeRegularLayerOutputs[layer].shrink_to_fit();
+
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              SAVING CUMULATIVE OUTPUTS  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+		Model::saveCumulativeRegularLayerOutput(folderName, inputFolder, cumulativeRegularLayerOutputs);
+		if ( world_rank == 0 ) {
+			std::cout << "\n\n-----------------------------------------------------" << std::endl;
+			std::cout << "\n              CUMULATIVE OUTPUTS SAVED  " << std::endl;
+			std::cout << "\n-----------------------------------------------------" << std::endl;
+		}
+	}
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n       SUPERVISED INFERENCE PROCESS FINISHED  " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+} // end function run_supervised 
+
+
 // train the model
 void	Model::train( const std::string& folderName )
 {
@@ -1147,6 +2428,690 @@ void	Model::train( const std::string& folderName )
 } // end function train 
 
 
+// train the model using supervision
+void	Model::train_supervised( const std::string& folderName )
+{
+	// Get the rank of the process
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+
+	//timer::SetTrackSummariesOverTime(true);
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n        STARTING SUPERVISED TRAINING PROCESS " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+
+  	regularLayerResponse				encoderLayerOutput;	// output from the encoder layer
+	std::vector<regularLayerResponse>		regularLayerOutputs;	// outputs from the regular layers
+	regularLayerOutputs.resize(_modelStructure.numberOfLayers);
+
+	// loads the supervision information to feed the model
+	if ( world_rank == 0 )
+		std::cout << "\nLoading Model Supervision data.\n";
+
+	auto	supervision = Model::loadSupervisionData(folderName + "/supervision");	
+
+	if ( world_rank == 0 )
+		std::cout << "\nModel Supervision data loaded.\n";
+
+	if ( _modelStructure.encoderIncorporation ) {	// if there is encoder
+		// then, loads the input information to feed the encoder layer
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Encoder Layer Input data.\n";
+
+		auto	encoderLayerInput = Model::loadEncoderInputs(folderName + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nEncoder Layer Input data loaded.\n";
+
+		// check the data coherence
+		if ( !(supervision.labels.size() == encoderLayerInput.size()) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn Model class, in train_supervised function:" << endl;
+				std::cout << "supervision.labels.size() == encoderLayerInput.size() is not satisfied" << endl;
+			}
+
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		auto	timeSteps = encoderLayerInput.size();
+
+		// ask if the encoder layer is new
+		if ( _modelStructure.newEncoder ) {
+			// if the encoder is new, newLayerAt must be 0
+			if ( !(_modelStructure.newLayerAt == 0) ) {
+				if ( world_rank == 0 ) {
+					std::cout << "\nIn Model class, in train_supervised function:" << endl;
+					std::cout << "the encoder layer is new but" << endl;
+					std::cout << "_modelStructure.newLayerAt == 0 is not satisfied" << endl;
+				}
+
+				MPI_Abort(MPI::COMM_WORLD,1);
+			}
+
+			if ( world_rank == 0 )
+				std::cout << "\nTraining process for the encoder layer." << std::endl;
+
+			// initializes auxiliary encoder layer parameters from the encoder layer parameters
+			auto	auxiliaryEncoderParameters = _encoderLayerParameters;
+			// enable proximal and distal learning mechanisms in the encoder layer
+			auxiliaryEncoderParameters.enableLearning = true;
+			auxiliaryEncoderParameters.learning.enableProximalLearning = true;
+			auxiliaryEncoderParameters.learning.enableDistalLearning = true;
+			// parameters gradually decreased for the learning process
+			double	encoderInitialProximalLearningRate = 0.9;
+			double	encoderInitialProximalNeighborhood = 5.0;
+			double	encoderInitialDistalLearningRate = 1.0;
+
+			// these are the different stages in the training process for a new encoder layer
+			std::size_t	initialStageAt = _modelStructure.initialStageAt;
+			for ( std::size_t stage = initialStageAt; stage <= _modelStructure.stages+1; stage++ ) {
+				if ( world_rank == 0 ) {
+					std::cout << "\nTraining process for the encoder layer." << std::endl;
+					std::cout << "Encoder Layer training stage number " << stage << ".\n";
+				}
+
+				for ( std::size_t iteration = 0; iteration < _modelStructure.iterations; iteration++ ) {
+					for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+						if ( stage < _modelStructure.stages ) {
+							auxiliaryEncoderParameters.learning.proximalLearningRate = std::pow(0.2,stage) *
+										encoderInitialProximalLearningRate *
+										std::pow(0.01,(timeStep+iteration*timeSteps)/
+											(timeSteps*_modelStructure.iterations));
+							auxiliaryEncoderParameters.learning.proximalNeighborhood = std::pow(0.2,stage) *
+										encoderInitialProximalNeighborhood *
+										std::pow(0.01,(timeStep+iteration*timeSteps)/
+											(timeSteps*_modelStructure.iterations));
+							auxiliaryEncoderParameters.learning.distalLearningRate = std::pow(0.2,stage) *
+										encoderInitialDistalLearningRate *
+										std::pow(0.01,(timeStep+iteration*timeSteps)/
+											(timeSteps*_modelStructure.iterations));
+						}
+						else if ( iteration == 0 ) {
+							auxiliaryEncoderParameters.learning.proximalLearningRate =
+							_encoderLayerParameters.learning.proximalLearningRate;
+							auxiliaryEncoderParameters.learning.proximalNeighborhood =
+							_encoderLayerParameters.learning.proximalNeighborhood;
+							auxiliaryEncoderParameters.learning.distalLearningRate =
+							_encoderLayerParameters.learning.distalLearningRate;
+						}
+						
+						//timer::MarkStartTimeStep((int)timeStep, time(0));
+						//timer::MarkStartEvent("EncoderLayer Test");
+						if ( _modelStructure.numberOfLayers == 0 ) { // apply supervision here (to the encoder layer)
+							if ( timeStep == 0 && iteration == 0 ) // for the first iteration there is no lateral information
+								encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep], // afferent
+														   auxiliaryEncoderParameters);
+							else
+								encoderLayerOutput = _encoderLayer.
+										      computeResponse(encoderLayerInput[timeStep],			// afferent
+												      encoderLayerOutput, 				// lateral
+												      supervision.codes[supervision.labels[timeStep]],	// apical
+												      auxiliaryEncoderParameters);
+						}
+						else { // apply supervision here too
+							if ( timeStep == 0 && iteration == 0 ) // for the first iteration there is no lateral information
+								encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep], // afferent
+														   auxiliaryEncoderParameters);
+							else
+								encoderLayerOutput = _encoderLayer.
+										      computeResponse(encoderLayerInput[timeStep],			// afferent
+												      encoderLayerOutput,	  			// lateral
+												      supervision.codes[supervision.labels[timeStep]],	// apical
+												      auxiliaryEncoderParameters);
+						}
+
+						//timer::MarkEndEvent("EncoderLayer Test");
+						//timer::MarkEndTimeStep();
+					}
+				}
+				// increments _modelStructure.initialStageAt and
+				// saves the model status for every iteration
+				_modelStructure.initialStageAt = (_modelStructure.initialStageAt+1) % (_modelStructure.stages+2);
+				// if the encoder training process is in the last stage
+				// the encoder is not new any more
+				if ( stage == _modelStructure.stages+1 )
+					_modelStructure.newEncoder = false;
+
+				if ( world_rank == 0 ) {
+					std::cout << "\n\n-----------------------------------------------------" << std::endl;
+					std::cout << "\n              CHECKPOINT    SAVING STATE" << std::endl;
+					std::cout << "\n-----------------------------------------------------" << std::endl;
+				}
+				Model::saveModelStatus(folderName);
+				if ( world_rank == 0 ) {
+					std::cout << "\n\n-----------------------------------------------------" << std::endl;
+					std::cout << "\n              CHECKPOINT    STATE SAVED" << std::endl;
+					std::cout << "\n-----------------------------------------------------" << std::endl;
+				}
+			}
+
+			if ( world_rank == 0 )
+				std::cout << "\nEncoder Layer training process completed.\n";
+
+			// this is the end of the initial encoder layer training procedure
+		}
+
+		// If there are regular layers in the model, they have to be trained
+		// only if newLayerAt is smaller than numberOfLayers
+		// Asks if there is -at least- one regular layer in the model
+		// and if newLayerAt < numberOfLayers
+		if ( _modelStructure.numberOfLayers > 0 &&
+		     _modelStructure.newLayerAt < _modelStructure.numberOfLayers ) {
+			if ( world_rank == 0 )
+				std::cout << "\nIn this model we have "
+					  << _modelStructure.numberOfLayers
+					  << " regular layers.\n";
+
+			if ( world_rank == 0 )
+				std::cout << "\nWe have to train from regular layer number "
+					  << _modelStructure.newLayerAt
+					  << " to regular layer number "
+					  << _modelStructure.numberOfLayers-1
+					  << ".\n";
+
+			// trainingLayer is the layer which is new and which is trained in this iteration
+			std::size_t	newLayerAt = _modelStructure.newLayerAt;
+			for ( std::size_t trainingLayer = newLayerAt;
+					  trainingLayer < _modelStructure.numberOfLayers;
+					  trainingLayer++ ) {
+				if ( world_rank == 0 )
+					std::cout << "\nTraining regular layer number " << trainingLayer << "." << std::endl;
+
+				// initializes auxiliary encoder layer parameters from encoder layer parameters
+				auto	auxiliaryEncoderParameters = _encoderLayerParameters;
+				// disables proximal learning but enables distal learning
+				// for the encoder layer
+				// Encoder layer is the unique in which proximal learning in disabled once it has been
+				// initially trained
+				auxiliaryEncoderParameters.enableLearning = true;
+				auxiliaryEncoderParameters.learning.enableProximalLearning = false;
+				auxiliaryEncoderParameters.learning.enableDistalLearning = true;
+
+				// there must be one regular layer parameter set for every regular layer
+				if ( !(_regularLayerParameters.size() == _modelStructure.numberOfLayers) ) {
+					if ( world_rank == 0 ) {
+						std::cout << "\nIn Model class, in function train_supervised:" << endl;
+						std::cout << "the condition _regularLayerParameters.size() ";
+						std::cout << "== _modelStructure.numberOfLayers is not satisfied" << endl;
+					}
+
+					MPI_Abort(MPI::COMM_WORLD,1);
+				}
+				// initializes auxiliary regular layer parameters from regular layer parameters
+				std::vector<regularLayerParameters>	auxiliaryRegularParameters;
+				for (const auto& parameters : _regularLayerParameters)
+					auxiliaryRegularParameters.push_back(parameters);
+
+				auxiliaryRegularParameters.shrink_to_fit();
+				// enable proximal and distal learning for every regular layer in the model
+				for ( std::size_t layer = 0;
+						  layer < _modelStructure.numberOfLayers;
+						  layer++ ) {
+					auxiliaryRegularParameters[layer].enableLearning = true;
+					auxiliaryRegularParameters[layer].activationHomeostasis = true;
+					auxiliaryRegularParameters[layer].learning.enableProximalLearning = true;
+					auxiliaryRegularParameters[layer].learning.enableDistalLearning = true;
+					auxiliaryRegularParameters[layer].learning.synapticHomeostasis = true;
+				}
+
+				// parameters gradually decreased for the learning process
+				double	regularInitialProximalLearningRate = 0.9;
+				double	regularInitialProximalNeighborhood = 5.0;
+				double	regularInitialDistalLearningRate = 1.0;
+
+				std::size_t	initialStageAt = _modelStructure.initialStageAt;
+				for ( std::size_t stage = initialStageAt; stage <= _modelStructure.stages+1; stage++ ) {
+					if ( world_rank == 0 ) {
+						std::cout << "\nTraining regular layer number " << trainingLayer << "." << std::endl;
+						std::cout << "Regular Layer training stage number " << stage << ".\n";
+					}
+
+					for ( std::size_t iteration = 0; iteration < _modelStructure.iterations; iteration++ ) {
+						for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+							// the data is processed by the encoder layer
+							if ( timeStep == 0 && iteration == 0 ) // in the first iteration there is no lateral information
+								encoderLayerOutput = _encoderLayer.computeResponse(encoderLayerInput[timeStep],	// afferent
+														   auxiliaryEncoderParameters);
+							else {
+								std::vector<regularLayerResponse>	apicalInformation;
+								apicalInformation.resize(2);
+								apicalInformation[0] = regularLayerOutputs[0];
+								apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+								encoderLayerOutput = _encoderLayer.
+										      computeResponse(encoderLayerInput[timeStep],	// afferent
+												      encoderLayerOutput,		// lateral
+												      Model::mergeSDRs(apicalInformation),	// apical
+												      auxiliaryEncoderParameters);
+							}
+
+							if ( stage < _modelStructure.stages ) {
+								auxiliaryRegularParameters[trainingLayer].learning.proximalLearningRate =
+											std::pow(0.2,stage) *
+											regularInitialProximalLearningRate *
+											std::pow(0.01,(timeStep+iteration*timeSteps)/
+												(timeSteps*_modelStructure.iterations));
+								auxiliaryRegularParameters[trainingLayer].learning.proximalNeighborhood =
+											std::pow(0.2,stage) *
+											regularInitialProximalNeighborhood *
+											std::pow(0.01,(timeStep+iteration*timeSteps)/
+												(timeSteps*_modelStructure.iterations));
+								auxiliaryRegularParameters[trainingLayer].learning.distalLearningRate =
+											std::pow(0.2,stage) *
+											regularInitialDistalLearningRate *
+											std::pow(0.01,(timeStep+iteration*timeSteps)/
+												(timeSteps*_modelStructure.iterations));
+							}
+							else if ( timeStep == 0 ) {
+								auxiliaryRegularParameters[trainingLayer].learning.proximalLearningRate =
+								_regularLayerParameters[trainingLayer].learning.proximalLearningRate;
+								auxiliaryRegularParameters[trainingLayer].learning.proximalNeighborhood =
+								_regularLayerParameters[trainingLayer].learning.proximalNeighborhood;
+								auxiliaryRegularParameters[trainingLayer].learning.distalLearningRate =
+								_regularLayerParameters[trainingLayer].learning.distalLearningRate;
+							}
+
+							// regular layers processes the data in turns
+							// until the training layer is reached
+							//timer::MarkStartTimeStep((int)timeStep, time(0));
+							//timer::MarkStartEvent("RegularLayer Test");
+							for ( std::size_t layer = 0;
+									  layer <= trainingLayer;
+									  layer++ ) {
+
+								if ( layer == 0 ) { // if layer is 0, information comes from encoder layer
+									if ( timeStep == 0 && iteration == 0 ) { // in the first iteration there is no
+									       					 // lateral information neither
+														 // apical
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+												     encoderLayerOutput, // afferent
+												     auxiliaryRegularParameters[layer]);
+									}
+									else {
+										if ( layer < trainingLayer ) {
+											std::vector<regularLayerResponse>	apicalInformation;
+											apicalInformation.resize(2);
+											apicalInformation[0] = regularLayerOutputs[layer+1];
+											apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+											regularLayerOutputs[layer] =
+											_regularLayers[layer].computeResponse(
+													     encoderLayerOutput, // afferent
+													     regularLayerOutputs[layer], // lateral
+													     Model::mergeSDRs(apicalInformation),	// apical
+													     auxiliaryRegularParameters[layer]);
+										}
+										// for the training layer there is no apical information
+										// but only supervision
+										else if ( layer < _modelStructure.numberOfLayers-1 ) {
+											regularLayerOutputs[layer] =
+											_regularLayers[layer].computeResponse(
+													     encoderLayerOutput, // afferent
+													     regularLayerOutputs[layer], // lateral
+												      	     supervision.codes[supervision.labels[timeStep]],	// apical
+													     auxiliaryRegularParameters[layer]);
+										}
+										// for the last layer, apical information
+										// comes only from supervision
+										else {
+											regularLayerOutputs[layer] =
+											_regularLayers[layer].computeResponse(
+													     encoderLayerOutput, // afferent
+													     regularLayerOutputs[layer], // lateral
+												      	     supervision.codes[supervision.labels[timeStep]], // apical
+													     auxiliaryRegularParameters[layer]);
+										}
+									}
+								}
+								else { // if the layer is not 0, information comes from the previous regular layer
+									if ( timeStep == 0 && iteration == 0 ) { // in the first iteration there is no
+									       					 // lateral information
+														 // neither apical
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+												     regularLayerOutputs[layer-1], // afferent
+												     auxiliaryRegularParameters[layer]);
+									}
+									else {
+										if ( layer < trainingLayer ) {
+											std::vector<regularLayerResponse>	apicalInformation;
+											apicalInformation.resize(2);
+											apicalInformation[0] = regularLayerOutputs[layer+1];
+											apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+											regularLayerOutputs[layer] =
+											_regularLayers[layer].computeResponse(
+													     regularLayerOutputs[layer-1], // afferent
+													     regularLayerOutputs[layer], // lateral
+													     Model::mergeSDRs(apicalInformation),	// apical
+													     auxiliaryRegularParameters[layer]);
+										}
+										// for the training layer there is no apical information
+										// but only supervision
+										else if ( layer < _modelStructure.numberOfLayers-1 ) {
+											regularLayerOutputs[layer] =
+											_regularLayers[layer].computeResponse(
+													     regularLayerOutputs[layer-1], // afferent
+													     regularLayerOutputs[layer], // lateral
+												      	     supervision.codes[supervision.labels[timeStep]],	// apical
+													     auxiliaryRegularParameters[layer]);
+										}
+										// for the last layer, apical information
+										// comes only from supervision
+										else {
+											regularLayerOutputs[layer] =
+											_regularLayers[layer].computeResponse(
+													     regularLayerOutputs[layer-1], // afferent
+													     regularLayerOutputs[layer], // lateral
+												      	     supervision.codes[supervision.labels[timeStep]], // apical
+													     auxiliaryRegularParameters[layer]);
+										}
+									}
+								}
+							}
+							//timer::MarkEndEvent("RegularLayer Test");
+							//timer::MarkEndTimeStep();
+						}
+					}
+
+					// increments _modelStructure.initialStageAt and
+					// saves the model status for every iteration
+					_modelStructure.initialStageAt = (_modelStructure.initialStageAt+1) % (_modelStructure.stages+2);
+					// if this regular layer training process is in the last stage
+					// this regular layer is not new any more
+					if ( stage == _modelStructure.stages+1 )
+						_modelStructure.newLayerAt++;
+
+					if ( world_rank == 0 ) {
+						std::cout << "\n\n-----------------------------------------------------" << std::endl;
+						std::cout << "\n              CHECKPOINT    SAVING STATE" << std::endl;
+						std::cout << "\n-----------------------------------------------------" << std::endl;
+					}
+					Model::saveModelStatus(folderName);
+					if ( world_rank == 0 ) {
+						std::cout << "\n\n-----------------------------------------------------" << std::endl;
+						std::cout << "\n              CHECKPOINT    STATE SAVED" << std::endl;
+						std::cout << "\n-----------------------------------------------------" << std::endl;
+					}
+				}
+				if ( world_rank == 0 )
+					std::cout << "\nRegular Layer training process completed.\n";
+
+			}
+		}
+	}
+	else {	// if there is no encoder
+		// there must be at least one regular layer
+		if ( !(_modelStructure.numberOfLayers > 0) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn Model class, in function train_supervised:" << endl;
+				std::cout << "Condition _modelStructure.numberOfLayers > 0 was not satisfied" << endl;
+			}
+
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+		// for this function to have sense
+		// newLayerAt has to be smaller than
+		// numbeOfLayers
+		if ( !(_modelStructure.newLayerAt <
+		       _modelStructure.numberOfLayers) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn Model class, in function train_supervised:" << endl;
+				std::cout << "Condition _modelStructure.newLayerAt <";
+		       		std::cout << " _modelStructure.numberOfLayers was not satisfied" << endl;
+			}
+
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		// loads the information to feed the first regular layer in the model
+		if ( world_rank == 0 )
+			std::cout << "\nLoading Regular Layer Input data.\n";
+
+		auto	regularLayerInput = Model::loadRegularInputs(folderName + "/inputs");	
+
+		if ( world_rank == 0 )
+			std::cout << "\nRegular Layer Input data loaded.\n";
+
+		// check the data coherence
+		if ( !(supervision.labels.size() == regularLayerInput.size()) ) {
+			if ( world_rank == 0 ) {
+				std::cout << "\nIn Model class, in train_supervised function:" << endl;
+				std::cout << "supervision.labels.size() == regularLayerInput.size() is not satisfied" << endl;
+			}
+
+			MPI_Abort(MPI::COMM_WORLD,1);
+		}
+
+		auto	timeSteps = regularLayerInput.size();
+
+		// Regular Layers in the model have to be trained
+		if ( world_rank == 0 )
+			std::cout << "\nIn this model we have "
+				  << _modelStructure.numberOfLayers
+				  << " number of regular layers.\n";
+
+		if ( world_rank == 0 )
+			std::cout << "\nWe have to train_supervised from regular layer number "
+				  << _modelStructure.newLayerAt
+				  << " to regular layer "
+				  << _modelStructure.numberOfLayers-1
+				  << ".\n";
+
+		// trainingLayer is the layer which is new and which is trained in this iteration
+		std::size_t	newLayerAt = _modelStructure.newLayerAt;
+		for ( std::size_t trainingLayer = newLayerAt;
+				  trainingLayer < _modelStructure.numberOfLayers;
+				  trainingLayer++ ) {
+			if ( world_rank == 0 )
+				std::cout << "\nTraining regular layer number " << trainingLayer << ".\n";
+
+			// there must be one regular layer parameter set for every regular layer
+			if ( !(_regularLayerParameters.size() == _modelStructure.numberOfLayers) ) {
+				if ( world_rank == 0 ) {
+					std::cout << "\nIn Model class, in function train_supervised:" << endl;
+					std::cout << "Condition _regularLayerParameters.size() == _modelStructure.numberOfLayers";
+				        std::cout << " was not satisfied" << endl;
+				}
+
+				MPI_Abort(MPI::COMM_WORLD,1);
+			}
+
+			// initializes auxiliary regular layer parameters from regular layer parameters
+			std::vector<regularLayerParameters>	auxiliaryRegularParameters;
+			for (const auto& parameters : _regularLayerParameters)
+				auxiliaryRegularParameters.push_back(parameters);
+
+			auxiliaryRegularParameters.shrink_to_fit();
+			// enable proximal and distal learning for every regular layer in the model
+			for ( std::size_t layer = 0;
+					  layer < _modelStructure.numberOfLayers;
+					  layer++ ) {
+				auxiliaryRegularParameters[layer].enableLearning = true;
+				auxiliaryRegularParameters[layer].activationHomeostasis = true;
+				auxiliaryRegularParameters[layer].learning.enableProximalLearning = true;
+				auxiliaryRegularParameters[layer].learning.enableDistalLearning = true;
+				auxiliaryRegularParameters[layer].learning.synapticHomeostasis = true;
+			}
+
+			// parameters gradually decreased for the learning process
+			double	regularInitialProximalLearningRate = 0.9;
+			double	regularInitialProximalNeighborhood = 5.0;
+			double	regularInitialDistalLearningRate = 1.0;
+
+			std::size_t	initialStageAt = _modelStructure.initialStageAt;
+			for ( std::size_t stage = initialStageAt; stage <= _modelStructure.stages+1; stage++ ) {
+				if ( world_rank == 0 ) {
+					std::cout << "\nTraining regular layer number " << trainingLayer << "." << std::endl;
+					std::cout << "Regular Layer training stage number " << stage << ".\n";
+				}
+
+				for ( std::size_t iteration = 0; iteration < _modelStructure.iterations; iteration++ ) {
+					for ( std::size_t timeStep = 0; timeStep < timeSteps; timeStep++ ) {
+
+						if ( stage < _modelStructure.stages ) {
+							auxiliaryRegularParameters[trainingLayer].learning.proximalLearningRate =
+										std::pow(0.2,stage) *
+										regularInitialProximalLearningRate *
+										std::pow(0.01,(timeStep+iteration*timeSteps)/
+											(timeSteps*_modelStructure.iterations));
+							auxiliaryRegularParameters[trainingLayer].learning.proximalNeighborhood =
+										std::pow(0.2,stage) *
+										regularInitialProximalNeighborhood *
+										std::pow(0.01,(timeStep+iteration*timeSteps)/
+											(timeSteps*_modelStructure.iterations));
+							auxiliaryRegularParameters[trainingLayer].learning.distalLearningRate =
+										std::pow(0.2,stage) *
+										regularInitialDistalLearningRate *
+										std::pow(0.01,(timeStep+iteration*timeSteps)/
+											(timeSteps*_modelStructure.iterations));
+						}
+						else if ( timeStep == 0 ) {
+							auxiliaryRegularParameters[trainingLayer].learning.proximalLearningRate =
+							_regularLayerParameters[trainingLayer].learning.proximalLearningRate;
+							auxiliaryRegularParameters[trainingLayer].learning.proximalNeighborhood =
+							_regularLayerParameters[trainingLayer].learning.proximalNeighborhood;
+							auxiliaryRegularParameters[trainingLayer].learning.distalLearningRate =
+							_regularLayerParameters[trainingLayer].learning.distalLearningRate;
+						}
+
+						// every regular layer processes the data by turns
+						// until the training layer is reached
+						//timer::MarkStartTimeStep((int)timeStep, time(0));
+						//timer::MarkStartEvent("RegularLayer Test");
+						for ( std::size_t layer = 0;
+								  layer <= trainingLayer;
+								  layer++ ) {
+
+							if ( layer == 0 ) { // if layer is 0, information comes from regular layer input
+								if ( timeStep == 0 && iteration == 0 ) { // in the first iteration there is no
+								       					 // lateral information
+													 // neither apical
+									regularLayerOutputs[layer] =
+									_regularLayers[layer].computeResponse(
+											     regularLayerInput[timeStep], // afferent
+											     auxiliaryRegularParameters[layer]);
+								}
+								else {
+									if ( layer < trainingLayer ) {
+										std::vector<regularLayerResponse>	apicalInformation;
+										apicalInformation.resize(2);
+										apicalInformation[0] = regularLayerOutputs[layer+1];
+										apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+												     regularLayerInput[timeStep], // afferent
+												     regularLayerOutputs[layer], // lateral
+												     Model::mergeSDRs(apicalInformation),	// apical
+												     auxiliaryRegularParameters[layer]);
+									}
+									// for the training layer there is no apical information
+									// but only supervision
+									else if ( layer < _modelStructure.numberOfLayers-1 ) {
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+											     	     regularLayerInput[timeStep], // afferent
+												     regularLayerOutputs[layer], // lateral
+												     supervision.codes[supervision.labels[timeStep]],	// apical
+												     auxiliaryRegularParameters[layer]);
+									}
+									// for the last layer, apical information
+									// comes only from supervision
+									else {
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+											     	     regularLayerInput[timeStep], // afferent
+												     regularLayerOutputs[layer], // lateral
+												     supervision.codes[supervision.labels[timeStep]], // apical
+												     auxiliaryRegularParameters[layer]);
+									}
+								}
+							}
+							else {	// if layer is not 0, information comes from the previous layer
+								if ( timeStep == 0 && iteration == 0 ) { // in the first iteration there is no
+								       					 // lateral information 
+													 // neither apical
+									regularLayerOutputs[layer] =
+									_regularLayers[layer].computeResponse(
+											     regularLayerOutputs[layer-1], // afferent
+											     auxiliaryRegularParameters[layer]);
+								}
+								else {
+									if ( layer < trainingLayer ) {
+										std::vector<regularLayerResponse>	apicalInformation;
+										apicalInformation.resize(2);
+										apicalInformation[0] = regularLayerOutputs[layer+1];
+										apicalInformation[1] = supervision.codes[supervision.labels[timeStep]];
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+												     regularLayerOutputs[layer-1], // afferent
+												     regularLayerOutputs[layer], // lateral
+												     Model::mergeSDRs(apicalInformation),	// apical
+												     auxiliaryRegularParameters[layer]);
+									}
+									// for the training layer there is no apical information
+									// but only supervision
+									else if ( layer < _modelStructure.numberOfLayers-1 ) {
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+												     regularLayerOutputs[layer-1], // afferent
+												     regularLayerOutputs[layer], // lateral
+												     supervision.codes[supervision.labels[timeStep]],	// apical
+												     auxiliaryRegularParameters[layer]);
+									}
+									// for the last layer, apical information
+									// comes only from supervision
+									else {
+										regularLayerOutputs[layer] =
+										_regularLayers[layer].computeResponse(
+												     regularLayerOutputs[layer-1], // afferent
+												     regularLayerOutputs[layer], // lateral
+												     supervision.codes[supervision.labels[timeStep]], // apical
+												     auxiliaryRegularParameters[layer]);
+									}
+								}
+							}
+						}
+						//timer::MarkEndEvent("RegularLayer Test");
+						//timer::MarkEndTimeStep();
+					}
+				}
+
+				// increments _modelStructure.initialStageAt and
+				// saves the model status for every iteration
+				_modelStructure.initialStageAt = (_modelStructure.initialStageAt+1) % (_modelStructure.stages+2);
+				// if this regular layer training process is in the last stage
+				// this regular layer is not new any more
+				if ( stage == _modelStructure.stages+1 )
+					_modelStructure.newLayerAt++;
+
+				if ( world_rank == 0 ) {
+					std::cout << "\n\n-----------------------------------------------------" << std::endl;
+					std::cout << "\n              CHECKPOINT    SAVING STATE" << std::endl;
+					std::cout << "\n-----------------------------------------------------" << std::endl;
+				}
+				Model::saveModelStatus(folderName);
+				if ( world_rank == 0 ) {
+					std::cout << "\n\n-----------------------------------------------------" << std::endl;
+					std::cout << "\n              CHECKPOINT    STATE SAVED" << std::endl;
+					std::cout << "\n-----------------------------------------------------" << std::endl;
+				}
+			}
+			if ( world_rank == 0 )
+				std::cout << "\nRegular Layer training process complete.\n";
+		}
+	}
+	if ( world_rank == 0 ) {
+		std::cout << "\n\n\n\n-----------------------------------------------------" << std::endl;
+		std::cout << "\n              SUPERVISED TRAINING PROCESS FINISHED  " << std::endl;
+		std::cout << "\n-----------------------------------------------------" << std::endl;
+	}
+
+	//timer::PrintLog(std::cout, MPI_COMM_WORLD);
+} // end function train_supervised 
+
+
 // loads input information
 std::vector<encoderLayerInput>	Model::loadEncoderInputs( const std::string& fileName )
 {
@@ -1349,6 +3314,138 @@ std::vector<regularLayerResponse>	Model::loadRegularInputs( const std::string& f
 
 	return	inputModel;
 } // end function loadRegularInputs
+
+
+// loads supervision information
+supervisionData	Model::loadSupervisionData( const std::string& fileName )
+{
+	std::size_t	world_rank = MPI::COMM_WORLD.Get_rank();
+	std::stringstream	inputStream;
+
+       // open a file in read mode.
+	MPI::File infile = MPI::File::Open(MPI::COMM_WORLD, (COMMON_PATH + fileName + ".mat").c_str(),
+					   MPI::MODE_RDONLY,
+					   MPI::INFO_NULL);
+
+	// gets the file size
+	MPI::Offset filesize = infile.Get_size(); // in bytes
+	int	bufsize = filesize / sizeof(char); /* in number of char */
+	std::string	aux;
+	aux.resize(bufsize);
+
+	infile.Set_view(0 * bufsize * sizeof(char),
+			MPI_UNSIGNED_CHAR,
+			MPI_UNSIGNED_CHAR,
+			"native", MPI::INFO_NULL);
+
+	// read the complete file
+	infile.Read(&aux[0], bufsize,
+		    MPI_UNSIGNED_CHAR);
+
+	inputStream.str(aux);
+
+	// close the opened file.
+	infile.Close();
+
+	bool	check_SDR_Codes = false;
+	bool	check_sequence_of_tags = false;
+
+	std::string	str;
+	std::string	STR;
+	threedvector<int>		codes;
+	std::vector<std::size_t>	labels;
+
+	if (ENABLE_MATLAB_COMPATIBILITY) {
+		bool	big_endianness = load_the_header(inputStream);
+		auto	array_structure = check_next_data_structure(inputStream, big_endianness);
+		while ( array_structure.more_data ) {
+			STR = "SDR_Codes";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_cell_array_to_multidimensional_vector(array_structure, codes, inputStream, big_endianness);
+				check_SDR_Codes = true;
+			}
+
+			STR = "sequence_of_tags";
+			if ( array_structure.name.compare(STR) == 0 ) {
+				load_numeric_array_to_vector(array_structure, labels, inputStream, big_endianness);
+				check_sequence_of_tags = true;
+			}
+
+			array_structure = check_next_data_structure(inputStream,big_endianness);
+		}
+	}
+	else {
+		while ( std::getline(inputStream, str) ) {
+			STR = "# name: SDR_Codes";
+			if ( str.compare(STR) == 0 ) {
+				load_cell_to_multidimensional_vector(codes, inputStream);
+				check_SDR_Codes = true;
+			}
+
+			STR = "# name: sequence_of_tags";
+			if ( str.compare(STR) == 0 ) {
+				load_matrix_to_vector(labels, inputStream);
+				check_sequence_of_tags = true;
+			}
+		}
+	}
+
+	if (!(check_SDR_Codes == true)) {
+		if ( world_rank == 0 ) {
+			std::cout << "(check_SDR_Codes == true) no satisfied" << std::endl;
+		}
+		MPI_Abort(MPI::COMM_WORLD,1);
+	}
+
+	if (!(check_sequence_of_tags == true)) {
+		if ( world_rank == 0 ) {
+			std::cout << "(check_sequence_of_tags == true) no satisfied" << std::endl;
+		}
+		MPI_Abort(MPI::COMM_WORLD,1);
+	}
+
+	auto	numberOfCodes = codes.size();
+
+	supervisionData	supervision;
+
+	supervision.codes.resize(numberOfCodes);
+	for ( size_t codeNumber = 0; codeNumber < numberOfCodes; codeNumber++ ) {
+		auto	columns = codes[codeNumber].size();
+		supervision.codes[codeNumber].currentIndexes.resize(columns);
+		supervision.codes[codeNumber].synchronization.resize(columns);
+		supervision.codes[codeNumber].information.resize(columns);
+		for ( size_t column = 0; column < columns; column++ ) {
+			auto	indexes = codes[codeNumber][column].size();
+			for ( std::size_t index = 0; index < indexes; index++ ) {
+				if ( codes[codeNumber][column][index] > -1 ) { // just load the indexes that bring information
+					supervision.codes[codeNumber].currentIndexes[column].push_back(
+					codes[codeNumber][column][index]);
+				}
+				else {
+					if (!(codes[codeNumber][column].size() == 1)) {
+						if ( world_rank == 0 ) {
+							std::cout << "(codes[codeNumber][column].size() == 1) no satisfied" << std::endl;
+						}
+						MPI_Abort(MPI::COMM_WORLD,1);
+					}
+				}
+			}
+
+			if ( supervision.codes[codeNumber].currentIndexes[column].size() == 0 ) {
+				supervision.codes[codeNumber].information[column] = false;
+			}
+			else {
+				supervision.codes[codeNumber].information[column] = true;
+			}	
+
+			supervision.codes[codeNumber].synchronization[column] = true;
+		}
+	}
+
+	supervision.labels = labels;
+
+	return	supervision;
+} // end function loadSupervisionData
 
 
 // function that saves the Model's status in a file
@@ -4574,4 +6671,39 @@ void	Model::saveCumulativeRegularLayerOutput( const std::string& folderName,
 		outfile.Close();
 	}
 } // end function saveCumulativeRegularLayerOutput
+
+
+// this function merges n SDRs in a vector in one SDR as output
+regularLayerResponse	Model::mergeSDRs( const std::vector<regularLayerResponse>& SDRs )
+{
+	assert(SDRs.size() > 0);
+
+	// Merge the SDRs in the input vector in one SDR called output
+	regularLayerResponse	output;
+	for (const auto& SDR : SDRs) {
+		if ( output.currentIndexes.size() < SDR.currentIndexes.size() ) {
+			output.currentIndexes.resize(SDR.currentIndexes.size());
+			output.synchronization.resize(SDR.synchronization.size());
+			output.information.resize(SDR.information.size());
+		}
+
+		for (std::size_t column = 0; column < SDR.currentIndexes.size(); column++ ) {
+			output.currentIndexes[column].insert(output.currentIndexes[column].end(),
+							     SDR.currentIndexes[column].begin(),
+							     SDR.currentIndexes[column].end());
+
+			output.synchronization[column] = output.synchronization[column] | SDR.synchronization[column];
+			output.information[column] = output.information[column] | SDR.information[column];
+		}
+	}
+
+	// Eliminate active units duplicates
+	for (auto& corticalColumn : output.currentIndexes) {
+		std::sort(corticalColumn.begin(),corticalColumn.end());
+		auto    it = std::unique(corticalColumn.begin(),corticalColumn.end());
+		corticalColumn.erase(it, corticalColumn.end());
+	}
+
+	return	output;
+} // end function mergeSDRs
 

@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
 		std::string	mode = argv[2];
 		std::string	inference = "inference";
 		std::string	training = "training";
+		std::string	supervised_training = "supervised_training";
+		std::string	supervised_inference = "supervised_inference";
 
 		if ( mode.compare(inference) == 0 ) {
 			MPI_Barrier(MPI::COMM_WORLD);
@@ -35,15 +37,18 @@ int main(int argc, char* argv[])
 			Model	model(folderName, false);
 
 			// run inference
+			//model.run(folderName,"minitest");
+			model.run(folderName,"test");
+			//model.run(folderName,"tune");
 			//model.run(folderName,"Minicorpus");
-			model.run(folderName,"original");
-			model.run(folderName,"whitenoise1");
-			model.run(folderName,"whitenoise2");
-			model.run(folderName,"reverberation30");
-			model.run(folderName,"reverberation60");
-			model.run(folderName,"pitchdown");
-			model.run(folderName,"pitchup");
-			model.run(folderName,"changedvoices");
+			//model.run(folderName,"original");
+			//model.run(folderName,"whitenoise1");
+			//model.run(folderName,"whitenoise2");
+			//model.run(folderName,"reverberation30");
+			//model.run(folderName,"reverberation60");
+			//model.run(folderName,"pitchdown");
+			//model.run(folderName,"pitchup");
+			//model.run(folderName,"changedvoices");
 			MPI_Barrier(MPI::COMM_WORLD);
 		}
 		else if ( mode.compare(training) == 0 ) {
@@ -55,10 +60,41 @@ int main(int argc, char* argv[])
 			model.train(folderName);
 			MPI_Barrier(MPI::COMM_WORLD);
 		}
+		else if ( mode.compare(supervised_training) == 0 ) {
+			MPI_Barrier(MPI::COMM_WORLD);
+			// generates object of Model class 
+			Model	model(folderName, true);
+
+			// train the model 
+			model.train_supervised(folderName);
+			MPI_Barrier(MPI::COMM_WORLD);
+		}
+		else if ( mode.compare(supervised_inference) == 0 ) {
+			MPI_Barrier(MPI::COMM_WORLD);
+			// generates object of Model class 
+			Model	model(folderName, false);
+
+			// run supervised inference
+			//model.run_supervised(folderName,"minitest");
+			model.run_supervised(folderName,"test");
+			//model.run_supervised(folderName,"test",4);
+			//model.run_supervised(folderName,"tune",1);
+			//model.run_supervised(folderName,"Minicorpus");
+			//model.run_supervised(folderName,"original");
+			//model.run_supervised(folderName,"whitenoise1");
+			//model.run_supervised(folderName,"whitenoise2");
+			//model.run_supervised(folderName,"reverberation30");
+			//model.run_supervised(folderName,"reverberation60");
+			//model.run_supervised(folderName,"pitchdown");
+			//model.run_supervised(folderName,"pitchup");
+			//model.run_supervised(folderName,"changedvoices");
+			MPI_Barrier(MPI::COMM_WORLD);
+		}
 		else {
 			if ( world_rank == 0 ) {
 				std::cout << "\nsecond argument must be \"inference\"" << std::endl;
-				std::cout << "or \"training\"" << std::endl;
+				std::cout << "or \"training\" or \"supervised_training\"" << std::endl;
+				std::cout << "or \"supervised_inference\"" << std::endl;
 			}
 			MPI_Abort(MPI::COMM_WORLD, 1);
 		}

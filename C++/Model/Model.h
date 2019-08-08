@@ -35,7 +35,15 @@ public:
 
 	void	run( const std::string&, const std::string& );		// run the model
 
+	void	run_supervised( const std::string& );	// run the model using supervision
+
+	void	run_supervised( const std::string&, const std::string& ); // run the model using supervision
+
+	void	run_supervised( const std::string&, const std::string&, const std::size_t ); // run the model using supervision
+											     // but just in the first number_of_supervisions words in each sentence
 	void	train( const std::string& );		// train the model
+
+	void	train_supervised( const std::string& );	// train the model using supervision
 
 	std::vector<encoderLayerInput>	loadEncoderInputs( const std::string& );	// loads input information for the encoder.
 											// puts the inputs in a vector of encoderLayerInput structures
@@ -46,6 +54,9 @@ public:
 											// puts the inputs in a vector of regularLayerResponse structures
 											// every regularLayerResponse structure corresponds to a time step
 											// in the run
+
+	supervisionData				loadSupervisionData( const std::string& );	// loads supervision information.
+											// This method is used in case the model is trained in supervised way.
 
 	void	saveModelStatus( const std::string& );			// function that saves the Model's status in a file
 									// this has to be called every time a stage is completed
@@ -85,6 +96,9 @@ public:
 	void	saveCumulativeRegularLayerOutput( const std::string&,
 						  const std::string&,
 						  const fourdvector<std::size_t>& );	// this function saves the cumulative regular layer outputs in a file
+
+
+	regularLayerResponse	mergeSDRs( const std::vector<regularLayerResponse>& );	// this function merges n SDRs in a vector in one SDR as output
 
 private:
 	modelStructure					_modelStructure;	// the model structure
