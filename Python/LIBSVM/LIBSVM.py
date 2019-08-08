@@ -150,7 +150,8 @@ def libsvm_train(filePath, kernel=0):
                                 auxiliary_cost = np.array([])
 
                                 print('The best model for inputs gives Accuracy = {}'.format(model))
-                                training_options = '-t 0 -q -c ' + str(2**cost)
+                                training_options = '-b 1 -t 0 -q -c ' + str(2**cost)
+                                # training_options = '-t 0 -q -c ' + str(2**cost)
                                 model = svm_train(labels, features, training_options)
 
                                 svm_save_model(filePath + 'inputs.model', model)
@@ -185,7 +186,8 @@ def libsvm_train(filePath, kernel=0):
                                 auxiliary_cost = np.array([])
 
                                 print('The best model for encoderLayer gives Accuracy = {}'.format(model))
-                                training_options = '-t 0 -q -c ' + str(2**cost)
+                                training_options = '-b 1 -t 0 -q -c ' + str(2**cost)
+                                # training_options = '-t 0 -q -c ' + str(2**cost)
                                 model = svm_train(labels, features, training_options)
 
                                 svm_save_model(filePath + 'encoderLayer.model', model)
@@ -220,7 +222,8 @@ def libsvm_train(filePath, kernel=0):
                         auxiliary_cost = np.array([])
 
                         print('The best model for regularLayer_{} gives Accuracy = {}'.format(counter, model))
-                        training_options = '-t 0 -q -c ' + str(2**cost)
+                        training_options = '-b 1 -t 0 -q -c ' + str(2**cost)
+                        # training_options = '-t 0 -q -c ' + str(2**cost)
                         model = svm_train(labels, features, training_options)
 
                         svm_save_model(filePath + 'regularLayer_' + str(counter) + '.model', model)
@@ -258,7 +261,8 @@ def libsvm_train(filePath, kernel=0):
                                 auxiliary_gamma = np.array([])
 
                                 print('The best model for inputs gives Accuracy = {}'.format(model))
-                                training_options = '-t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
+                                training_options = '-b 1 -t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
+                                # training_options = '-t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
                                 model = svm_train(labels, features, training_options)
 
                                 svm_save_model(filePath + 'inputs.model', model)
@@ -295,7 +299,8 @@ def libsvm_train(filePath, kernel=0):
                                 auxiliary_gamma = np.array([])
 
                                 print('The best model for encoderLayer gives Accuracy = {}'.format(model))
-                                training_options = '-t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
+                                training_options = '-b 1 -t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
+                                # training_options = '-t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
                                 model = svm_train(labels, features, training_options)
 
                                 svm_save_model(filePath + 'encoderLayer.model', model)
@@ -332,7 +337,8 @@ def libsvm_train(filePath, kernel=0):
                         auxiliary_gamma = np.array([])
 
                         print('The best model for regularLayer_{} gives Accuracy = {}'.format(counter, model))
-                        training_options = '-t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
+                        training_options = '-b 1 -t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
+                        # training_options = '-t 2 -q -c ' + str(2**cost) + ' -g ' + str(2**gamma)
                         model = svm_train(labels, features, training_options)
 
                         svm_save_model(filePath + 'regularLayer_' + str(counter) + '.model', model)
@@ -342,4 +348,57 @@ def libsvm_train(filePath, kernel=0):
         else:
                 raise Exception('in libsvm_train, kernel_type must be 0 or 2. The method received {}.'\
                                         .format(kernel_type))
+
+
+
+
+
+
+
+
+
+
+
+def libsvm_test(filePath):
+
+        if os.path.isfile(filePath + 'inputs.model'):
+                if os.path.isfile(filePath + 'inputs.txt'):
+                        labels, features = svm_read_problem(filePath + 'inputs.txt')
+
+                        m = svm_load_model(filePath + 'inputs.model')
+                        print('Classification results for inputs')
+                        p_label, p_acc, p_val = svm_predict(labels, features, m, '-b 1')
+                        # p_label, p_acc, p_val = svm_predict(labels, features, m)
+
+                        sio.savemat(filePath + 'inputs_classification_accuracy.mat',\
+                                    {'p_label': p_label, 'p_acc': p_acc, 'p_val': p_val})
+                else:
+                        raise Exception('in libsvm_test, there is no file called inputs.txt in the path provided.')
+
+        if os.path.isfile(filePath + 'encoderLayer.model'):
+                if os.path.isfile(filePath + 'encoderLayer.txt'):
+                        labels, features = svm_read_problem(filePath + 'encoderLayer.txt')
+
+                        m = svm_load_model(filePath + 'encoderLayer.model')
+                        print('Classification results for encoderLayer')
+                        p_label, p_acc, p_val = svm_predict(labels, features, m, '-b 1')
+                        # p_label, p_acc, p_val = svm_predict(labels, features, m)
+
+                        sio.savemat(filePath + 'encoderLayer_classification_accuracy.mat',\
+                                    {'p_label': p_label, 'p_acc': p_acc, 'p_val': p_val})
+                else:
+                        raise Exception('in libsvm_test, there is no file called encoderLayer.txt in the path provided.')
+
+        counter = 0
+        while os.path.isfile(filePath + 'regularLayer_' + str(counter) + '.txt') and os.path.isfile(filePath + 'regularLayer_' + str(counter) + '.model'):
+                labels, features = svm_read_problem(filePath + 'regularLayer_' + str(counter) + '.txt')
+
+                m = svm_load_model(filePath + 'regularLayer_' + str(counter) + '.model')
+                print('Classification results for regularLayer_{}'.format(counter))
+                p_label, p_acc, p_val = svm_predict(labels, features, m, '-b 1')
+                # p_label, p_acc, p_val = svm_predict(labels, features, m)
+
+                sio.savemat(filePath + 'regularLayer_' + str(counter) + '_classification_accuracy.mat',\
+                            {'p_label': p_label, 'p_acc': p_acc, 'p_val': p_val})
+                counter += 1
 
