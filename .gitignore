@@ -41,11 +41,17 @@ C_Proc_Test
 # swp files
 *.swp
 
+# swn files
+*.swn
+
 # swo files
 *.swo
 
-# Octave mat files
+# Octave/Matlab mat files
 *.mat
+
+# txt mat files
+*.txt
 
 # octave.workspace files
 octave-workspace

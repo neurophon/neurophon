@@ -39,11 +39,14 @@ my_residue = 1*10^(-10);
 % This is the model structure
 encoderIncorporation = 1 + my_residue;
 newEncoder = 1 + my_residue;
-numberOfLayers = 0 + my_residue;
+numberOfLayers = 2 + my_residue;
+%numberOfLayers = 0 + my_residue;
 newLayerAt = 0 + my_residue;
 initialStageAt = 0 + my_residue;
-iterations = 4 + my_residue;
-stages = 4 + my_residue;
+iterations = 2 + my_residue;
+stages = 2 + my_residue;
+%iterations = 4 + my_residue;
+%stages = 4 + my_residue;
 
 % Saves the model structure
 name = ['./'];
@@ -62,21 +65,25 @@ save (name, 'encoderIncorporation', ...
 clear -except keepVariables
 
 % This is the encoder layer structure
-afferentArrayDimensionality = [5 + my_residue, 128 + my_residue];
-apicalArrayDimensionality = [1 + my_residue, 1 + my_residue];
-%apicalArrayDimensionality = [15 + my_residue, 15 + my_residue];
+afferentArrayDimensionality = [10 + my_residue, 30 + my_residue];
+%afferentArrayDimensionality = [5 + my_residue, 128 + my_residue];
+%apicalArrayDimensionality = [1 + my_residue, 1 + my_residue];
+apicalArrayDimensionality = [15 + my_residue, 15 + my_residue];
 columnsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 
-afferentReceptiveField = [2 + my_residue, 63 + my_residue];
-afferentPercentage = 0.05;
+afferentReceptiveField = [4 + my_residue, 14 + my_residue];
+%afferentReceptiveField = [2 + my_residue, 63 + my_residue];
+afferentPercentage = 0.12;
+%afferentPercentage = 0.05;
 afferentWrapAround = 1 + my_residue;
 
 lateralDistalReceptiveField = [4 + my_residue, 4 + my_residue];
-lateralDistalPercentage = 0.9;
+lateralDistalPercentage = 0.9/3;
+%lateralDistalPercentage = 0.9;
 lateralDistalWrapAround = 1 + my_residue;
 
-%apicalReceptiveField = [4 + my_residue, 4 + my_residue];
-apicalReceptiveField = [-2 + my_residue, -2 + my_residue];
+apicalReceptiveField = [4 + my_residue, 4 + my_residue];
+%apicalReceptiveField = [-2 + my_residue, -2 + my_residue];
 apicalPercentage = 0.9;
 apicalWrapAround = 1 + my_residue;
 
@@ -162,15 +169,14 @@ clear -except keepVariables
 
 
 
-%{
 % This is the regular layer structure number 0
-afferentArrayDimensionality = [9 + my_residue, 9 + my_residue];
+afferentArrayDimensionality = [15 + my_residue, 15 + my_residue];
 %apicalArrayDimensionality = [1 + my_residue, 1 + my_residue];
-apicalArrayDimensionality = [9 + my_residue, 9 + my_residue];
-columnsArrayDimensionality = [9 + my_residue, 9 + my_residue];
+apicalArrayDimensionality = [15 + my_residue, 15 + my_residue];
+columnsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 
 afferentReceptiveField = [4 + my_residue, 4 + my_residue];
-afferentPercentage = 0.025;
+afferentPercentage = 0.025*2;
 %afferentPercentage = 0.9;
 afferentWrapAround = 1 + my_residue;
 
@@ -181,7 +187,8 @@ lateralProximalPercentage = 0.8;
 lateralProximalWrapAround = 1 + my_residue;
 
 lateralDistalReceptiveField = [4 + my_residue, 4 + my_residue];
-lateralDistalPercentage = 0.9;
+lateralDistalPercentage = 0.9/3;
+%lateralDistalPercentage = 0.9;
 lateralDistalWrapAround = 1 + my_residue;
 
 apicalReceptiveField = [4 + my_residue, 4 + my_residue];
@@ -196,7 +203,7 @@ populationsArrayDimensionality = [15 + my_residue,15 + my_residue];
 afferentPopulationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 apicalPopulationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 
-temporalGatheringAfferentValue = 10 + my_residue;
+temporalGatheringAfferentValue = 2 + my_residue;
 proximalPotentialPercentage = 3*0.0045;
 distalPotentialPercentage = 0.03;
 
@@ -287,13 +294,13 @@ clear -except keepVariables
 
 
 % This is the regular layer structure number 1
-afferentArrayDimensionality = [9 + my_residue, 9 + my_residue];
-%apicalArrayDimensionality = [9 + my_residue, 9 + my_residue];
+afferentArrayDimensionality = [15 + my_residue, 15 + my_residue];
+%apicalArrayDimensionality = [15 + my_residue, 15 + my_residue];
 apicalArrayDimensionality = [1 + my_residue, 1 + my_residue];
-columnsArrayDimensionality = [9 + my_residue, 9 + my_residue];
+columnsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 
 afferentReceptiveField = [4 + my_residue, 4 + my_residue];
-afferentPercentage = 0.025;
+afferentPercentage = 0.025*2;
 %afferentPercentage = 0.9;
 afferentWrapAround = 1 + my_residue;
 
@@ -317,7 +324,7 @@ populationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 afferentPopulationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 apicalPopulationsArrayDimensionality = [15 + my_residue, 15 + my_residue];
 
-temporalGatheringAfferentValue = 10 + my_residue;
+temporalGatheringAfferentValue = 2 + my_residue;
 proximalPotentialPercentage = 3*0.0045;
 distalPotentialPercentage = 0.03;
 
@@ -402,6 +409,7 @@ save (name, 'enableLearning', ...
 
 
 
+%{
 % This is the regular layer structure number 2
 afferentArrayDimensionality = [3 + my_residue, 3 + my_residue];
 apicalArrayDimensionality = [1 + my_residue, 1 + my_residue];

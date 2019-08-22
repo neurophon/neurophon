@@ -67,7 +67,7 @@
 #define		ENABLE_RANDOM_BEHAVIOUR true
 
 // this constant enables binary Matlab output file format compatibility
-#define		ENABLE_MATLAB_COMPATIBILITY true
+#define		ENABLE_MATLAB_COMPATIBILITY false
 
 // this is the common path to the I/O data managed by the model
 #define		COMMON_PATH "/projects/neurophon/TestsData/"
