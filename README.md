@@ -1,5 +1,5 @@
-Cortical Spectro-Temporal Model for phonetic abstraction.
-=========================================================
+A Computational Theory for the Emergence of Grammatical Categories in Cortical Dynamics
+=========================================================================================
 
 A new approach for deep phonetic acquisition
 --------------------------------------------
